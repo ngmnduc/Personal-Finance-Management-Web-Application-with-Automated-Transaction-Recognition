@@ -1,0 +1,246 @@
+// FinTrack — Prisma Schema
+// Sau khi điền DATABASE_URL vào .env, chạy:
+//   npm run prisma:generate   → tạo Prisma Client
+//   npm run prisma:migrate    → tạo bảng trên Supabase
+//   npm run prisma:seed       → seed default categories
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// 1. USERS
+// ─────────────────────────────────────────
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  avatarUrl     String?  @map("avatar_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  wallets          Wallet[]
+  categories       Category[]
+  transactions     Transaction[]
+  budgets          Budget[]
+  savingGoals      SavingGoal[]
+  recurringRules   RecurringRule[]
+  recurringIncomes RecurringIncome[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// 2. WALLETS
+// ─────────────────────────────────────────
+model Wallet {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  name           String
+  type           WalletType  @default(GENERAL)
+  initialBalance BigInt      @default(0) @map("initial_balance")
+  currentBalance BigInt      @default(0) @map("current_balance")
+  isDefault      Boolean     @default(false) @map("is_default")
+  archivedAt     DateTime?   @map("archived_at")
+  deletedAt      DateTime?   @map("deleted_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user              User              @relation(fields: [userId], references: [id])
+  transactions      Transaction[]
+  savingGoals       SavingGoal[]
+  recurringRules    RecurringRule[]
+  recurringIncomes  RecurringIncome[]
+
+  @@index([userId, deletedAt])
+  @@map("wallets")
+}
+
+enum WalletType {
+  CASH
+  BANK
+  E_WALLET
+  GENERAL
+}
+
+// ─────────────────────────────────────────
+// 3. CATEGORIES
+// user_id = null  → system default (seed sẵn)
+// user_id = xxx   → custom của user
+// ─────────────────────────────────────────
+model Category {
+  id        String           @id @default(uuid())
+  userId    String?          @map("user_id")
+  name      String
+  type      TransactionType
+  icon      String           @default("circle")
+  isDefault Boolean          @default(false) @map("is_default")
+  deletedAt DateTime?        @map("deleted_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user             User?             @relation(fields: [userId], references: [id])
+  transactions     Transaction[]
+  budgets          Budget[]
+  recurringRules   RecurringRule[]
+  recurringIncomes RecurringIncome[]
+
+  @@index([userId, type])
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────
+// 4. TRANSACTIONS
+// ─────────────────────────────────────────
+model Transaction {
+  id              String          @id @default(uuid())
+  userId          String          @map("user_id")
+  walletId        String          @map("wallet_id")
+  categoryId      String          @map("category_id")
+  type            TransactionType
+  amount          BigInt
+  transactionDate DateTime        @map("transaction_date")
+  merchant        String?
+  note            String?
+  source          TxSource        @default(MANUAL)
+  extractedText   String?         @map("extracted_text")
+  recurringRuleId String?         @map("recurring_rule_id")
+  deletedAt       DateTime?       @map("deleted_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id])
+  wallet        Wallet         @relation(fields: [walletId], references: [id])
+  category      Category       @relation(fields: [categoryId], references: [id])
+  recurringRule RecurringRule? @relation(fields: [recurringRuleId], references: [id])
+
+  @@index([userId, deletedAt])
+  @@index([userId, transactionDate])
+  @@index([walletId, deletedAt])
+  @@index([userId, merchant, amount])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TxSource {
+  MANUAL
+  OCR
+  RECURRING
+}
+
+// ─────────────────────────────────────────
+// 5. BUDGETS
+// ─────────────────────────────────────────
+model Budget {
+  id            String       @id @default(uuid())
+  userId        String       @map("user_id")
+  categoryId    String       @map("category_id")
+  amountLimit   BigInt       @map("amount_limit")
+  period        BudgetPeriod
+  alert80SentAt DateTime?    @map("alert_80_sent_at")
+  deletedAt     DateTime?    @map("deleted_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, period])
+  @@index([userId, deletedAt])
+  @@map("budgets")
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+}
+
+// ─────────────────────────────────────────
+// 6. SAVING GOALS
+// ─────────────────────────────────────────
+model SavingGoal {
+  id             String     @id @default(uuid())
+  userId         String     @map("user_id")
+  sourceWalletId String     @map("source_wallet_id")
+  name           String
+  targetAmount   BigInt     @map("target_amount")
+  currentAmount  BigInt     @default(0) @map("current_amount")
+  deadline       DateTime?
+  status         GoalStatus @default(ACTIVE)
+  deletedAt      DateTime?  @map("deleted_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  user         User   @relation(fields: [userId], references: [id])
+  sourceWallet Wallet @relation(fields: [sourceWalletId], references: [id])
+
+  @@index([userId, status])
+  @@map("saving_goals")
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+// ─────────────────────────────────────────
+// 7. RECURRING RULES (auto-detect từ lịch sử)
+// is_active = false → pending confirm từ user
+// ─────────────────────────────────────────
+model RecurringRule {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  categoryId   String    @map("category_id")
+  walletId     String    @map("wallet_id")
+  merchant     String
+  amount       BigInt
+  intervalDays Int       @default(30) @map("interval_days")
+  nextDueDate  DateTime? @map("next_due_date")
+  snoozeUntil  DateTime? @map("snoozed_until")
+  isActive     Boolean   @default(false) @map("is_active")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id])
+  category     Category      @relation(fields: [categoryId], references: [id])
+  wallet       Wallet        @relation(fields: [walletId], references: [id])
+  transactions Transaction[]
+
+  @@index([userId, isActive])
+  @@map("recurring_rules")
+}
+
+// ─────────────────────────────────────────
+// 8. RECURRING INCOMES (lương cố định — user tự tạo)
+// Khác recurring_rules: không auto-detect, user nhập thủ công
+// ─────────────────────────────────────────
+model RecurringIncome {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  walletId   String   @map("wallet_id")
+  categoryId String   @map("category_id")
+  name       String
+  amount     BigInt
+  dayOfMonth Int      @map("day_of_month")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id])
+  wallet   Wallet   @relation(fields: [walletId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, isActive])
+  @@map("recurring_incomes")
+}
