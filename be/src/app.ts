@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
+import authRoutes from './routes/auth.routes';
 
 // --------------- BigInt serialization (safe — no monkey-patch) ---------------
 const bigIntReplacer = (_key: string, value: unknown) =>
@@ -55,10 +56,10 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/register', authLimiter);
-app.use('/api/v1/auth/refresh', authLimiter);
-app.use('/api', apiLimiter);
+app.use('/api/v1/auth/login', authRoutes);
+app.use('/api/v1/auth/register', authRoutes);
+app.use('/api/v1/auth/refresh', authRoutes);
+app.use('/api', authRoutes);
 
 // --------------- Health check (cron-job.org ping) ---------------
 app.get('/health', (_req, res) => {

@@ -54,7 +54,7 @@ export const errorHandler = (err: unknown, req: Request, res: Response, next: Ne
   console.error('[Unhandled Error]', {
     method: req.method,
     url: req.originalUrl,
-    userId: req.user?.userId ?? 'anonymous',
+    userId: (req as any).user?.userId ?? 'anonymous',
     error: err instanceof Error ? { message: err.message, stack: err.stack } : err,
   });
 

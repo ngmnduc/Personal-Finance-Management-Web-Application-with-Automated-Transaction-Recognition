@@ -1,4 +1,4 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
 
 // --------------- Constants ---------------
@@ -15,7 +15,7 @@ export const signAccessToken = (userId: string, tokenVersion = 0): string =>
     { userId, type: JWT_ACCESS_TYPE, tokenVersion },
     env.JWT_ACCESS_SECRET as string,
     {
-      expiresIn: env.JWT_ACCESS_EXPIRES_IN,
+      expiresIn: env.JWT_ACCESS_EXPIRES_IN as SignOptions['expiresIn'],
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     }
@@ -26,7 +26,7 @@ export const signRefreshToken = (userId: string, tokenVersion = 0): string =>
     { userId, type: JWT_REFRESH_TYPE, tokenVersion },
     env.JWT_REFRESH_SECRET as string,
     {
-      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+      expiresIn: env.JWT_REFRESH_EXPIRES_IN as SignOptions['expiresIn'],
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     }

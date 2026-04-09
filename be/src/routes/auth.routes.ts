@@ -18,7 +18,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// Schema mới: Cho phép đổi name HOẶC đổi password. Nếu đổi password thì bắt buộc có currentPassword
+// đổi name HOẶC đổi password. Nếu đổi password thì bắt buộc có currentPassword
 const updateMeSchema = z.object({
   name: z.string().min(2).optional(),
   currentPassword: z.string().min(1).optional(),
