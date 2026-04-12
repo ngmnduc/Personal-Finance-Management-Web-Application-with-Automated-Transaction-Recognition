@@ -22,7 +22,7 @@ export default function NavSidebar() {
       <div>
         {/* Logo */}
         <div className="p-6">
-          <h1 className="text-xl font-bold tracking-tight">FinTrack</h1>
+          <h1 className="text-xl font-bold tracking-tight">Finman</h1>
           <p className="text-xs text-slate-400">Personal Finance</p>
         </div>
 
