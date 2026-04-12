@@ -5,6 +5,8 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt";
+import { AppError } from "../utils/errors";
+
 
 // Helper function để loại bỏ passwordHash khỏi response
 const excludePassword = <T extends { passwordHash?: string }>(user: T): Omit<T, 'passwordHash'> => {
@@ -18,9 +20,7 @@ export const register = async (data: { email: string; name: string; password: st
   // 1. Kiểm tra email đã tồn tại chưa
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    const err = new Error("Email already exists");
-    (err as any).code = 409;
-    throw err;
+    throw AppError.Conflict("Email already exists");
   }
 
   const passwordHash = await hashPassword(password);
@@ -57,16 +57,12 @@ export const login = async (data: { email: string; password: string }) => {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    const err = new Error("Invalid email or password");
-    (err as any).code = 401;
-    throw err;
+    throw AppError.Unauthorized("Invalid email or password");
   }
 
   const isMatch = await comparePassword(password, user.passwordHash);
   if (!isMatch) {
-    const err = new Error("Invalid email or password");
-    (err as any).code = 401;
-    throw err;
+    throw AppError.Unauthorized("Invalid email or password");
   }
 
   const accessToken = signAccessToken(user.id);
@@ -95,14 +91,15 @@ export const logout = async (userId: string): Promise<void> => {
 export const refresh = async (token: string) => {
   const decoded = verifyRefreshToken(token); // Giả sử trả về { userId: string }
 
+  if (!decoded.ok) {
+    throw AppError.Unauthorized(decoded.error || "Invalid refresh token");
+  }
   const user = await prisma.user.findUnique({
-    where: { id: (decoded as any).userId },
+    where: { id: decoded.payload.userId },
   });
 
   if (!user || user.refreshToken !== token) {
-    const err = new Error("Invalid or expired refresh token");
-    (err as any).code = 401;
-    throw err;
+    throw AppError.Unauthorized("Invalid or expired refresh token");
   }
 
   const newAccessToken = signAccessToken(user.id);
@@ -111,13 +108,11 @@ export const refresh = async (token: string) => {
 
 export const getMe = async (userId: string) => {
   const user = await prisma.user.findFirst({
-    where: { id: userId, deletedAt: null },
+    where: { id: userId, deleted_at: null },
   });
 
   if (!user) {
-    const err = new Error("User not found");
-    (err as any).code = 404;
-    throw err;
+    throw AppError.NotFound("User not found");
   }
 
   return excludePassword(user);
@@ -141,9 +136,7 @@ export const updateMe = async (
     
     const isMatch = await comparePassword(data.currentPassword!, user.passwordHash);
     if (!isMatch) {
-      const err = new Error("Current password is incorrect");
-      (err as any).code = 401;
-      throw err;
+      throw AppError.Unauthorized("Current password is incorrect");
     }
 
     updateData.passwordHash = await hashPassword(data.newPassword);

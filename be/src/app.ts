@@ -56,10 +56,10 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/v1/auth/login', authRoutes);
-app.use('/api/v1/auth/register', authRoutes);
-app.use('/api/v1/auth/refresh', authRoutes);
-app.use('/api', authRoutes);
+//app.use('/api/v1/auth/login', authRoutes);
+//app.use('/api/v1/auth/register', authRoutes);
+//app.use('/api/v1/auth/refresh', authRoutes);
+//app.use('/api', authRoutes);
 
 // --------------- Health check (cron-job.org ping) ---------------
 app.get('/health', (_req, res) => {
@@ -67,7 +67,7 @@ app.get('/health', (_req, res) => {
 });
 
 // --------------- Routes (mount here) ---------------
-// app.use('/api/v1/auth', authRoutes);
+ app.use('/api/v1/auth', authRoutes);
 // app.use('/api/v1/wallets', walletRoutes);
 // app.use('/api/v1/categories', categoryRoutes);
 // app.use('/api/v1/transactions', transactionRoutes);
