@@ -56,11 +56,12 @@
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
   border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
+  display: flex;
 }
 
 /* Exception cho auth pages */

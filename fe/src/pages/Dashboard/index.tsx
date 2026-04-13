@@ -1,3 +1,3 @@
 export default function Page() {
-  return <div className="p-8 text-white">Coming soon</div>
+  return <div className="p-8 text-black">Coming soon</div>
 }
