@@ -1,38 +1,28 @@
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import PrivateRoute from './PrivateRoute'
 import AppLayout from '../layouts/AppLayout'
 import PageSkeleton from '../components/shared/PageSkeleton'
+import AuthLayout from '../layouts/AuthLayout'
 
-// Lazy load pages
-const LoginPage = lazy(() => import('../pages/Login'))
-const RegisterPage = lazy(() => import('../pages/Register'))
-const DashboardPage = lazy(() => import('../pages/Dashboard'))
-const ScanPage = lazy(() => import('../pages/Scan'))
-const WalletsPage = lazy(() => import('../pages/Wallets'))
-const TransactionsPage = lazy(() => import('../pages/Transactions'))
-const BudgetsPage = lazy(() => import('../pages/Budgets'))
-const GoalsPage = lazy(() => import('../pages/Goals'))
-const ReportsPage = lazy(() => import('../pages/Reports'))
-const SettingsPage = lazy(() => import('../pages/Settings'))
+const LoginPage = lazy(() => import('../pages/Auth/LoginPage'))
+const RegisterPage = lazy(() => import('../pages/Auth/RegisterPage'))
+const DashboardPage = lazy(() => import('../pages/Dashboard/index'))
+const ScanPage = lazy(() => import('../pages/Scan/index'))
+const WalletsPage = lazy(() => import('../pages/Wallets/index'))
+const TransactionsPage = lazy(() => import('../pages/Transactions/index'))
+const BudgetsPage = lazy(() => import('../pages/Budgets/index'))
+const GoalsPage = lazy(() => import('../pages/Goals/index'))
+const ReportsPage = lazy(() => import('../pages/Reports/index'))
+const SettingsPage = lazy(() => import('../pages/Settings/index'))
 
-
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
-    path: '/login',
-    element: (
-      <Suspense fallback={<PageSkeleton />}>
-        <LoginPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/register',
-    element: (
-      <Suspense fallback={<PageSkeleton />}>
-        <RegisterPage />
-      </Suspense>
-    ),
+    element: <AuthLayout />,
+    children: [
+      { path: '/login', element: <Suspense fallback={<PageSkeleton />}><LoginPage /></Suspense> },
+      { path: '/register', element: <Suspense fallback={<PageSkeleton />}><RegisterPage /></Suspense> },
+    ],
   },
   {
     element: <PrivateRoute />,
@@ -49,8 +39,10 @@ export const router = createBrowserRouter([
           { path: '/goals', element: <Suspense fallback={<PageSkeleton />}><GoalsPage /></Suspense> },
           { path: '/reports', element: <Suspense fallback={<PageSkeleton />}><ReportsPage /></Suspense> },
           { path: '/settings', element: <Suspense fallback={<PageSkeleton />}><SettingsPage /></Suspense> },
-        ]
-      }
-    ]
-  }
+        ],
+      },
+    ],
+  },
 ])
+
+export default router
