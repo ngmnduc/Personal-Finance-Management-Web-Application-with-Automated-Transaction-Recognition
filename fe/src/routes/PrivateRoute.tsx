@@ -1,10 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuthStore } from '../store/auth.store'
+import { useAuthStore,useIsAuthenticated } from '../store/auth.store'
+import PageSkeleton from '../components/shared/PageSkeleton'
+
 
 export default function PrivateRoute() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const isAuthLoading = useAuthStore((state) => state.isAuthLoading); 
 
-  if (!isAuthenticated) {
+  if(isAuthLoading) {return <PageSkeleton/>}
+  if (!useIsAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
