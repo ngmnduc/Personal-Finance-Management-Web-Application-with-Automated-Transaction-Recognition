@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
       setAuthLoading: (loading) => set({ isAuthLoading: loading }),
     }),
     {
-      name: 'fintrack-auth',
+      name: 'finman-auth',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

@@ -20,6 +20,8 @@ const router = createBrowserRouter([
   {
     element: <AuthLayout />,
     children: [
+      { path: '/', element: <Navigate to="/login" replace /> },
+
       { path: '/login', element: <Suspense fallback={<PageSkeleton />}><LoginPage /></Suspense> },
       { path: '/register', element: <Suspense fallback={<PageSkeleton />}><RegisterPage /></Suspense> },
     ],
@@ -30,7 +32,6 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { path: '/', element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard', element: <Suspense fallback={<PageSkeleton />}><DashboardPage /></Suspense> },
           { path: '/scan', element: <Suspense fallback={<PageSkeleton />}><ScanPage /></Suspense> },
           { path: '/wallets', element: <Suspense fallback={<PageSkeleton />}><WalletsPage /></Suspense> },

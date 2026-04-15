@@ -5,6 +5,11 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import authRoutes from './routes/auth.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+import  walletRoutes from './routes/wallet.routes';
+import  categoryRoutes from './routes/category.routes';
+
+
 
 // --------------- BigInt serialization (safe — no monkey-patch) ---------------
 const bigIntReplacer = (_key: string, value: unknown) =>
@@ -68,14 +73,14 @@ app.get('/health', (_req, res) => {
 
 // --------------- Routes (mount here) ---------------
  app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/wallets', walletRoutes);
-// app.use('/api/v1/categories', categoryRoutes);
+ app.use('/api/v1/wallets', walletRoutes);
+ app.use('/api/v1/categories', categoryRoutes);
 // app.use('/api/v1/transactions', transactionRoutes);
 // app.use('/api/v1/ocr', ocrRoutes);
 // app.use('/api/v1/budgets', budgetRoutes);
 // app.use('/api/v1/goals', goalRoutes);
 // app.use('/api/v1/recurring', recurringRoutes);
-// app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 // app.use('/api/v1/export', exportRoutes);
 
 // --------------- 404 fallback ---------------
