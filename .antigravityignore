@@ -1,0 +1,16 @@
+# Bỏ qua thư viện thư mục
+**/node_modules/
+ocr/venv/
+
+# Bỏ qua build output
+fe/dev-dist/
+**/dist/
+**/build/
+
+# Bỏ qua file môi trường chứa thông tin nhạy cảm
+**/.env
+**/.env.local
+**/.env.*
+
+# Bỏ qua file lock nếu không cần thiết
+**/package-lock.json

@@ -6,24 +6,33 @@ export interface User {
   createdAt: string
 }
 
+export type TransactionType = 'INCOME' | 'EXPENSE'
+export type WalletType = 'cash' | 'bank' | 'e-wallet' | 'general'
+
 export interface Wallet {
   id: string
-  userId: string
+  userId?: string
   name: string
-  type: 'CASH' | 'BANK' | 'E_WALLET' | 'GENERAL'
-  initialBalance: number
-  currentBalance: number
+  type: WalletType
+  initialBalance: number | string
+  currentBalance: number | string
   isDefault: boolean
   archivedAt?: string
 }
 
 export interface Category {
+  color: any
   id: string
   userId?: string
   name: string
-  type: 'INCOME' | 'EXPENSE'
+  type:TransactionType
   icon: string
   isDefault: boolean
+}
+
+export interface DashboardOverview {
+  totalBalance: number
+  wallets: Wallet[]
 }
 
 export interface Transaction {
