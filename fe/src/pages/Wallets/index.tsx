@@ -3,6 +3,7 @@ import { useWallets, useSetDefaultWallet, useDeleteWallet } from "../../features
 import { useUiStore } from "../../store/ui.store"
 import { WalletDialog } from "../../features/wallets/components/WalletDialog"
 import { Button } from "../../components/ui/button"
+import { Card, CardContent } from "../../components/ui/card"
 import PageSkeleton from "../../components/shared/PageSkeleton"
 import { Wallet } from "../../types"
 import { Plus, Edit2, Trash2, Archive, Star, Building2, Landmark, Wallet as WalletIcon, Smartphone, CreditCard } from "lucide-react"
@@ -122,21 +123,25 @@ export default function WalletsPage() {
         {/* Main Wallet Grid */}
         <div className="col-span-1 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
           {displayedWallets.map((w) => (
-            <div 
+            <Card 
               key={w.id} 
-              className={`relative bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md ${selectedWalletId === w.id ? 'ring-2 ring-brand-green border-transparent' : ''}`}
+              onClick={() => setSelectedWallet(w.id)}
+              className={`relative bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-[#10b981] cursor-pointer ${selectedWalletId === w.id ? 'ring-2 ring-[#10b981] border-transparent' : ''}`}
             >
               <div className="absolute inset-x-0 bottom-0 bg-slate-50/50 h-24 rounded-b-2xl pointer-events-none" style={{ clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)' }}></div>
               
-              <div className="flex items-start justify-between relative z-10">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getWalletColor(w.type)}`}>
-                  {getWalletIcon(w.type)}
+              <CardContent className="p-6 z-10 flex flex-col h-full justify-between relative">
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getWalletColor(w.type)}`}>
+                      {getWalletIcon(w.type)}
+                    </div>
+                    
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#86efac]/20 text-[#166534]`}>
+                      {getWalletBadgeType(w.type)}
+                    </span>
+                  </div>
                 </div>
-                
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#86efac]/20 text-[#166534]`}>
-                  {getWalletBadgeType(w.type)}
-                </span>
-              </div>
               
               <div className="mt-8 relative z-10">
                 <p className="text-sm font-semibold text-slate-600 mb-1 flex items-center gap-2">
@@ -165,33 +170,37 @@ export default function WalletsPage() {
                     {activeDropdown === w.id && (
                       <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-50 py-1 overflow-hidden origin-bottom-right">
                         {!w.isDefault && (
-                          <button 
-                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          <Button 
+                            variant="ghost" size="sm"
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-start gap-2 h-auto rounded-none"
                             onClick={(e) => handleSetDefault(w, e)}
                           >
                             <Star size={14} /> Set Default
-                          </button>
+                          </Button>
                         )}
-                        <button 
-                          className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                        <Button 
+                          variant="ghost" size="sm"
+                          className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-start gap-2 h-auto rounded-none"
                           onClick={(e) => handleEdit(w, e)}
                         >
                           <Edit2 size={14} /> Edit
-                        </button>
+                        </Button>
                         <div className="h-px bg-slate-100 my-1"></div>
-                        <button 
-                          className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        <Button 
+                          variant="ghost" size="sm"
+                          className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center justify-start gap-2 h-auto rounded-none"
                           onClick={(e) => handleDelete(w, e)}
                         >
                           {Number(w.currentBalance) > 0 ? <Archive size={14} /> : <Trash2 size={14} />} 
                           {Number(w.currentBalance) > 0 ? 'Archive' : 'Delete'}
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
           ))}
 
           {/* Connect Institution Box */}

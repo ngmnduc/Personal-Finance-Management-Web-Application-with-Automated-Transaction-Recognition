@@ -15,6 +15,7 @@ const BudgetsPage = lazy(() => import('../pages/Budgets/index'))
 const GoalsPage = lazy(() => import('../pages/Goals/index'))
 const ReportsPage = lazy(() => import('../pages/Reports/index'))
 const SettingsPage = lazy(() => import('../pages/Settings/index'))
+const CategoriesPage = lazy(() => import('../pages/categories/index'))
 
 const router = createBrowserRouter([
   {
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
           { path: '/goals', element: <Suspense fallback={<PageSkeleton />}><GoalsPage /></Suspense> },
           { path: '/reports', element: <Suspense fallback={<PageSkeleton />}><ReportsPage /></Suspense> },
           { path: '/settings', element: <Suspense fallback={<PageSkeleton />}><SettingsPage /></Suspense> },
+          { path: '/categories', element: <Suspense fallback={<PageSkeleton />}><CategoriesPage /></Suspense> },
         ],
       },
     ],

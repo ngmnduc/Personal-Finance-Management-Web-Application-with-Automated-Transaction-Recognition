@@ -10,6 +10,7 @@ export const ROUTES = {
   GOALS: '/goals',
   REPORTS: '/reports',
   SETTINGS: '/settings',
+  CATEGORIES: '/categories',
 }
 
 export const QUERY_KEYS = {

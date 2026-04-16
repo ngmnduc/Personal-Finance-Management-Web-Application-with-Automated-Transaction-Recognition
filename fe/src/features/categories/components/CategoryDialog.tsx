@@ -11,19 +11,25 @@ import { Category, TransactionType } from "../../../types"
 import { toast } from "sonner"
 import { 
   Coffee, ShoppingCart, Car, DollarSign, Home, Phone, 
-  HeartPulse, GraduationCap, Briefcase, Gift, Zap
+  HeartPulse, GraduationCap, Briefcase, Gift, Zap,
+  Utensils, PawPrint, Smartphone, BriefcaseMedical, HeartHandshake, ShoppingBag
 } from "lucide-react"
 
 const ICONS = [
   { name: "Coffee", component: Coffee },
-  { name: "ShoppingCart", component: ShoppingCart },
+  { name: "ShoppingBag", component: ShoppingBag },
   { name: "Car", component: Car },
   { name: "DollarSign", component: DollarSign },
   { name: "Home", component: Home },
   { name: "Phone", component: Phone },
   { name: "HeartPulse", component: HeartPulse },
+  { name: "BriefcaseMedical", component: BriefcaseMedical },
   { name: "GraduationCap", component: GraduationCap },
   { name: "Briefcase", component: Briefcase },
+  { name: "Utensils", component: Utensils },
+  { name: "PawPrint", component: PawPrint },
+  { name: "Smartphone", component: Smartphone },
+  { name: "HeartHandshake", component: HeartHandshake },
   { name: "Gift", component: Gift },
   { name: "Zap", component: Zap },
 ]
