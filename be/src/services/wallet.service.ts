@@ -12,11 +12,12 @@ export const walletService = {
     
     // Nếu là ví đầu tiên của user, tự động set làm default
     const isDefault = count === 0;
+    const formattedType = data.type.toUpperCase().replace('-', '_');
 
     return walletRepository.create({
       userId,
       name: data.name,
-      type: data.type as WalletType,
+      type: formattedType, 
       initialBalance: BigInt(data.initialBalance),
       isDefault,
     });

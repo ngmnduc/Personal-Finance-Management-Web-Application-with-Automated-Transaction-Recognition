@@ -9,7 +9,11 @@ import dashboardRoutes from './routes/dashboard.routes';
 import  walletRoutes from './routes/wallet.routes';
 import  categoryRoutes from './routes/category.routes';
 
-
+if (!(BigInt.prototype as any).toJSON) {
+  (BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+  };
+}
 
 // --------------- BigInt serialization (safe — no monkey-patch) ---------------
 const bigIntReplacer = (_key: string, value: unknown) =>

@@ -9,36 +9,51 @@ import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
 import { Category, TransactionType } from "../../../types"
 import { toast } from "sonner"
-import { 
-  Coffee, ShoppingCart, Car, DollarSign, Home, Phone, 
+import {
+  Coffee, ShoppingCart, Car, DollarSign, Home, Phone,
   HeartPulse, GraduationCap, Briefcase, Gift, Zap,
-  Utensils, PawPrint, Smartphone, BriefcaseMedical, HeartHandshake, ShoppingBag
+  Utensils, PawPrint, Smartphone, BriefcaseMedical, HeartHandshake, ShoppingBag,
+  Gamepad2, BookOpen, Shirt, Wifi, Plane, CircleEllipsis,
+  Banknote, Trophy, Laptop, TrendingUp, Store, ArrowDownCircle,
 } from "lucide-react"
 
+// All icons available in the picker (name must match the DB slug format picker uses = PascalCase)
 const ICONS = [
-  { name: "Coffee", component: Coffee },
-  { name: "ShoppingBag", component: ShoppingBag },
-  { name: "Car", component: Car },
-  { name: "DollarSign", component: DollarSign },
-  { name: "Home", component: Home },
-  { name: "Phone", component: Phone },
-  { name: "HeartPulse", component: HeartPulse },
+  { name: "Coffee",         component: Coffee },
+  { name: "ShoppingBag",   component: ShoppingBag },
+  { name: "ShoppingCart",  component: ShoppingCart },
+  { name: "Car",           component: Car },
+  { name: "DollarSign",    component: DollarSign },
+  { name: "Banknote",      component: Banknote },
+  { name: "Home",          component: Home },
+  { name: "Phone",         component: Phone },
+  { name: "Smartphone",    component: Smartphone },
+  { name: "Wifi",          component: Wifi },
+  { name: "HeartPulse",    component: HeartPulse },
   { name: "BriefcaseMedical", component: BriefcaseMedical },
   { name: "GraduationCap", component: GraduationCap },
-  { name: "Briefcase", component: Briefcase },
-  { name: "Utensils", component: Utensils },
-  { name: "PawPrint", component: PawPrint },
-  { name: "Smartphone", component: Smartphone },
+  { name: "BookOpen",      component: BookOpen },
+  { name: "Briefcase",     component: Briefcase },
+  { name: "Laptop",        component: Laptop },
+  { name: "Utensils",      component: Utensils },
+  { name: "PawPrint",      component: PawPrint },
+  { name: "Shirt",         component: Shirt },
   { name: "HeartHandshake", component: HeartHandshake },
-  { name: "Gift", component: Gift },
-  { name: "Zap", component: Zap },
+  { name: "Gift",          component: Gift },
+  { name: "Trophy",        component: Trophy },
+  { name: "Zap",           component: Zap },
+  { name: "Plane",         component: Plane },
+  { name: "TrendingUp",    component: TrendingUp },
+  { name: "Store",         component: Store },
+  { name: "Gamepad2",      component: Gamepad2 },
+  { name: "ArrowDownCircle", component: ArrowDownCircle },
+  { name: "CircleEllipsis", component: CircleEllipsis },
 ]
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["INCOME", "EXPENSE"] as const),
-  icon: z.string().min(1, "Icon is required"),
-  color: z.string(),
+  icon: z.string().min(1, "Please select an icon"),
 })
 
 type CategoryFormValues = z.infer<typeof categorySchema>
@@ -50,10 +65,14 @@ interface CategoryDialogProps {
   defaultType?: TransactionType
 }
 
-export function CategoryDialog({ open, onOpenChange, category, defaultType = "EXPENSE" }: CategoryDialogProps) {
+export function CategoryDialog({
+  open,
+  onOpenChange,
+  category,
+  defaultType = "EXPENSE",
+}: CategoryDialogProps) {
   const createCategory = useCreateCategory()
   const updateCategory = useUpdateCategory()
-
   const isEditing = !!category
 
   const {
@@ -69,12 +88,12 @@ export function CategoryDialog({ open, onOpenChange, category, defaultType = "EX
       name: "",
       type: defaultType,
       icon: "DollarSign",
-      color: "#10b981", // default brand green
     },
   })
 
   const selectedIcon = watch("icon")
   const selectedType = watch("type")
+  const isExpense = selectedType === "EXPENSE"
 
   useEffect(() => {
     if (open) {
@@ -83,14 +102,12 @@ export function CategoryDialog({ open, onOpenChange, category, defaultType = "EX
           name: category.name,
           type: category.type as TransactionType,
           icon: category.icon,
-          color: category.color || "#10b981",
         })
       } else {
         reset({
           name: "",
           type: defaultType,
           icon: "DollarSign",
-          color: "#10b981",
         })
       }
     }
@@ -113,69 +130,119 @@ export function CategoryDialog({ open, onOpenChange, category, defaultType = "EX
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Category" : "Create Category"}</DialogTitle>
+      <DialogContent className="sm:max-w-[520px] rounded-[2rem] border border-slate-100 shadow-xl p-0 overflow-hidden bg-white">
+
+        {/* Dialog Header */}
+        <DialogHeader className="px-8 pt-8 pb-0">
+          <DialogTitle className="text-xl font-bold text-[#0f1f3d]">
+            {isEditing ? "Edit Category" : "New Category"}
+          </DialogTitle>
+          <p className="text-sm text-slate-500 mt-1">
+            {isEditing
+              ? "Update your category details below."
+              : "Create a custom category to track your transactions."}
+          </p>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+        <form onSubmit={handleSubmit(onSubmit)} className="px-8 pb-8 pt-6 space-y-6">
+
+          {/* ── Type Toggle ── */}
           <div className="space-y-2">
-            <Label>Transaction Type</Label>
-            <div className="flex gap-4 p-1 bg-navy-light rounded-md">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Transaction Type
+            </p>
+            <div className="flex gap-1 p-1 bg-[#f1f5f9] rounded-full border border-slate-200">
               <button
                 type="button"
-                className={`flex-1 py-1.5 rounded-sm text-sm font-medium transition-all ${selectedType === "EXPENSE" ? "bg-red-500 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
                 onClick={() => setValue("type", "EXPENSE")}
+                className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all ${
+                  isExpense
+                    ? "bg-red-500 text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
               >
                 Expense
               </button>
               <button
                 type="button"
-                className={`flex-1 py-1.5 rounded-sm text-sm font-medium transition-all ${selectedType === "INCOME" ? "bg-brand-green text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
                 onClick={() => setValue("type", "INCOME")}
+                className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all ${
+                  !isExpense
+                    ? "bg-emerald-500 text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
               >
                 Income
               </button>
             </div>
-            {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
+            {errors.type && <p className="text-xs text-red-500">{errors.type.message}</p>}
           </div>
 
+          {/* ── Name Input ── */}
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" placeholder="e.g. Groceries" {...register("name")} />
-            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+            <Label
+              htmlFor="name"
+              className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >
+              Category Name
+            </Label>
+            <Input
+              id="name"
+              placeholder="e.g. Groceries, Freelance..."
+              className="rounded-xl border-slate-200 bg-[#f1f5f9] focus-visible:ring-1 focus-visible:ring-[#0f1f3d] h-11 text-[#0f1f3d]"
+              {...register("name")}
+            />
+            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
-          
+
+          {/* ── Icon Picker ── */}
           <div className="space-y-3">
-            <Label>Icon</Label>
-            <div className="grid grid-cols-6 gap-2">
-              {ICONS.map((iconConf) => {
-                const IconComp = iconConf.component
-                const isSelected = selectedIcon === iconConf.name
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Icon</p>
+            <div className="grid grid-cols-8 gap-2 max-h-[160px] overflow-y-auto pr-1">
+              {ICONS.map(({ name, component: IconComp }) => {
+                const isSelected = selectedIcon === name
                 return (
                   <button
-                    key={iconConf.name}
+                    key={name}
                     type="button"
-                    onClick={() => setValue("icon", iconConf.name)}
-                    className={`flex aspect-square items-center justify-center rounded-md border transition-all ${
-                      isSelected 
-                        ? "border-brand-green bg-brand-green/20 text-brand-green" 
-                        : "border-slate-700 bg-navy-light text-slate-400 hover:bg-slate-800 hover:text-white"
+                    title={name}
+                    onClick={() => setValue("icon", name)}
+                    className={`flex aspect-square items-center justify-center rounded-xl border transition-all ${
+                      isSelected
+                        ? isExpense
+                          ? "border-red-400 bg-red-50 text-red-500 shadow-sm"
+                          : "border-emerald-400 bg-emerald-50 text-emerald-600 shadow-sm"
+                        : "border-slate-200 bg-[#f1f5f9] text-slate-400 hover:border-slate-300 hover:text-slate-600 hover:bg-white"
                     }`}
                   >
-                    <IconComp size={20} />
+                    <IconComp size={18} />
                   </button>
                 )
               })}
             </div>
-            {errors.icon && <p className="text-sm text-red-500">{errors.icon.message}</p>}
+            {errors.icon && <p className="text-xs text-red-500">{errors.icon.message}</p>}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+          {/* ── Actions ── */}
+          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="ghost"
+              className="rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] px-6 font-semibold"
+            >
+              {isSubmitting
+                ? "Saving..."
+                : isEditing
+                  ? "Save Changes"
+                  : "Create Category"}
             </Button>
           </div>
         </form>
