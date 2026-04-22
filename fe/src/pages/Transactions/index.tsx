@@ -102,7 +102,7 @@ export default function TransactionsPage() {
 
   // ─── Columns ─────────────────────────────────────────────────────────────
 
-  const columns = useMemo<ColumnDef<Transaction, unknown>[]>(
+  const columns = useMemo<ColumnDef<Transaction, any>[]>(
     () => [
       columnHelper.accessor('transactionDate', {
         header: 'Date',
@@ -121,7 +121,7 @@ export default function TransactionsPage() {
                   : 'bg-red-100 text-red-600'
                 }`}
             >
-              {type === 'INCOME' ? '↑' : '↓'} {type}
+              {type === 'INCOME' ? '' : ''} {type}
             </span>
           )
         },
@@ -133,7 +133,7 @@ export default function TransactionsPage() {
           const formatted = vndFormatter.format(Number(info.getValue()))
           return (
             <span
-              className={`font-bold text-sm ${row.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'
+              className={` whitespace-nowrap font-bold text-sm ${row.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'
                 }`}
             >
               {row.type === 'INCOME' ? '+' : '-'} {formatted}
@@ -147,7 +147,7 @@ export default function TransactionsPage() {
           const cat = info.getValue()
           if (!cat) return <span className="text-slate-400 text-sm">—</span>
           return (
-            <span className="text-sm text-slate-700">{cat.name}</span>
+            <span className=" whitespace-nowrap text-sm text-slate-700">{cat.name}</span>
           )
         },
       }),
@@ -156,7 +156,7 @@ export default function TransactionsPage() {
         cell: (info) => {
           const wallet = info.getValue()
           return (
-            <span className="text-sm text-slate-600">{wallet?.name ?? '—'}</span>
+            <span className=" whitespace-nowrap text-sm text-slate-600">{wallet?.name ?? '—'}</span>
           )
         },
       }),
@@ -237,7 +237,7 @@ export default function TransactionsPage() {
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Transactions</h1>
-            <p className="text-slate-500 text-sm mt-1">Track and manage all your financial activity</p>
+            <p className="text-slate-600 text-sm mt-1">Track and manage all your financial activity</p>
           </div>
           <Button
             id="new-transaction-btn"
@@ -337,7 +337,7 @@ export default function TransactionsPage() {
                 max={filters.end_date}
                 value={filters.start_date ?? ''}
                 onChange={(e) => updateFilter('start_date', e.target.value || undefined)}
-                className="rounded-xl border-slate-200 text-sm text-slate-600"
+                className="rounded-xl border-slate-200 text-sm text-slate-400"
                 title="From date"
               />
               <Input
@@ -346,7 +346,7 @@ export default function TransactionsPage() {
                 min={filters.start_date}
                 value={filters.end_date ?? ''}
                 onChange={(e) => updateFilter('end_date', e.target.value || undefined)}
-                className="rounded-xl border-slate-200 text-sm text-slate-600"
+                className="rounded-xl border-slate-200 text-sm text-slate-400"
                 title="To date"
               />
             </div>

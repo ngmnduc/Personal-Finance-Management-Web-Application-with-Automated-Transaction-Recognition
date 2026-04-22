@@ -13,6 +13,7 @@ export interface CreateTransactionDto {
   merchant?: string;
   note?: string;
   source?: TxSource;
+  extractedText?: string;
 }
 
 export interface UpdateTransactionDto {
@@ -72,6 +73,7 @@ export const create = async (data: CreateTransactionDto) => {
         merchant: data.merchant ?? null,
         note: data.note ?? null,
         source: data.source ?? TxSource.MANUAL,
+        extractedText: data.extractedText ?? null,
       },
     }),
     prisma.wallet.update({
