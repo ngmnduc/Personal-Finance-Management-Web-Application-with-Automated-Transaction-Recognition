@@ -18,10 +18,10 @@ const upload = multer({
 
 const confirmSchema = z.object({
   body: z.object({
-    amount: z.number({ invalid_type_error: 'amount must be a number' }).positive('amount must be positive'),
+    amount: z.number({ message: 'amount must be a number' }).positive('amount must be positive'),
     transactionDate: z.string().min(1, 'transactionDate is required'),
     type: z.enum(['INCOME', 'EXPENSE'], { error: 'type must be INCOME or EXPENSE' }),
-    categoryId: z.string().uuid('categoryId must be a valid UUID'),
+    categoryId: z.string().min(1, 'categoryId is required'),
     walletId: z.string().uuid('walletId must be a valid UUID'),
     extractedText: z.string().optional(),
     merchant: z.string().optional(),
