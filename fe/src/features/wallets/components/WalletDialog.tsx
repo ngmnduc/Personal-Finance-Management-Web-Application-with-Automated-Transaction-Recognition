@@ -94,7 +94,7 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
             <Label htmlFor="type">Type</Label>
             <select
               id="type"
-              className="flex h-10 w-full rounded-md border border-slate-700 bg-navy-light px-3 py-2 text-sm text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+              className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 hover:border-slate-300 transition-colors"
               {...register("type")}
             >
               <option value="cash">Cash</option>

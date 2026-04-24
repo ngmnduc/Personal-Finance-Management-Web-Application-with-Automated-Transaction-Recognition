@@ -29,7 +29,7 @@ export default function DashboardPage() {
           
           {/* Top: Total Liquidity */}
           <Card className="rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden bg-white p-0">
-            <CardContent className="p-8 lg:p-10 flex flex-col h-full relative z-10">
+            <CardContent className="p-6 sm:p-8 lg:p-10 flex flex-col h-full relative z-10">
               <div className="absolute right-0 bottom-0 w-1/2 h-48 pointer-events-none opacity-40 text-[#10b981] z-0">
                 <svg viewBox="0 0 400 150" preserveAspectRatio="none" className="w-full h-full">
                   <path d="M0,150 C100,50 200,100 400,20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -43,12 +43,12 @@ export default function DashboardPage() {
                  </span>
               </div>
               
-              <h2 className="text-[3.5rem] lg:text-[4.5rem] font-bold tracking-tight text-[#0f1f3d] leading-none mb-12 relative z-10">
+              <h2 className="text-[2rem] sm:text-[2.8rem] lg:text-[3.5rem] xl:text-[4.5rem] font-bold tracking-tight text-[#0f1f3d] leading-none mb-6 lg:mb-12 relative z-10">
                 {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalBalance)}
               </h2>
 
-              <div className="flex items-end justify-between mt-auto z-10 pt-8 border-t border-slate-100 relative">
-                <div className="flex gap-12">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mt-auto z-10 pt-6 lg:pt-8 border-t border-slate-100 relative gap-4">
+                <div className="flex gap-6 sm:gap-12">
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">CHECKING</p>
                     <p className="text-xl font-bold text-[#0f1f3d]">
@@ -62,7 +62,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <Button variant="link" className="text-sm font-bold text-[#0f1f3d] flex items-center hover:underline group p-0 h-auto">
+                <Button variant="link" className="text-sm font-bold text-[#0f1f3d] flex items-center hover:underline group p-0 h-auto self-start sm:self-auto">
                   View Wallets <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
@@ -72,12 +72,12 @@ export default function DashboardPage() {
           {/* Cash Flow Dynamics */}
           <Card className="rounded-[2rem] shadow-sm border border-slate-100 bg-[#fcfdff] p-0">
             <CardContent className="p-8">
-              <div className="flex items-start justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 lg:mb-8 gap-3">
                 <div>
                   <h3 className="text-xl font-bold text-[#0f1f3d]">Cash Flow Dynamics</h3>
                   <p className="text-sm text-slate-500 mt-1">Trailing 30-day institutional activity</p>
                 </div>
-                <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest text-[#0f1f3d] bg-white rounded-full px-4 py-2 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4 text-[10px] font-bold tracking-widest text-[#0f1f3d] bg-white rounded-full px-4 py-2 border border-slate-100 shadow-sm self-start sm:self-auto">
                   <span className="flex items-center before:content-[''] before:w-2 before:h-2 before:rounded-full before:bg-[#10b981] before:mr-2">Income</span>
                   <span className="flex items-center before:content-[''] before:w-2 before:h-2 before:rounded-full before:bg-[#b91c1c] before:mr-2">Expenses</span>
                 </div>
@@ -92,7 +92,7 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <Card className="rounded-[2rem] shadow-sm border border-slate-100 mb-8 bg-white p-0">
             <CardContent className="p-8">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8 gap-3">
                 <h3 className="text-xl font-bold text-[#0f1f3d]">Recent Activity</h3>
                 <Button variant="outline" size="sm" className="text-xs font-bold text-[#0f1f3d] flex items-center uppercase tracking-widest hover:bg-slate-50 border-slate-200">
                   Export Ledger <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -129,14 +129,14 @@ export default function DashboardPage() {
                  <div className="bg-gradient-to-r from-[#34d399] to-[#10b981] h-3 rounded-full" style={{ width: '74%' }}></div>
                </div>
                
-               <div className="grid grid-cols-2 gap-4 relative z-10">
-                 <div className="bg-white/5 rounded-2xl p-4">
+               <div className="grid grid-cols-2 gap-3 lg:gap-4 relative z-10">
+                 <div className="bg-white/5 rounded-2xl p-3 lg:p-4">
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SPENT</p>
-                   <p className="text-xl font-bold">$2,450</p>
+                   <p className="text-lg lg:text-xl font-bold">$2,450</p>
                  </div>
-                 <div className="bg-white/5 rounded-2xl p-4">
+                 <div className="bg-white/5 rounded-2xl p-3 lg:p-4">
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ALLOCATED</p>
-                   <p className="text-xl font-bold">$3,300</p>
+                   <p className="text-lg lg:text-xl font-bold">$3,300</p>
                  </div>
                </div>
                
