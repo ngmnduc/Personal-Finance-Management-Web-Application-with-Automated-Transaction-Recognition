@@ -35,10 +35,13 @@ export const scan = async (
   form.append('scan_context', scanContext);
 
   const { data: ocrData } = await axios.post(
-    `${OCR_SERVICE_URL}/api/v1/ocr/scan`,
-    form,
-    { headers: form.getHeaders() },
-  );
+  `${OCR_SERVICE_URL}/api/v1/ocr/scan`,
+  form,
+  { 
+    headers: form.getHeaders(),
+    timeout: 60000,
+  },
+);
 
   // Resolve the user's default wallet so the FE can pre-fill the wallet picker
   const defaultWallet = await prisma.wallet.findFirst({
