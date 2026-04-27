@@ -1,7 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Form, HTTPException, UploadFile, File
-
+from fastapi import APIRouter, Form, HTTPException,Request, UploadFile, File
+from app.utils.rate_limiter import limiter
 from app.models.schemas import BankInfo, ExtractedData, HealthResponse, ScanResponse
 from app.utils.cache import get_cached, set_cache
 from app.services.pdf_service import extract_text_from_pdf
@@ -17,7 +17,6 @@ from app.services.nlp_extractor import (
 from app.services.bank_parser import detect_bank
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 # ── Supported banks list ──────────────────────────────────────────────────────
@@ -45,7 +44,9 @@ def get_supported_banks():
 # ── Scan ──────────────────────────────────────────────────────────────────────
 
 @router.post("/api/v1/ocr/scan", response_model=ScanResponse)
+@limiter.limit("10/minute")
 async def scan_receipt(
+    request: Request,
     file: UploadFile = File(...),
     scan_context: str = Form(...),
 ):

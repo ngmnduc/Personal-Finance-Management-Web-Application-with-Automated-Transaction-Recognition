@@ -8,7 +8,7 @@ no markdown fences — to make downstream parsing reliable.
 import base64
 import logging
 from typing import Any
-
+from app.utils.rate_limiter import ProviderRateLimiter
 import google.generativeai as genai  # type: ignore
 import httpx
 
@@ -117,15 +117,25 @@ async def call_openrouter(image_bytes: bytes, mime_type: str, model_id: str) -> 
 
     return content.strip()
 
+gemini_limiter = ProviderRateLimiter(max_calls=15, period_seconds=60.0)
+openrouter_limiter = ProviderRateLimiter(max_calls=20, period_seconds=60.0)
+
+async def call_gemini_with_limit(img: bytes, mt: str) -> str:
+    await gemini_limiter.acquire()
+    return await call_gemini(img, mt)
+
+async def call_openrouter_with_limit(img: bytes, mt: str, model_id: str) -> str:
+    await openrouter_limiter.acquire()
+    return await call_openrouter(img, mt, model_id)
 
 # ── Fallback chain ────────────────────────────────────────────────────────────
 
 _FALLBACK_CHAIN = [
-    # (label, coroutine factory)
-    ("Gemini 2.0 Flash",          lambda img, mt: call_gemini(img, mt)),
-    ("Qwen2.5-VL-72B (OR)",       lambda img, mt: call_openrouter(img, mt, "qwen/qwen2.5-vl-72b-instruct")),
-    ("GPT-4o-mini (OR)",          lambda img, mt: call_openrouter(img, mt, "openai/gpt-4o-mini")),
+    ("Gemini 2.0 Flash",    lambda img, mt: call_gemini_with_limit(img, mt)),
+    ("Qwen2.5-VL-72B (OR)", lambda img, mt: call_openrouter_with_limit(img, mt, "qwen/qwen2.5-vl-72b-instruct")),
+    ("GPT-4o-mini (OR)",    lambda img, mt: call_openrouter_with_limit(img, mt, "openai/gpt-4o-mini")),
 ]
+
 
 
 async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
@@ -151,8 +161,17 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
             logger.info("LLM call: %s succeeded", label)
             return result
         except Exception as exc:  # noqa: BLE001
+            err_str = str(exc)
             logger.warning("LLM call: %s failed — %s", label, exc)
             errors.append(f"{label}: {exc}")
+
+            if "400" in err_str and "429" not in err_str:
+                logger.error("Non-retryable error, stopping chain: %s", exc)
+                break
+            
+            # 429 hoặc 5xx → thử provider tiếp theo (đã có limiter handle)
+            continue
+        
 
     raise ValueError(
         "All LLM models failed to process the image.\n" + "\n".join(errors)

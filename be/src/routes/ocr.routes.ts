@@ -36,8 +36,26 @@ const confirmSchema = z.object({
 router.post('/scan', requireAuth, upload.single('file'), scan);
 
 // POST /api/v1/ocr/confirm
-router.post('/confirm', requireAuth, validateRequest(confirmSchema), confirm);
-
+router.post(
+  '/scan',
+  requireAuth,
+  (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({
+            success: false,
+            message: 'File too large. Maximum 10MB.',
+            code: 'FILE_TOO_LARGE',
+          });
+        }
+      }
+      if (err) return next(err);
+      next();
+    });
+  },
+  scan,
+);
 // GET /api/v1/ocr/banks
 router.get('/banks', requireAuth, getBanks);
 

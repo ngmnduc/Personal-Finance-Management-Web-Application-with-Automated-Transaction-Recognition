@@ -3,7 +3,7 @@ import FormData from 'form-data';
 import { prisma } from '../config/prisma';
 import * as transactionRepository from '../repositories/transaction.repository';
 import { TransactionType, TxSource } from '@prisma/client';
-
+import { AppError } from '../utils/errors';
 const OCR_SERVICE_URL = process.env.OCR_SERVICE_URL ?? 'http://localhost:8001';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -26,7 +26,6 @@ export const scan = async (
   scanContext: string,
   userId: string,
 ) => {
-  // Build multipart form-data for the Python OCR service
   const form = new FormData();
   form.append('file', file.buffer, {
     filename: file.originalname,
@@ -34,22 +33,69 @@ export const scan = async (
   });
   form.append('scan_context', scanContext);
 
-  const { data: ocrData } = await axios.post(
-  `${OCR_SERVICE_URL}/api/v1/ocr/scan`,
-  form,
-  { 
-    headers: form.getHeaders(),
-    timeout: 60000,
-  },
-);
+  let ocrData: any;
 
-  // Resolve the user's default wallet so the FE can pre-fill the wallet picker
+  try {
+    const response = await axios.post(
+      `${OCR_SERVICE_URL}/api/v1/ocr/scan`,
+      form,
+      {
+        headers: form.getHeaders(),
+        timeout: 60000,
+      },
+    );
+    ocrData = response.data;
+
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const detail = err?.response?.data?.detail || err?.response?.data?.message;
+
+    // Python service rate limited after all fallbacks -> clear notification
+    if (status === 429) {
+      throw new AppError(
+        429,
+        'OCR_RATE_LIMITED',
+        'OCR system is busy. Please try again in 60 seconds.',
+      );
+    }
+
+    // Python service cold start or crash
+    if (status === 502 || status === 503) {
+      throw new AppError(
+        503,
+        'OCR_UNAVAILABLE',
+        'OCR service is starting up. Please try again in 30 seconds.',
+      );
+    }
+
+    // Python processed but extraction failed (blurry image, unrecognized)
+    if (status === 422) {
+      throw new AppError(
+        422,
+        'OCR_EXTRACTION_FAILED',
+        detail || 'Could not recognize image content. Please provide a clearer photo.',
+      );
+    }
+
+    // Timeout — Python is taking too long
+    if (err.code === 'ECONNABORTED') {
+      throw new AppError(
+        504,
+        'OCR_TIMEOUT',
+        'OCR processing timed out. Please try again.',
+      );
+    }
+
+    // Lỗi khác — re-throw để errorHandler bắt
+    throw err;
+  }
+
+  // Resolve default wallet
   const defaultWallet = await prisma.wallet.findFirst({
     where: { userId, isDefault: true, archivedAt: null },
     select: { id: true },
   });
 
-  // Inject wallet + category hints into the OCR response
   return {
     ...ocrData,
     default_wallet_id: defaultWallet?.id ?? null,
