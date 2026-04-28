@@ -47,3 +47,28 @@ export const getBanks = async (req: Request, res: Response, next: NextFunction) 
     next(err);
   }
 };
+
+// ── POST /api/v1/ocr/bulk ─────────────────────────────────────────────────────
+
+export const scanBulk = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const files = req.files as Express.Multer.File[];
+
+    if (!files || files.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'No files uploaded. Please attach at least one image or PDF.',
+        code: 'MISSING_FILES',
+      });
+      return;
+    }
+
+    const scanContext: string = req.body.scan_context ?? 'EXPENSE';
+    const userId = req.user!.userId;
+
+    const result = await ocrService.scanBulk(files, scanContext, userId);
+    sendSuccess(res, result, `Bulk scan complete: ${result.processed}/${result.total} processed`, 200);
+  } catch (err) {
+    next(err);
+  }
+};

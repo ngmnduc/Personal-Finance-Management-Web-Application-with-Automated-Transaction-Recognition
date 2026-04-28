@@ -3,7 +3,7 @@ import multer from 'multer';
 import { z } from 'zod';
 import { requireAuth } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
-import { scan, confirm, getBanks } from '../controllers/ocr.controller';
+import { scan, confirm, getBanks, scanBulk } from '../controllers/ocr.controller';
 
 const router = Router();
 
@@ -32,10 +32,6 @@ const confirmSchema = z.object({
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 // POST /api/v1/ocr/scan
-// requireAuth first, then multer parses the multipart body
-router.post('/scan', requireAuth, upload.single('file'), scan);
-
-// POST /api/v1/ocr/confirm
 router.post(
   '/scan',
   requireAuth,
@@ -56,7 +52,19 @@ router.post(
   },
   scan,
 );
+
+// POST /api/v1/ocr/confirm
+router.post('/confirm', requireAuth, validateRequest(confirmSchema), confirm);
+
 // GET /api/v1/ocr/banks
 router.get('/banks', requireAuth, getBanks);
+
+// POST /api/v1/ocr/bulk
+router.post(
+  '/bulk',
+  requireAuth,
+  upload.array('files', 20),
+  scanBulk,
+);
 
 export default router;

@@ -6,6 +6,55 @@ import { TransactionType, TxSource } from '@prisma/client';
 import { AppError } from '../utils/errors';
 const OCR_SERVICE_URL = process.env.OCR_SERVICE_URL ?? 'http://localhost:8001';
 
+const MAX_RETRIES = 1;
+const RETRY_DELAY_MS = 3000;
+const SCAN_TIMEOUT_MS = 60000;
+const BULK_SCAN_TIMEOUT_MS = 180000;
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+const handleOcrAxiosError = (err: any) => {
+  const status = err?.response?.status;
+  const detail = err?.response?.data?.detail || err?.response?.data?.message;
+
+  // Python service rate limited after all fallbacks -> clear notification
+  if (status === 429) {
+    throw new AppError(
+      429,
+      'OCR_RATE_LIMITED',
+      'OCR system is busy. Please try again in 60 seconds.',
+    );
+  }
+
+  // Python service cold start or crash
+  if (status === 502 || status === 503) {
+    throw new AppError(
+      503,
+      'OCR_UNAVAILABLE',
+      'OCR service is starting up. Please try again in 30 seconds.',
+    );
+  }
+
+  // Python processed but extraction failed (blurry image, unrecognized)
+  if (status === 422) {
+    throw new AppError(
+      422,
+      'OCR_EXTRACTION_FAILED',
+      detail || 'Could not recognize image content. Please provide a clearer photo.',
+    );
+  }
+
+  // Timeout — Python is taking too long
+  if (err.code === 'ECONNABORTED') {
+    throw new AppError(
+      504,
+      'OCR_TIMEOUT',
+      'OCR processing timed out. Please try again.',
+    );
+  }
+  throw err;
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ConfirmOCRInput {
@@ -34,60 +83,29 @@ export const scan = async (
   form.append('scan_context', scanContext);
 
   let ocrData: any;
+  let retries = MAX_RETRIES;
 
-  try {
-    const response = await axios.post(
-      `${OCR_SERVICE_URL}/api/v1/ocr/scan`,
-      form,
-      {
-        headers: form.getHeaders(),
-        timeout: 60000,
-      },
-    );
-    ocrData = response.data;
-
-  } catch (err: any) {
-    const status = err?.response?.status;
-    const detail = err?.response?.data?.detail || err?.response?.data?.message;
-
-    // Python service rate limited after all fallbacks -> clear notification
-    if (status === 429) {
-      throw new AppError(
-        429,
-        'OCR_RATE_LIMITED',
-        'OCR system is busy. Please try again in 60 seconds.',
+  while (retries >= 0) {
+    try {
+      const response = await axios.post(
+        `${OCR_SERVICE_URL}/api/v1/ocr/scan`,
+        form,
+        {
+          headers: form.getHeaders(),
+          timeout: SCAN_TIMEOUT_MS,
+        },
       );
+      ocrData = response.data;
+      break;
+    } catch (err: any) {
+      if (err.code === 'ECONNABORTED' && retries > 0) {
+        console.warn('OCR service timeout, retrying...');
+        retries--;
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        continue;
+      }
+      handleOcrAxiosError(err);
     }
-
-    // Python service cold start or crash
-    if (status === 502 || status === 503) {
-      throw new AppError(
-        503,
-        'OCR_UNAVAILABLE',
-        'OCR service is starting up. Please try again in 30 seconds.',
-      );
-    }
-
-    // Python processed but extraction failed (blurry image, unrecognized)
-    if (status === 422) {
-      throw new AppError(
-        422,
-        'OCR_EXTRACTION_FAILED',
-        detail || 'Could not recognize image content. Please provide a clearer photo.',
-      );
-    }
-
-    // Timeout — Python is taking too long
-    if (err.code === 'ECONNABORTED') {
-      throw new AppError(
-        504,
-        'OCR_TIMEOUT',
-        'OCR processing timed out. Please try again.',
-      );
-    }
-
-    // Lỗi khác — re-throw để errorHandler bắt
-    throw err;
   }
 
   // Resolve default wallet
@@ -150,4 +168,57 @@ export const getBanks = async () => {
   } catch {
     return BANK_FALLBACK;
   }
+};
+
+// ── scanBulk ─────────────────────────────────────────────────────────────
+
+export const scanBulk = async (
+  files: Express.Multer.File[],
+  scanContext: string,
+  userId: string,
+) => {
+  const form = new FormData();
+
+  for (const file of files) {
+    form.append('files', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
+  }
+  form.append('scan_context', scanContext);
+
+  let ocrData: any;
+
+  try {
+    const response = await axios.post(
+      `${OCR_SERVICE_URL}/api/v1/ocr/scan/bulk`,
+      form,
+      {
+        headers: form.getHeaders(),
+        timeout: BULK_SCAN_TIMEOUT_MS,
+      },
+    );
+    ocrData = response.data;
+  } catch (err: any) {
+    handleOcrAxiosError(err);
+  }
+
+  // Resolve default wallet once for all items
+  const defaultWallet = await prisma.wallet.findFirst({
+    where: { userId, isDefault: true, archivedAt: null },
+    select: { id: true },
+  });
+  const defaultWalletId = defaultWallet?.id ?? null;
+
+  // Inject default_wallet_id into each result item
+  const results = (ocrData.results ?? []).map((item: any) => ({
+    ...item,
+    default_wallet_id: defaultWalletId,
+  }));
+
+  return {
+    total: ocrData.total,
+    processed: ocrData.processed,
+    results,
+  };
 };

@@ -16,6 +16,19 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+# ── Key rotation ──────────────────────────────────────────────────────────────
+
+_key_index: int = 0
+
+
+def get_next_gemini_key() -> str:
+    """Return the next Gemini API key in round-robin order."""
+    global _key_index
+    keys = settings.GEMINI_API_KEYS
+    key = keys[_key_index % len(keys)]
+    _key_index = (_key_index + 1) % len(keys)
+    return key
+
 # ── Prompt ────────────────────────────────────────────────────────────────────
 
 EXTRACTION_PROMPT = """You are a financial document OCR assistant.
@@ -41,14 +54,15 @@ Rules:
 
 # ── Gemini ────────────────────────────────────────────────────────────────────
 
-async def call_gemini(image_bytes: bytes, mime_type: str) -> str:
+async def call_gemini(image_bytes: bytes, mime_type: str, api_key: str | None = None) -> str:
     """
-    Call Gemini 2.0 Flash with vision.
+    Call Gemini 2.0 Flash with vision using the provided (or next-in-rotation) key.
 
     Returns raw LLM response string.
     Raises Exception on API or content error.
     """
-    genai.configure(api_key=settings.GEMINI_API_KEY)
+    key = api_key or get_next_gemini_key()
+    genai.configure(api_key=key)
     model = genai.GenerativeModel("gemini-2.0-flash")
 
     image_part = {
@@ -142,6 +156,10 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     """
     Try each model in the fallback chain and return the first successful response.
 
+    Strategy:
+      1. Try ALL Gemini keys in round-robin (skip on 429, stop on non-retryable).
+      2. If all Gemini keys fail → fall through to OpenRouter (Qwen → GPT-4o-mini).
+
     Args:
         image_bytes: Raw image bytes.
         mime_type:   MIME type string, e.g. "image/jpeg".
@@ -153,25 +171,54 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
         ValueError: If every model in the chain fails.
     """
     errors: list[str] = []
+    global _key_index  # must be declared before first read/write
+    num_keys = len(settings.GEMINI_API_KEYS)
 
-    for label, factory in _FALLBACK_CHAIN:
+    # ── Phase 1: cycle through every Gemini key ──
+    for attempt in range(num_keys):
+        key = settings.GEMINI_API_KEYS[(_key_index + attempt) % num_keys]
         try:
-            logger.info("LLM call: attempting %s", label)
-            result = await factory(image_bytes, mime_type)
-            logger.info("LLM call: %s succeeded", label)
+            logger.info("Gemini attempt %d/%d (key …%s)", attempt + 1, num_keys, key[-6:])
+            await gemini_limiter.acquire()
+            result = await call_gemini(image_bytes, mime_type, api_key=key)
+            logger.info("Gemini succeeded on attempt %d", attempt + 1)
+            # Advance the global index so the next request starts from a fresh key
+            _key_index = (_key_index + attempt + 1) % num_keys
             return result
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             err_str = str(exc)
-            logger.warning("LLM call: %s failed — %s", label, exc)
+            logger.warning("Gemini key …%s failed: %s", key[-6:], exc)
+            errors.append(f"Gemini[{attempt}]: {exc}")
+
+            if "429" in err_str or "quota" in err_str.lower() or "rate" in err_str.lower():
+                logger.info("Gemini rate limited, trying next key")
+                continue  # try next Gemini key
+
+            if "400" in err_str:
+                logger.error("Non-retryable Gemini error, skipping to OpenRouter")
+                break  # bad prompt / image — no point retrying other keys
+
+    # ── Phase 2: OpenRouter fallback chain ──
+    openrouter_models = [
+        ("Qwen2.5-VL-72B (OR)", "qwen/qwen2.5-vl-72b-instruct"),
+        ("GPT-4o-mini (OR)",    "openai/gpt-4o-mini"),
+    ]
+
+    for label, model_id in openrouter_models:
+        try:
+            logger.info("LLM fallback: attempting %s", label)
+            await openrouter_limiter.acquire()
+            result = await call_openrouter(image_bytes, mime_type, model_id)
+            logger.info("LLM fallback: %s succeeded", label)
+            return result
+        except Exception as exc:
+            err_str = str(exc)
+            logger.warning("LLM fallback: %s failed — %s", label, exc)
             errors.append(f"{label}: {exc}")
 
             if "400" in err_str and "429" not in err_str:
-                logger.error("Non-retryable error, stopping chain: %s", exc)
+                logger.error("Non-retryable error from %s, stopping chain", label)
                 break
-            
-            # 429 hoặc 5xx → thử provider tiếp theo (đã có limiter handle)
-            continue
-        
 
     raise ValueError(
         "All LLM models failed to process the image.\n" + "\n".join(errors)
