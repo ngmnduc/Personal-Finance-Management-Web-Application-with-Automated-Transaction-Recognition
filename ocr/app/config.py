@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_FILE_PATH = os.path.join(BASE_DIR, ".env")
@@ -18,31 +18,22 @@ print(f"DEBUG - Biến GEMINI_API_KEY lấy từ .env: {'Thành công (Có dữ 
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = Field(..., description="Primary Gemini API key (required)")
     # Comma-separated list of Gemini keys for rotation, e.g. "key1,key2,key3"
-    GEMINI_API_KEYS_RAW: str = Field(default="", alias="GEMINI_API_KEYS", validation_alias="GEMINI_API_KEYS")
-    GEMINI_API_KEYS: list[str] = []
+    GEMINI_API_KEYS_RAW: str = Field(default="", alias="GEMINI_API_KEYS")
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     PORT: int = 8000
     ALLOWED_ORIGINS: str = "*"
 
-    @field_validator("GEMINI_API_KEYS", mode="before")
-    @classmethod
-    def build_key_list(cls, v: object, info: object) -> list[str]:
-        """Build rotation list from GEMINI_API_KEYS env var (comma-sep).
-        Falls back to singleton [GEMINI_API_KEY] if not provided."""
-        raw = os.getenv("GEMINI_API_KEYS", "").strip()
+    @property
+    def GEMINI_API_KEYS(self) -> list[str]:
+        """Convert the raw comma-separated string into a list of keys.
+        Falls back to the single GEMINI_API_KEY if the rotation list is empty."""
+        raw = self.GEMINI_API_KEYS_RAW.strip()
         if raw:
             keys = [k.strip() for k in raw.split(",") if k.strip()]
             if keys:
                 return keys
-        # Fallback: will be overridden in __init__ after primary key resolves
-        return []
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        # Ensure GEMINI_API_KEYS always has at least the primary key
-        if not self.GEMINI_API_KEYS:
-            object.__setattr__(self, "GEMINI_API_KEYS", [self.GEMINI_API_KEY])
+        return [self.GEMINI_API_KEY]
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE_PATH,
