@@ -2,6 +2,7 @@ import { TransactionType } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { prisma } from '../config/prisma';
 import * as transactionRepo from '../repositories/transaction.repository';
+import * as budgetService from './budget.service';
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -97,9 +98,19 @@ export const create = async (userId: string, input: CreateTransactionInput) => {
     note: input.note,
   };
 
-  // TODO (Week 5): Call budget alert check service here
+  const transaction = await transactionRepo.create(dto);
 
-  return transactionRepo.create(dto);
+  // ── Budget alert check ───────────────────────────────────────────────────
+  let budget_alert = null;
+  if (type === TransactionType.EXPENSE) {
+    budget_alert = await budgetService.checkBudgetAlert(
+      userId,
+      input.categoryId,
+      'MONTHLY',
+    );
+  }
+
+  return { transaction, budget_alert };
 };
 
 // ──────────────────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
     const userId = req.user!.userId;
     const { walletId, categoryId, type, amount, transactionDate, merchant, note } = req.body;
 
-    const transaction = await transactionService.create(userId, {
+    const { transaction, budget_alert } = await transactionService.create(userId, {
       walletId,
       categoryId,
       type,
@@ -18,7 +18,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
       note,
     });
 
-    sendSuccess(res, transaction, 'Transaction created successfully', 201);
+    sendSuccess(res, { transaction, budget_alert }, 'Transaction created successfully', 201);
   } catch (err) {
     next(err);
   }

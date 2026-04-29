@@ -6,14 +6,14 @@ from pydantic import Field, ValidationError
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_FILE_PATH = os.path.join(BASE_DIR, ".env")
 
-print(f"DEBUG - Đường dẫn: {ENV_FILE_PATH} | Tồn tại: {os.path.exists(ENV_FILE_PATH)}")
+print(f"DEBUG - Env Path: {ENV_FILE_PATH} | Exists: {os.path.exists(ENV_FILE_PATH)}")
 
-# Ép đọc bằng bảng mã utf-8-sig để loại bỏ ký tự tàng hình (BOM) của Windows
+# Force reading with utf-8-sig to remove hidden BOM characters on Windows
 load_dotenv(dotenv_path=ENV_FILE_PATH, override=True, encoding="utf-8-sig")
 
-# TEST TRỰC TIẾP: Kiểm tra xem biến đã thực sự chui vào RAM chưa
+# Direct test: verify that the environment variable is loaded into memory
 test_key = os.getenv("GEMINI_API_KEY")
-print(f"DEBUG - Biến GEMINI_API_KEY lấy từ .env: {'Thành công (Có dữ liệu)' if test_key else 'THẤT BẠI (Vẫn rỗng)'}")
+print(f"DEBUG - GEMINI_API_KEY from .env: {'Success (Has data)' if test_key else 'FAIL (Empty)'}")
 
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = Field(..., description="Primary Gemini API key (required)")
@@ -21,8 +21,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEYS_RAW: str = Field(default="", alias="GEMINI_API_KEYS")
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    PORT: int = 8000
+    PORT: int = 8001
     ALLOWED_ORIGINS: str = "*"
+    BE_SERVICE_URL: str = "http://localhost:3000"
+    INTERNAL_SECRET: str = "change_this_secret"
 
     @property
     def GEMINI_API_KEYS(self) -> list[str]:
@@ -46,7 +48,7 @@ try:
     settings = Settings()
     print(f"DEBUG - Gemini key rotation: {len(settings.GEMINI_API_KEYS)} key(s) loaded.")
 except ValidationError as e:
-    print("Environment Variable Error: Thiếu cấu hình GEMINI_API_KEY.")
+    print("Environment Variable Error: Missing GEMINI_API_KEY configuration.")
     raise e
 
 # RENDER ENV REQUIREMENT: GEMINI_API_KEYS="key1,key2,key3"

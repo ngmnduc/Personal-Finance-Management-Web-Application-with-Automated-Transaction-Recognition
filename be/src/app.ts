@@ -10,6 +10,8 @@ import  walletRoutes from './routes/wallet.routes';
 import  categoryRoutes from './routes/category.routes';
 import  transactionRoutes from './routes/transaction.routes';
 import ocrRoutes from './routes/ocr.routes';
+import budgetRoutes from './routes/budget.routes';
+import recurringIncomeRoutes from './routes/recurringIncome.routes';
 
 if (!(BigInt.prototype as any).toJSON) {
   (BigInt.prototype as any).toJSON = function () {
@@ -83,8 +85,9 @@ app.get('/health', (_req, res) => {
  app.use('/api/v1/categories', categoryRoutes);
  app.use('/api/v1/transactions', transactionRoutes);
  app.use('/api/v1/ocr', ocrRoutes);
-// app.use('/api/v1/budgets', budgetRoutes);
+ app.use('/api/v1/budgets', budgetRoutes);
 // app.use('/api/v1/goals', goalRoutes);
+ app.use('/api/v1/recurring-incomes', recurringIncomeRoutes);
 // app.use('/api/v1/recurring', recurringRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 // app.use('/api/v1/export', exportRoutes);

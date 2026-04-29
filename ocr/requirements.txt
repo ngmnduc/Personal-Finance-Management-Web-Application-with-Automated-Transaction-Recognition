@@ -45,3 +45,5 @@ uritemplate==4.2.0
 urllib3==2.6.3
 uvicorn==0.44.0
 slowapi==0.1.9
+apscheduler>=3.10.0
+pytz>=2024.1
