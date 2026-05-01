@@ -5,12 +5,19 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import {
   Upload,
   ImageIcon,
   RotateCcw,
   CheckCircle2,
   Loader2,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Check,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react'
 
 import { Button } from '../../components/ui/button'
@@ -22,7 +29,8 @@ import PageSkeleton from '../../components/shared/PageSkeleton'
 
 import { useWallets } from '../../features/wallets/api/wallet.api'
 import { useCategories } from '../../features/categories/api/category.api'
-import { useScanImage, useConfirmOCR, type ScanResponse } from '../../features/ocr/api/ocr.api'
+import { useScanImage, useConfirmOCR, useScanBulk, type ScanResponse } from '../../features/ocr/api/ocr.api'
+import ThumbnailItem, { type QueueItem, type QueueStatus } from '../../features/ocr/components/ThumbnailItem'
 import { ROUTES } from '../../lib/constants'
 
 // ─── Form Schema ──────────────────────────────────────────────────────────────
@@ -39,9 +47,9 @@ const confirmSchema = z.object({
 
 type ConfirmFormValues = z.infer<typeof confirmSchema>
 
-// ─── ThumbnailItem (inline sub-component) ────────────────────────────────────
+// ─── SingleThumbnailItem (inline sub-component) ────────────────────────────────────
 
-function ThumbnailItem({ file, previewUrl }: { file: File; previewUrl: string }) {
+function SingleThumbnailItem({ file, previewUrl }: { file: File; previewUrl: string }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-[#0f1f3d] bg-white">
       <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
@@ -81,6 +89,15 @@ export default function ScanPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLockClick, setIsLockClick] = useState(false)
 
+  // ── Bulk state ───────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single')
+  const [bulkPhase, setBulkPhase] = useState<'upload' | 'scanning' | 'review'>('upload')
+  const [bulkQueue, setBulkQueue] = useState<QueueItem[]>([])
+  const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null)
+  const [globalScanContext, setGlobalScanContext] = useState<'expense' | 'income'>('expense')
+  const bulkFileInputRef = useRef<HTMLInputElement>(null)
+  const MAX_BULK_FILES = 10
+
   // Revoke object URL on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -110,6 +127,38 @@ export default function ScanPage() {
   const { data: categories = [] } = useCategories(watchedType as 'INCOME' | 'EXPENSE')
   const scanMutation = useScanImage()
   const confirmMutation = useConfirmOCR()
+  const bulkScanMutation = useScanBulk()
+
+  // ── Bulk form ─────────────────────────────────────────────────────────────
+  const bulkForm = useForm<ConfirmFormValues>({
+    resolver: zodResolver(confirmSchema),
+    defaultValues: { type: 'EXPENSE', amount: undefined, transactionDate: '', categoryId: '', walletId: '', merchant: '', note: '' },
+  })
+  const bulkWatchedType = bulkForm.watch('type')
+  const bulkWatchedWalletId = bulkForm.watch('walletId')
+  const { data: bulkCategories = [] } = useCategories(bulkWatchedType as 'INCOME' | 'EXPENSE')
+
+  // Sync bulk form when active item changes
+  useEffect(() => {
+    if (!confirmingItemId) return
+    const item = bulkQueue.find((i) => i.id === confirmingItemId)
+    if (!item?.result) return
+    const ex = item.result.extracted
+    bulkForm.reset({
+      type: ex.type ?? (globalScanContext.toUpperCase() as 'INCOME' | 'EXPENSE'),
+      amount: ex.amount ?? undefined,
+      transactionDate: ex.transaction_date ?? new Date().toISOString().split('T')[0],
+      categoryId: item.result.suggested_category_id ?? '',
+      walletId: item.result.default_wallet_id ?? '',
+      merchant: ex.merchant ?? '',
+      note: '',
+    })
+  }, [confirmingItemId])
+
+  // Cleanup bulk preview URLs on unmount
+  useEffect(() => {
+    return () => { bulkQueue.forEach((i) => URL.revokeObjectURL(i.previewUrl)) }
+  }, [])
 
   // ── Reset ─────────────────────────────────────────────────────────────────
   function resetToUpload() {
@@ -119,6 +168,128 @@ export default function ScanPage() {
     setScanResult(null)
     setScanPhase('upload')
     form.reset()
+  }
+
+  // ── Bulk handlers ──────────────────────────────────────────────────────────
+
+  function moveToNextPendingItem(queue: QueueItem[]) {
+    const next = queue.find((i) => !i.confirmed && !i.skipped && i.status !== 'error')
+    setConfirmingItemId(next?.id ?? null)
+  }
+
+  async function handleBulkFileSelect(files: FileList | null) {
+    if (!files || files.length === 0) return
+    const arr = Array.from(files)
+    if (arr.length > MAX_BULK_FILES) {
+      toast.warning(`Max ${MAX_BULK_FILES} files at a time. Only first ${MAX_BULK_FILES} will be used.`)
+    }
+    const limited = arr.slice(0, MAX_BULK_FILES)
+    const queue: QueueItem[] = limited.map((f) => ({
+      id: crypto.randomUUID(),
+      file: f,
+      previewUrl: URL.createObjectURL(f),
+      status: 'queued' as QueueStatus,
+      confirmed: false,
+      skipped: false,
+    }))
+    setBulkQueue(queue)
+    setBulkPhase('scanning')
+    await handleBulkScan(limited, queue)
+  }
+
+  async function handleBulkScan(files: File[], initialQueue: QueueItem[]) {
+    try {
+      const response = await bulkScanMutation.mutateAsync({ files, scanContext: globalScanContext })
+      const updated = initialQueue.map((item, idx) => {
+        const res = response.results[idx]
+        if (!res || res.status === 'error') {
+          return { ...item, status: 'error' as QueueStatus, result: res ? { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id, error: res.error } : undefined }
+        }
+        const confidence = res.extracted.confidence ?? 0
+        const autoReady = confidence >= 0.85 && !!res.suggested_category_id
+        return {
+          ...item,
+          status: (autoReady ? 'ready' : 'needs_review') as QueueStatus,
+          result: { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id },
+        }
+      })
+      setBulkQueue(updated)
+      setBulkPhase('review')
+      moveToNextPendingItem(updated)
+    } catch {
+      toast.error('Bulk scan failed. Please try again.')
+      setBulkPhase('upload')
+    }
+  }
+
+  async function handleConfirmItem(values: ConfirmFormValues) {
+    if (!confirmingItemId) return
+    const item = bulkQueue.find((i) => i.id === confirmingItemId)
+    if (!item) return
+    await confirmMutation.mutateAsync({
+      amount: values.amount,
+      transactionDate: values.transactionDate,
+      type: values.type,
+      categoryId: values.categoryId,
+      walletId: values.walletId,
+      merchant: values.merchant,
+      note: values.note,
+      extractedText: item.result?.extracted_text ?? '',
+    })
+    const updated = bulkQueue.map((i) => i.id === confirmingItemId ? { ...i, confirmed: true } : i)
+    setBulkQueue(updated)
+    moveToNextPendingItem(updated)
+  }
+
+  function handleSkipItem(itemId: string) {
+    const updated = bulkQueue.map((i) => i.id === itemId ? { ...i, skipped: true } : i)
+    setBulkQueue(updated)
+    moveToNextPendingItem(updated)
+  }
+
+  async function handleConfirmAll() {
+    const autoConfirmable = bulkQueue.filter(
+      (i) => i.status === 'ready' && (i.result?.extracted.confidence ?? 0) >= 0.85 && !!i.result?.suggested_category_id && !i.confirmed && !i.skipped
+    )
+    if (autoConfirmable.length === 0) { toast.info('No items eligible for auto-confirm.'); return }
+    let updated = [...bulkQueue]
+    for (const item of autoConfirmable) {
+      if (!item.result) continue
+      const ex = item.result.extracted
+      await confirmMutation.mutateAsync({
+        amount: ex.amount ?? 0,
+        transactionDate: ex.transaction_date ?? new Date().toISOString().split('T')[0],
+        type: ex.type ?? 'EXPENSE',
+        categoryId: item.result.suggested_category_id ?? '',
+        walletId: item.result.default_wallet_id ?? '',
+        extractedText: item.result.extracted_text,
+      })
+      updated = updated.map((i) => i.id === item.id ? { ...i, confirmed: true } : i)
+    }
+    setBulkQueue(updated)
+    toast.success(`${autoConfirmable.length} transaction(s) confirmed!`)
+    const focusOrder: QueueStatus[] = ['needs_review', 'error', 'queued']
+    for (const s of focusOrder) {
+      const next = updated.find((i) => i.status === s && !i.confirmed && !i.skipped)
+      if (next) { setConfirmingItemId(next.id); break }
+    }
+  }
+
+  async function handleReuploadItem(itemId: string, newFile: File) {
+    const previewUrl = URL.createObjectURL(newFile)
+    setBulkQueue((prev) => prev.map((i) => i.id === itemId ? { ...i, file: newFile, previewUrl, status: 'queued' as QueueStatus, result: undefined } : i))
+    try {
+      const res = await scanMutation.mutateAsync({ file: newFile, scanContext: globalScanContext })
+      const confidence = res.extracted.confidence ?? 0
+      const autoReady = confidence >= 0.85 && !!res.suggested_category_id
+      setBulkQueue((prev) => prev.map((i) => i.id === itemId ? {
+        ...i, status: (autoReady ? 'ready' : 'needs_review') as QueueStatus,
+        result: { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id },
+      } : i))
+      setConfirmingItemId(itemId)
+    } catch {
+      setBulkQueue((prev) => prev.map((i) => i.id === itemId ? { ...i, status: 'error' as QueueStatus } : i))
+    }
   }
 
   // ── handleScan ────────────────────────────────────────────────────────────
@@ -208,18 +379,22 @@ export default function ScanPage() {
         {/* ── Tabs (Single / Bulk) ── */}
         <div className="flex gap-1 p-1 bg-white rounded-2xl border border-slate-100 shadow-sm w-fit mb-8">
           <button
-            className="px-5 py-2 rounded-xl text-sm font-bold bg-[#0f1f3d] text-white"
+            className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${ activeTab === 'single' ? 'bg-[#0f1f3d] text-white' : 'text-slate-500 hover:text-[#0f1f3d]' }`}
+            onClick={() => setActiveTab('single')}
           >
             Single Scan
           </button>
           <button
-            className="px-5 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-[#0f1f3d] transition-colors"
-            onClick={() => toast.info('Bulk mode coming soon!')}
+            className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${ activeTab === 'bulk' ? 'bg-[#0f1f3d] text-white' : 'text-slate-500 hover:text-[#0f1f3d]' }`}
+            onClick={() => setActiveTab('bulk')}
           >
             Bulk Mode
           </button>
         </div>
 
+        {/* ═══════════════════════════════════════ SINGLE MODE ══════════════════════════════════════════ */}
+        {activeTab === 'single' && (
+          <>
         {/* ════════════════════════════════ UPLOAD PHASE ══════════════════════ */}
         {scanPhase === 'upload' && (
           <div className="max-w-2xl mx-auto">
@@ -348,7 +523,7 @@ export default function ScanPage() {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
                       Documents
                     </p>
-                    <ThumbnailItem file={currentFile} previewUrl={previewUrl} />
+                    <SingleThumbnailItem file={currentFile} previewUrl={previewUrl} />
 
                     <button
                       type="button"
@@ -613,8 +788,269 @@ export default function ScanPage() {
             </div>
           </form>
         )}
+          </>
+        )}
+
+        {/* ═══════════════════════════════════════ BULK MODE ════════════════════════════════════════════ */}
+        {activeTab === 'bulk' && (
+          <div>
+            {/* ── Upload phase ── */}
+            {bulkPhase === 'upload' && (
+              <div className="max-w-2xl mx-auto">
+                {/* Context toggle */}
+                <div className="flex gap-2 mb-6 p-1 bg-white rounded-xl border border-slate-100 shadow-sm w-fit">
+                  {(['expense', 'income'] as const).map((ctx) => (
+                    <button key={ctx} type="button" onClick={() => setGlobalScanContext(ctx)}
+                      className={`px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${ globalScanContext === ctx ? ctx === 'income' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white' : 'text-slate-500 hover:text-slate-800' }`}>
+                      {ctx}
+                    </button>
+                  ))}
+                </div>
+                <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+                  <CardContent className="p-0">
+                    <label htmlFor="bulk-file-input" className="flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed border-slate-200 hover:border-[#0f1f3d]/40 hover:bg-slate-50/50">
+                      <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center">
+                        <Upload size={36} className="text-slate-400" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-[#0f1f3d]">Drop multiple receipts here</p>
+                        <p className="text-sm text-slate-400 mt-2">Supports JPEG, PNG, WebP and PDF — max {MAX_BULK_FILES} files</p>
+                      </div>
+                      <span className="px-6 py-2.5 bg-[#0f1f3d] text-white text-sm font-bold rounded-xl hover:bg-[#1a2f57] transition-colors">
+                        Choose Files
+                      </span>
+                    </label>
+                    <input id="bulk-file-input" ref={bulkFileInputRef} type="file" accept="image/*,application/pdf" multiple className="hidden"
+                      onChange={(e) => handleBulkFileSelect(e.target.files)} />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* ── Scanning phase ── */}
+            {bulkPhase === 'scanning' && (
+              <div className="flex flex-col items-center justify-center py-32 gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-[#0f1f3d]/5 flex items-center justify-center">
+                  <Loader2 size={32} className="text-[#0f1f3d] animate-spin" />
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-[#0f1f3d]">Analyzing {bulkQueue.length} receipts...</p>
+                  <p className="text-sm text-slate-400 mt-1">This may take up to 2 minutes</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Review phase — 3-column layout ── */}
+            {bulkPhase === 'review' && (() => {
+              const activeItem = bulkQueue.find((i) => i.id === confirmingItemId) ?? null
+              const doneCount = bulkQueue.filter((i) => i.confirmed || i.skipped).length
+              const autoConfirmCount = bulkQueue.filter((i) => i.status === 'ready' && (i.result?.extracted.confidence ?? 0) >= 0.85 && !!i.result?.suggested_category_id && !i.confirmed && !i.skipped).length
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_380px] gap-6">
+
+                  {/* ── Col 1: Queue ── */}
+                  <div className="flex flex-col gap-3">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      {doneCount}/{bulkQueue.length} processed
+                    </div>
+                    <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto pr-1">
+                      {bulkQueue.map((item) => (
+                        <ThumbnailItem key={item.id} item={item} isSelected={item.id === confirmingItemId} onClick={() => setConfirmingItemId(item.id)} />
+                      ))}
+                    </div>
+                    <Button onClick={handleConfirmAll} disabled={autoConfirmCount === 0 || confirmMutation.isPending}
+                      className="w-full bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-50">
+                      <Check size={14} className="mr-1" /> Confirm All ({autoConfirmCount})
+                    </Button>
+                    <Button variant="outline" onClick={() => { bulkQueue.forEach((i) => URL.revokeObjectURL(i.previewUrl)); setBulkQueue([]); setBulkPhase('upload'); setConfirmingItemId(null) }}
+                      className="w-full rounded-xl border-slate-200 text-slate-500 hover:text-[#0f1f3d]">
+                      <RefreshCw size={14} className="mr-1" /> Reset Batch
+                    </Button>
+                  </div>
+
+                  {/* ── Col 2: Image Viewer ── */}
+                  <div>
+                    <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 h-full">
+                      <CardContent className="p-3 flex flex-col h-full min-h-[480px]">
+                        {activeItem ? (
+                          <>
+                            <TransformWrapper initialScale={1} minScale={0.3} maxScale={5}>
+                              {({ zoomIn, zoomOut, resetTransform }) => (
+                                <>
+                                  <div className="flex items-center justify-end gap-2 mb-2">
+                                    <button onClick={() => zoomOut()} className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><ZoomOut size={16} /></button>
+                                    <button onClick={() => zoomIn()} className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><ZoomIn size={16} /></button>
+                                    <button onClick={() => resetTransform()} className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><RotateCw size={16} /></button>
+                                  </div>
+                                  <TransformComponent wrapperClass="!w-full !flex-1 rounded-2xl overflow-hidden bg-slate-50" contentClass="!w-full !h-full flex items-center justify-center">
+                                    <img src={activeItem.previewUrl} alt={activeItem.file.name} className="max-w-full max-h-[520px] object-contain rounded-xl" />
+                                  </TransformComponent>
+                                </>
+                              )}
+                            </TransformWrapper>
+                            <p className="text-xs text-slate-400 text-center mt-2 truncate">{activeItem.file.name}</p>
+                          </>
+                        ) : (
+                          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
+                            <ImageIcon size={48} />
+                            <p className="text-sm font-medium">Select an item from the queue</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* ── Col 3: Right Panel ── */}
+                  <div className="h-full flex flex-col">
+                    {(() => {
+                      // 1. Chưa chọn item -> Render Batch Summary
+                      if (!activeItem) {
+                        return (
+                          <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+                            <CardContent className="p-6 flex flex-col gap-4">
+                              <p className="text-lg font-bold text-[#0f1f3d]">Batch Summary</p>
+                              {[
+                                { label: 'Confirmed', count: bulkQueue.filter((i) => i.confirmed).length, color: 'text-emerald-600' },
+                                { label: 'Needs Review', count: bulkQueue.filter((i) => i.status === 'needs_review' && !i.confirmed && !i.skipped).length, color: 'text-amber-600' },
+                                { label: 'Errors', count: bulkQueue.filter((i) => i.status === 'error').length, color: 'text-red-500' },
+                                { label: 'Skipped', count: bulkQueue.filter((i) => i.skipped).length, color: 'text-slate-400' },
+                              ].map(({ label, count, color }) => (
+                                <div key={label} className="flex items-center justify-between">
+                                  <span className="text-sm text-slate-500">{label}</span>
+                                  <span className={`text-sm font-bold ${color}`}>{count}</span>
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )
+                      }
+
+                      // 2. Lỗi -> Render Error Panel
+                      if (activeItem.status === 'error') {
+                        return (
+                          <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+                            <CardContent className="p-6 flex flex-col gap-4">
+                              <div className="flex items-start gap-3 p-4 bg-red-50 rounded-2xl border border-red-100">
+                                <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <p className="text-sm font-bold text-red-700">Scan Failed</p>
+                                  <p className="text-xs text-red-500 mt-1">{activeItem.result?.error ?? 'Unknown error occurred'}</p>
+                                </div>
+                              </div>
+                              <label className="flex flex-col items-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:border-slate-400 transition-colors">
+                                <RefreshCw size={18} className="text-slate-400" />
+                                <span className="text-sm font-semibold text-slate-500">Replace with new image</span>
+                                <input type="file" accept="image/*,application/pdf" className="hidden"
+                                  onChange={(e) => { const f = e.target.files?.[0]; if (f && activeItem) handleReuploadItem(activeItem.id, f); e.target.value = '' }} />
+                              </label>
+                            </CardContent>
+                          </Card>
+                        )
+                      }
+
+                      // 3. Đang chờ/Đang quét -> Render Loading (Thêm mới để chống trắng màn hình)
+                      if (activeItem.status === 'queued' || activeItem.status === 'scanning') {
+                        return (
+                          <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 h-full flex items-center justify-center">
+                            <CardContent className="p-6 flex flex-col items-center gap-3 text-slate-400">
+                              <Loader2 size={32} className="animate-spin text-[#0f1f3d]/40" />
+                              <p className="text-sm font-medium">Processing image data...</p>
+                            </CardContent>
+                          </Card>
+                        )
+                      }
+
+                      // 4. Ready / Needs Review -> Render Confirm Form
+                      return (
+                        <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+                          <CardContent className="p-6">
+                            <form onSubmit={bulkForm.handleSubmit(handleConfirmItem)} className="flex flex-col gap-5">
+                              <div>
+                                <p className="text-lg font-bold text-[#0f1f3d]">Confirm Details</p>
+                                <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and save transaction</p>
+                              </div>
+                              {/* Type toggle */}
+                              <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                                {(['EXPENSE', 'INCOME'] as const).map((t) => (
+                                  <button key={t} type="button" onClick={() => bulkForm.setValue('type', t)}
+                                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 ${ bulkWatchedType === t ? t === 'INCOME' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-red-500 text-white shadow-sm' : 'bg-transparent text-slate-500' }`}>
+                                    {t === 'INCOME' ? '↑ Income' : '↓ Expense'}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* Amount */}
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Amount</p>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-2xl font-bold text-slate-400">₫</span>
+                                  <input type="number" min="0" step="any" placeholder="0"
+                                    className="text-4xl font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-200"
+                                    {...bulkForm.register('amount', { valueAsNumber: true })} />
+                                </div>
+                                {bulkForm.formState.errors.amount && <p className="text-red-500 text-xs mt-1">{bulkForm.formState.errors.amount.message}</p>}
+                              </div>
+                              {/* Date + Category */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Date</label>
+                                  <input type="date" className="flex h-10 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400" {...bulkForm.register('transactionDate')} />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Category</label>
+                                  <Select value={bulkForm.watch('categoryId')} onValueChange={(v) => bulkForm.setValue('categoryId', v, { shouldValidate: true })}>
+                                    <SelectTrigger className="rounded-xl border-slate-200 text-sm"><SelectValue placeholder="Pick..." /></SelectTrigger>
+                                    <SelectContent>{bulkCategories.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              {/* Merchant */}
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Merchant</label>
+                                <input type="text" placeholder="e.g. Grab, Netflix..." className="flex h-10 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400" {...bulkForm.register('merchant')} />
+                              </div>
+                              {/* Wallet */}
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Source Wallet</label>
+                                <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
+                                  {wallets.map((wallet) => {
+                                    const isSel = wallet.id === bulkWatchedWalletId
+                                    return (
+                                      <button key={wallet.id} type="button" onClick={() => bulkForm.setValue('walletId', wallet.id, { shouldValidate: true })}
+                                        className={`w-full text-left flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 ${ isSel ? 'border-[#0f1f3d] bg-[#0f1f3d]/5' : 'border-slate-200 hover:border-slate-300 bg-white' }`}>
+                                        <p className={`text-sm font-semibold truncate ${ isSel ? 'text-[#0f1f3d]' : 'text-slate-700' }`}>{wallet.name}</p>
+                                        {isSel && <CheckCircle2 size={16} className="flex-shrink-0 text-[#0f1f3d]" />}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                              {/* Confidence */}
+                              {activeItem.result && (
+                                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">AI Confidence</span>
+                                  <ConfidenceBadge score={activeItem.result.extracted.confidence} />
+                                </div>
+                              )}
+                              {/* Actions */}
+                              <div className="flex gap-3 pt-1">
+                                <Button type="button" variant="outline" className="flex-1 rounded-xl border-slate-200 text-slate-500 hover:text-[#0f1f3d]" onClick={() => handleSkipItem(activeItem.id)}>Skip</Button>
+                                <Button type="submit" disabled={confirmMutation.isPending} className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-60">
+                                  {confirmMutation.isPending ? <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" />Saving...</span> : 'Confirm & Save'}
+                                </Button>
+                              </div>
+                            </form>
+                          </CardContent>
+                        </Card>
+                      )
+                    })()}
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        )}
 
       </div>
     </div>
   )
-}
+}

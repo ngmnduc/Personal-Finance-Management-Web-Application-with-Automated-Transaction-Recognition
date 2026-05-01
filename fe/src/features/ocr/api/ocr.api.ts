@@ -96,3 +96,53 @@ export const useConfirmOCR = () => {
     },
   })
 }
+
+// ─── Bulk Scan Types ──────────────────────────────────────────────────────────
+
+export interface BulkScanItem {
+  status: 'ready' | 'error'
+  filename: string
+  extracted: ExtractedData
+  extracted_text: string
+  suggested_category_id: string | null
+  default_wallet_id: string | null
+  error?: string
+}
+
+export interface BulkScanResponse {
+  total: number
+  processed: number
+  results: BulkScanItem[]
+}
+
+// ─── useScanBulk ──────────────────────────────────────────────────────────────
+
+/**
+ * useScanBulk — POST multiple files to OCR bulk endpoint.
+ * No toast here — caller handles UX (progress, errors per item).
+ */
+export const useScanBulk = () => {
+  return useMutation({
+    mutationFn: async ({
+      files,
+      scanContext,
+    }: {
+      files: File[]
+      scanContext: 'expense' | 'income'
+    }): Promise<BulkScanResponse> => {
+      const formData = new FormData()
+      files.forEach((file) => formData.append('files', file))
+      formData.append('scan_context', scanContext.toUpperCase())
+
+      const response = await apiClient.post<ApiResponse<BulkScanResponse>>(
+        `${API_ENDPOINTS.OCR}/bulk`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 120000,
+        },
+      )
+      return response.data.data
+    },
+  })
+}

@@ -4,10 +4,11 @@ import { QUERY_KEYS, API_ENDPOINTS } from '../../../lib/constants'
 import { Category, ApiResponse, TransactionType } from '../../../types'
 
 export const useCategories = (type?: TransactionType) => {
+  const safeType = type ? type.trim().toUpperCase() : undefined;
   return useQuery({
-    queryKey: [QUERY_KEYS.CATEGORIES, type],
+    queryKey: [QUERY_KEYS.CATEGORIES, safeType],
     queryFn: async () => {
-      const params = type ? { type } : undefined
+      const params = safeType ? { type: safeType } : undefined
       const response = await apiClient.get<ApiResponse<Category[]>>(API_ENDPOINTS.CATEGORIES, { params })
       return response.data.data
     }

@@ -21,6 +21,7 @@ export const QUERY_KEYS = {
   GOALS: 'goals',
   DASHBOARD: 'dashboard',
   ME: 'me',
+  RECURRING_INCOMES: 'recurring-incomes',
 }
 
 export const API_ENDPOINTS = {
@@ -38,4 +39,5 @@ export const API_ENDPOINTS = {
   GOALS: '/goals',
   DASHBOARD: '/dashboard',
   OCR: '/ocr',
+  RECURRING_INCOMES: '/recurring-incomes',
 }

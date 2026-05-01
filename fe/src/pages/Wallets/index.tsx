@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from "react"
 import { useWallets, useSetDefaultWallet, useDeleteWallet } from "../../features/wallets/api/wallet.api"
 import { useUiStore } from "../../store/ui.store"
 import { WalletDialog } from "../../features/wallets/components/WalletDialog"
+import RecurringTab from "../../features/recurring/components/RecurringTab"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import PageSkeleton from "../../components/shared/PageSkeleton"
 import { Wallet } from "../../types"
-import { Plus, Edit2, Trash2, Archive, Star, Building2, Landmark, Wallet as WalletIcon, Smartphone, CreditCard } from "lucide-react"
+import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard, TrendingUp } from "lucide-react"
 
 export default function WalletsPage() {
   const { data: wallets, isLoading } = useWallets()
@@ -17,6 +18,7 @@ export default function WalletsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
+  const [activeTab, setActiveTab] = useState<'wallets' | 'automations'>('wallets')
   
   // Pagination
   const [currentPage] = useState(1) // Keep logic, ignore UI update for simple display
@@ -109,19 +111,45 @@ export default function WalletsPage() {
 
   return (
     <div className="p-8 text-slate-800 min-h-full bg-[#f8fafc]">
+      {/* ── Header ── */}
       <div className="mb-8">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">ASSET OVERVIEW</p>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Asset Overview</p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0f1f3d]">Financial Repositories</h1>
-          <Button onClick={openCreate} className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-10 w-full sm:w-auto flex-shrink-0">
-            <Plus size={18} /> Add New Wallet
-          </Button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0f1f3d]">Wallet Management</h1>
+            <p className="text-slate-500 text-sm mt-1">Configure and monitor your financial flows.</p>
+          </div>
+          {/* Pill Tab Switcher */}
+          <div className="flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0">
+            <button
+              onClick={() => setActiveTab('wallets')}
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'wallets'
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-[#0f1f3d]'
+              }`}
+            >
+              My Wallets
+            </button>
+            <button
+              onClick={() => setActiveTab('automations')}
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'automations'
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-[#0f1f3d]'
+              }`}
+            >
+              Automations
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Wallet Grid */}
-        <div className="col-span-1 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+      {/* ── Tab Content ── */}
+      {activeTab === 'wallets' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Wallet Grid */}
+          <div className="col-span-1 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
           {displayedWallets.map((w) => (
             <Card 
               key={w.id} 
@@ -154,7 +182,7 @@ export default function WalletsPage() {
                 <div className="flex items-center justify-between border-t border-slate-100 pt-3 lg:pt-4 gap-2">
                   <div className="flex items-center text-xs sm:text-sm font-medium text-slate-500 min-w-0">
                     <span className="text-[#10b981] flex items-center">
-                       <TrendingUpIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /> +12.4% 
+                       <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /> +12.4% 
                     </span>
                     <span className="ml-1 text-slate-400 truncate">this month</span>
                   </div>
@@ -215,7 +243,7 @@ export default function WalletsPage() {
           </div>
         </div>
         
-        {/* Right Side Widgets Placeholder (based on mockup image features) */}
+        {/* Right Side Widgets Placeholder */}
         <div className="col-span-1 flex flex-col gap-6 mt-2 lg:mt-0">
           <div className="bg-white rounded-2xl p-5 lg:p-6 shadow-sm border border-slate-100 h-56 lg:h-64 flex flex-col">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">NET DISTRIBUTION</h3>
@@ -233,28 +261,11 @@ export default function WalletsPage() {
           </div>
         </div>
       </div>
+      ) : (
+        <RecurringTab />
+      )}
 
       <WalletDialog open={dialogOpen} onOpenChange={setDialogOpen} wallet={editingWallet} />
     </div>
-  )
-}
-
-function TrendingUpIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
-    </svg>
   )
 }

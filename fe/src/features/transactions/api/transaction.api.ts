@@ -86,17 +86,34 @@ export const useCreateTransaction = () => {
       )
       return response.data.data
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast.success('Transaction created successfully')
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TRANSACTIONS] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WALLETS] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BUDGETS] })
+
+      // ── Budget Alert ──────────────────────────────────────────────────────
+      const budgetAlert = data?.budget_alert
+      if (budgetAlert?.triggered === true) {
+        const msg = `Budget alert: You have used ${budgetAlert.percent ?? ''}% of your ${budgetAlert.category ?? 'category'} budget.`
+        const action = {
+          label: 'View Budgets',
+          onClick: () => { window.location.href = '/budgets' },
+        }
+        if (budgetAlert.type === 'exceeded') {
+          toast.error(msg, { action, duration: 6000 })
+        } else {
+          toast.warning(msg, { action, duration: 6000 })
+        }
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to create transaction')
     },
   })
 }
+
 
 export const useUpdateTransaction = () => {
   const queryClient = useQueryClient()
