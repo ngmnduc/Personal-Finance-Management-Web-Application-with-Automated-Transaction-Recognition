@@ -25,7 +25,7 @@ export interface UpdateRecurringIncomeDto {
 // ─── Shared include ───────────────────────────────────────────────────────────
 
 const withRelations = {
-  wallet:   { select: { id: true, name: true, type: true } },
+  wallet: { select: { id: true, name: true, type: true } },
   category: { select: { id: true, name: true, icon: true } },
 } as const;
 
@@ -63,3 +63,6 @@ export const findDueToday = () => {
     include: { wallet: true, category: true },
   });
 };
+
+export const findByIdInternal = (id: string) =>
+  prisma.recurringIncome.findUnique({ where: { id } });

@@ -6,5 +6,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/overview", dashboardController.getOverview);
+router.get("/goals/summary", dashboardController.getGoalsSummary);
 
 export default router;

@@ -131,8 +131,13 @@ export const checkBudgetAlert = async (
   const limit   = Number(budget.amountLimit);
   const percent = limit > 0 ? (spent / limit) * 100 : 0;
 
+  // ── DEBUG LOGGING ──
+  console.log(`\n[BUDGET DEBUG] Category: ${categoryId} | Period: ${period}`);
+  console.log(`[BUDGET DEBUG] Limit: ${limit} | Spent: ${spent} | Percent: ${percent.toFixed(2)}%`);
+
   // ── 100%+ exceeded — always alert ────────────────────────────────────────
   if (percent >= 100) {
+    console.log(`[ALERT - EXCEEDED] Đã vượt 100% ngân sách! (${percent.toFixed(2)}%)`);
     return {
       triggered: true,
       percent: Math.round(percent),
@@ -148,6 +153,7 @@ export const checkBudgetAlert = async (
       budget.alert80SentAt !== null && budget.alert80SentAt >= startDate;
 
     if (!alreadySent) {
+      console.log(`[WARNING - 80%] Sắp hết ngân sách! (${percent.toFixed(2)}%). Đã lưu mốc chống spam.`);
       await budgetRepo.updateAlert80SentAt(budget.id, new Date());
       return {
         triggered: true,
@@ -155,6 +161,8 @@ export const checkBudgetAlert = async (
         limit,
         type: 'warning',
       };
+    } else {
+      console.log(`[INFO - DEDUP] Mức 80% đã được cảnh báo trong chu kỳ này. Bỏ qua.`);
     }
   }
 

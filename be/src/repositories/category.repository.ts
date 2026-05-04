@@ -44,7 +44,6 @@ export const categoryRepository = {
         name: data.name,
         type: data.type as any, // Ép kiểu cho enum Prisma
         icon: data.icon,
-        color: data.color,
       },
     });
   },
@@ -63,6 +62,16 @@ export const categoryRepository = {
     return prisma.category.update({
       where: { id },
       data: { deletedAt: new Date() },
+    });
+  },
+
+  findValidByIdAndUser: async (id: string, userId: string) => {
+    return prisma.category.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        OR: [{ userId }, { userId: null }],
+      },
     });
   },
 };

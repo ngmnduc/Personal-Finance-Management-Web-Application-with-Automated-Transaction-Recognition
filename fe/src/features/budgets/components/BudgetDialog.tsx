@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
@@ -38,7 +38,7 @@ export default function BudgetDialog({ open, onOpenChange, budget }: BudgetDialo
   const createMutation = useCreateBudget()
   const updateMutation = useUpdateBudget()
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { period: 'MONTHLY', categoryId: '', amountLimit: undefined },
   })
@@ -111,20 +111,26 @@ export default function BudgetDialog({ open, onOpenChange, budget }: BudgetDialo
           {/* Category Select */}
           <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Category</label>
-            <Select
-              value={watchedCategoryId}
-              onValueChange={(v) => setValue('categoryId', v, { shouldValidate: true })}
-              disabled={isEdit}
-            >
-              <SelectTrigger className="rounded-xl border-slate-200 h-11 text-sm disabled:opacity-60">
-                <SelectValue placeholder="Select expense category..." />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              control={control}
+              name="categoryId"
+              render={({ field }) => (
+                <Select
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                  disabled={isEdit}
+                >
+                  <SelectTrigger className="rounded-xl border-slate-200 h-11 text-sm disabled:opacity-60">
+                    <SelectValue placeholder="Select expense category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.categoryId && <p className="text-red-500 text-xs mt-1">{errors.categoryId.message}</p>}
           </div>
 

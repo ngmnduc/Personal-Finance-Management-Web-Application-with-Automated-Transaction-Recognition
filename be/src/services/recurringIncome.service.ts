@@ -1,8 +1,9 @@
 import { TxSource, TransactionType } from '@prisma/client';
 import { AppError } from '../utils/errors';
-import { prisma } from '../config/prisma';
 import * as recurringRepo from '../repositories/recurringIncome.repository';
 import * as transactionRepo from '../repositories/transaction.repository';
+import { walletRepository } from '../repositories/wallet.repository';
+import { categoryRepository } from '../repositories/category.repository';
 
 // ─── Input Types ──────────────────────────────────────────────────────────────
 
@@ -55,9 +56,7 @@ export const create = async (userId: string, input: CreateRecurringIncomeInput) 
   }
 
   // ── Validate wallet ──────────────────────────────────────────────────────
-  const wallet = await prisma.wallet.findFirst({
-    where: { id: input.walletId, userId, deletedAt: null, archivedAt: null },
-  });
+  const wallet = await walletRepository.findActiveByIdAndUserId(input.walletId, userId);
   if (!wallet) {
     throw AppError.NotFound(
       'Wallet not found, archived or does not belong to you.',
@@ -66,13 +65,7 @@ export const create = async (userId: string, input: CreateRecurringIncomeInput) 
   }
 
   // ── Validate category ────────────────────────────────────────────────────
-  const category = await prisma.category.findFirst({
-    where: {
-      id: input.categoryId,
-      deletedAt: null,
-      OR: [{ userId }, { userId: null }],
-    },
-  });
+  const category = await categoryRepository.findValidByIdAndUser(input.categoryId, userId);
   if (!category) {
     throw AppError.NotFound('Category not found.', 'CATEGORY_NOT_FOUND');
   }
@@ -147,9 +140,7 @@ export const getDueToday = () => recurringRepo.findDueToday();
  * Called by the cronjob after it receives the list from getDueToday.
  */
 export const processInternal = async (id: string) => {
-  const record = await prisma.recurringIncome.findUnique({
-    where: { id },
-  });
+  const record = await recurringRepo.findByIdInternal(id);
   if (!record) {
     throw AppError.NotFound('Recurring income not found.', 'RECURRING_NOT_FOUND');
   }

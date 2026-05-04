@@ -3,6 +3,7 @@ import { AppError } from '../utils/errors';
 import { prisma } from '../config/prisma';
 import * as transactionRepo from '../repositories/transaction.repository';
 import * as budgetService from './budget.service';
+import * as recurringRuleService from './recurringRule.service';
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -108,6 +109,19 @@ export const create = async (userId: string, input: CreateTransactionInput) => {
       input.categoryId,
       'MONTHLY',
     );
+  }
+
+  // ── Recurring detection (fire-and-forget — must NOT block response) ──────
+  if (type === TransactionType.EXPENSE && dto.merchant) {
+    recurringRuleService
+      .detectAndCreateSuggestion(
+        userId,
+        dto.merchant,
+        dto.amount,
+        dto.categoryId,
+        dto.walletId,
+      )
+      .catch((err) => console.error('[Recurring Detection] Failed:', err));
   }
 
   return { transaction, budget_alert };

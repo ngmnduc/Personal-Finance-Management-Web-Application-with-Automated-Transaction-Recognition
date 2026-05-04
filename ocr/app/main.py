@@ -14,7 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from app.utils.rate_limiter import limiter
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from app.services.recurring_service import process_recurring_incomes
+from app.services.recurring_service import process_recurring_incomes, process_recurring_rules
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +41,14 @@ async def startup():
         id="recurring_income_job",
         replace_existing=True,
     )
+    scheduler.add_job(
+        process_recurring_rules,
+        CronTrigger(hour=7, minute=30, timezone="Asia/Ho_Chi_Minh"),
+        id="recurring_rules_job",
+        replace_existing=True,
+    )
     scheduler.start()
-    logger.info("APScheduler started for Recurring Incomes (7:00 AM VN time)")
+    logger.info("APScheduler started: Income job at 7:00 AM, Rules job at 7:30 AM (VN time)")
 
 @app.on_event("shutdown")
 async def shutdown():

@@ -203,7 +203,7 @@ export default function RecurringTab() {
         </div>
         <Button
           onClick={openCreate}
-          className="gap-2 bg-[#10b981] text-white hover:bg-[#0ea572] rounded-xl px-5 h-10 flex-shrink-0 font-semibold shadow-sm"
+          className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-10 flex-shrink-0 font-semibold shadow-sm"
         >
           <Plus size={16} /> Add Income
         </Button>
@@ -218,7 +218,7 @@ export default function RecurringTab() {
           action={
             <Button
               onClick={openCreate}
-              className="gap-2 bg-[#10b981] text-white hover:bg-[#0ea572] rounded-xl px-6 h-10 font-semibold"
+              className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-6 h-10 font-semibold"
             >
               <Plus size={16} /> Add Income
             </Button>

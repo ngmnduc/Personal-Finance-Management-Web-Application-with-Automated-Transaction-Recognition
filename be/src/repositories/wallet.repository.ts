@@ -71,4 +71,10 @@ export const walletRepository = {
       data: { archivedAt: new Date() },
     });
   },
+
+  findActiveByIdAndUserId: async (id: string, userId: string) => {
+    return prisma.wallet.findFirst({
+      where: { id, userId, deletedAt: null, archivedAt: null },
+    });
+  },
 };

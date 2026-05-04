@@ -6,10 +6,18 @@ export const dashboardController = {
   getOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.userId;
-      
       const overviewData = await dashboardService.getDashboardOverview(userId);
-      
       sendSuccess(res, overviewData, "Get dashboard overview successfully", 200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getGoalsSummary: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const goals = await dashboardService.getGoalsSummary(userId);
+      sendSuccess(res, goals, "Goals summary fetched successfully", 200);
     } catch (error) {
       next(error);
     }
