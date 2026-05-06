@@ -377,16 +377,24 @@ export default function ScanPage() {
         </div>
 
         {/* ── Tabs (Single / Bulk) ── */}
-        <div className="flex gap-1 p-1 bg-white rounded-2xl border border-slate-100 shadow-sm w-fit mb-8">
+        <div className="flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0 mb-8">
           <button
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${ activeTab === 'single' ? 'bg-[#0f1f3d] text-white' : 'text-slate-500 hover:text-[#0f1f3d]' }`}
             onClick={() => setActiveTab('single')}
+            className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+              activeTab === 'single'
+                ? 'bg-[#0f1f3d] text-white shadow-sm'
+                : 'text-slate-500 hover:text-[#0f1f3d]'
+            }`}
           >
             Single Scan
           </button>
           <button
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${ activeTab === 'bulk' ? 'bg-[#0f1f3d] text-white' : 'text-slate-500 hover:text-[#0f1f3d]' }`}
             onClick={() => setActiveTab('bulk')}
+            className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+              activeTab === 'bulk'
+                ? 'bg-[#0f1f3d] text-white shadow-sm'
+                : 'text-slate-500 hover:text-[#0f1f3d]'
+            }`}
           >
             Bulk Mode
           </button>
@@ -858,10 +866,22 @@ export default function ScanPage() {
                         <ThumbnailItem key={item.id} item={item} isSelected={item.id === confirmingItemId} onClick={() => setConfirmingItemId(item.id)} />
                       ))}
                     </div>
-                    <Button onClick={handleConfirmAll} disabled={autoConfirmCount === 0 || confirmMutation.isPending}
-                      className="w-full bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-50">
-                      <Check size={14} className="mr-1" /> Confirm All ({autoConfirmCount})
-                    </Button>
+                    {doneCount === bulkQueue.length && bulkQueue.length > 0 ? (
+                      <Button 
+                        onClick={() => navigate(ROUTES.TRANSACTIONS)}
+                        className="w-full bg-[#10b981] text-white rounded-xl hover:bg-[#0ea572] shadow-md"
+                      >
+                        <CheckCircle2 size={16} className="mr-2" /> Finish & View Transactions
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={handleConfirmAll} 
+                        disabled={autoConfirmCount === 0 || confirmMutation.isPending}
+                        className="w-full bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-50"
+                      >
+                        <Check size={14} className="mr-1" /> Auto-Confirm Ready ({autoConfirmCount})
+                      </Button>
+                    )}
                     <Button variant="outline" onClick={() => { bulkQueue.forEach((i) => URL.revokeObjectURL(i.previewUrl)); setBulkQueue([]); setBulkPhase('upload'); setConfirmingItemId(null) }}
                       className="w-full rounded-xl border-slate-200 text-slate-500 hover:text-[#0f1f3d]">
                       <RefreshCw size={14} className="mr-1" /> Reset Batch

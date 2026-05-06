@@ -11,6 +11,8 @@ export const ROUTES = {
   REPORTS: '/reports',
   SETTINGS: '/settings',
   CATEGORIES: '/categories',
+  RECURRING_INCOMES: '/recurring',
+  RECURRING_RULES: '/recurring-rules',
 }
 
 export const QUERY_KEYS = {
@@ -22,6 +24,8 @@ export const QUERY_KEYS = {
   DASHBOARD: 'dashboard',
   ME: 'me',
   RECURRING_INCOMES: 'recurring-incomes',
+  RECURRING_SUGGESTIONS: 'recurring-suggestions',
+  RECURRING_RULES: 'recurring-rules',
 }
 
 export const API_ENDPOINTS = {
@@ -40,4 +44,5 @@ export const API_ENDPOINTS = {
   DASHBOARD: '/dashboard',
   OCR: '/ocr',
   RECURRING_INCOMES: '/recurring-incomes',
+  RECURRING: '/recurring',
 }

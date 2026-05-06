@@ -88,15 +88,21 @@ export default function ThumbnailItem({ item, isSelected, onClick }: ThumbnailIt
       )}
 
       {/* Status badge — top right */}
-      <span
-        className={`
-          absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold
-          ${config.className}
-          ${config.animate ? 'animate-pulse' : ''}
-        `}
-      >
-        {config.label}
-      </span>
+      {item.confirmed ? (
+        <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+          Confirmed
+        </span>
+      ) : (
+        <span
+          className={`
+            absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold
+            ${config.className}
+            ${config.animate ? 'animate-pulse' : ''}
+          `}
+        >
+          {config.label}
+        </span>
+      )}
 
       {/* File info + amount */}
       <div className="px-2 pb-2 pt-1 bg-white">

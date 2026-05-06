@@ -147,23 +147,23 @@ export default function CategoriesPage() {
       </div>
 
       {/* ── Pill Tab Switcher ── */}
-      <div className="mb-8 inline-flex items-center bg-white rounded-full border border-slate-100 shadow-sm p-1 gap-1">
+      <div className="mb-8 flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0">
         <button
           onClick={() => setActiveTab("EXPENSE")}
-          className={`px-6 py-1.5 rounded-full text-sm font-semibold transition-all ${
+          className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
             activeTab === "EXPENSE"
-              ? "bg-slate-100 text-slate-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-700"
+              ? "bg-[#0f1f3d] text-white shadow-sm"
+              : "text-slate-500 hover:text-[#0f1f3d]"
           }`}
         >
           Expenses
         </button>
         <button
           onClick={() => setActiveTab("INCOME")}
-          className={`px-6 py-1.5 rounded-full text-sm font-semibold transition-all ${
+          className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
             activeTab === "INCOME"
-              ? "bg-slate-100 text-slate-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-700"
+              ? "bg-[#0f1f3d] text-white shadow-sm"
+              : "text-slate-500 hover:text-[#0f1f3d]"
           }`}
         >
           Income

@@ -1,11 +1,26 @@
 import { useDashboardOverview } from "../../features/dashboard/api/dashboard.api"
+import { useGoalsSummary } from "../../features/goals/api/goal.api"
+import {
+  useRecurringSuggestions,
+  useConfirmRecurringRule,
+  useSnoozeSuggestion,
+} from "../../features/recurring/api/recurringRule.api"
+import SuggestionBanner from "../../features/recurring/components/SuggestionBanner"
 import PageSkeleton from "../../components/shared/PageSkeleton"
-import { TrendingUp, Activity, Home, ArrowRight } from "lucide-react"
+import AmountDisplay from "../../components/shared/AmountDisplay"
+import { TrendingUp, Activity, ArrowRight, Target } from "lucide-react"
 import { Card, CardContent } from "../../components/ui/card"
 import { Button } from "../../components/ui/button"
+import { useNavigate } from "react-router-dom"
+import { ROUTES } from "../../lib/constants"
 
 export default function DashboardPage() {
   const { data: overview, isLoading } = useDashboardOverview()
+  const { data: goalsSummary = [] } = useGoalsSummary()
+  const { data: suggestions = [] } = useRecurringSuggestions()
+  const confirmRule = useConfirmRecurringRule()
+  const snoozeRule = useSnoozeSuggestion()
+  const navigate = useNavigate()
 
   if (isLoading) return <PageSkeleton />
 
@@ -174,27 +189,97 @@ export default function DashboardPage() {
              </CardContent>
           </Card>
           
-          <Card className="rounded-[2rem] border border-slate-200 bg-[#f1f5f9] p-0">
-             <CardContent className="p-8">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">UPCOMING MILESTONE</h3>
-                 <Home size={16} className="text-[#0f1f3d]" />
-               </div>
-               
-               <h4 className="text-xl font-bold text-[#0f1f3d] mb-6">Down Payment Goal</h4>
-               
-               <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                 <span>PROGRESS</span>
-                 <span className="text-[#0f1f3d]">$42,000 / $60,000</span>
-               </div>
-               <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
-                 <div className="bg-[#0f1f3d] h-2 rounded-full" style={{ width: '70%' }}></div>
-               </div>
-             </CardContent>
+          {/* Saving Goals Widget */}
+          <Card className="rounded-[2rem] border border-slate-100 bg-white p-0">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  SAVING GOALS
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(ROUTES.GOALS)}
+                  className="text-xs font-bold text-[#0f1f3d] hover:underline p-0 h-auto"
+                >
+                  View All <ArrowRight size={12} className="ml-1" />
+                </Button>
+              </div>
+
+              {goalsSummary.length === 0 ? (
+                <div className="flex flex-col items-center py-6 text-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <Target size={20} className="text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-400">No active goals yet.</p>
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(ROUTES.GOALS)}
+                    className="bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] text-xs h-8 px-4"
+                  >
+                    + Create Goal
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-5">
+                  {goalsSummary.map((goal) => (
+                    <div key={goal.id}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold text-[#0f1f3d] truncate max-w-[60%]">
+                          {goal.name}
+                        </span>
+                        <span className="text-xs font-bold text-[#10b981]">
+                          {goal.progressPercent}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 mb-2">
+                        <AmountDisplay value={goal.currentAmount} />
+                        <AmountDisplay value={goal.targetAmount} />
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full overflow-hidden h-1.5">
+                        <div
+                          className="bg-[#10b981] h-1.5 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
           </Card>
 
         </div>
       </div>
+
+      {/* Automation Insights — Recurring Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              Automation Insights
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(ROUTES.RECURRING_RULES)}
+              className="text-xs font-bold text-[#0f1f3d] hover:underline p-0 h-auto"
+            >
+              Manage Rules <ArrowRight size={12} className="ml-1" />
+            </Button>
+          </div>
+          {suggestions.map((s) => (
+            <SuggestionBanner
+              key={s.id}
+              suggestion={s}
+              onConfirm={(id) => confirmRule.mutate(id)}
+              onSnooze={(id) => snoozeRule.mutate(id)}
+              isConfirming={confirmRule.isPending}
+              isSnoozing={snoozeRule.isPending}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
