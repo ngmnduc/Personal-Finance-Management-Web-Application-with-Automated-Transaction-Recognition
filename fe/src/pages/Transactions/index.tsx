@@ -254,11 +254,13 @@ export default function TransactionsPage() {
 
         {/* ── Filter Bar ── */}
         <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          <CardContent className="p-5 flex flex-col gap-4">
+
+            {/* ROW 1: Search + Type + Reset */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
 
               {/* Search */}
-              <div className="relative xl:col-span-2">
+              <div className="relative flex-1 w-full min-w-[200px]">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
                   id="transaction-search"
@@ -269,7 +271,7 @@ export default function TransactionsPage() {
                     setSearchInput(e.target.value)
                     setFilters((f) => ({ ...f, page: 1 }))
                   }}
-                  className="pl-9 rounded-xl border-slate-200 text-sm"
+                  className="pl-9 h-10 rounded-xl border-slate-200 text-sm bg-white"
                 />
               </div>
 
@@ -280,7 +282,7 @@ export default function TransactionsPage() {
                   updateFilter('type', val === 'ALL' ? undefined : (val as 'INCOME' | 'EXPENSE'))
                 }
               >
-                <SelectTrigger id="filter-type" className="rounded-xl border-slate-200 text-sm">
+                <SelectTrigger id="filter-type" className="w-full sm:w-[130px] shrink-0 h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:ring-2 focus:ring-[#0f1f3d]/20 focus:border-[#0f1f3d] [&>span]:text-slate-700">
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -290,6 +292,22 @@ export default function TransactionsPage() {
                 </SelectContent>
               </Select>
 
+              {/* Reset */}
+              <Button
+                id="reset-filters-btn"
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="w-full sm:w-auto shrink-0 sm:ml-auto h-10 px-4 flex items-center gap-2 rounded-xl text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <RotateCcw size={13} />
+                Reset Filters
+              </Button>
+            </div>
+
+            {/* ROW 2: Category + Wallet + Date Range */}
+            <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full">
+
               {/* Category */}
               <Select
                 value={filters.category_id ?? 'ALL'}
@@ -297,7 +315,7 @@ export default function TransactionsPage() {
                   updateFilter('category_id', val === 'ALL' ? undefined : val)
                 }
               >
-                <SelectTrigger id="filter-category" className="rounded-xl border-slate-200 text-sm">
+                <SelectTrigger id="filter-category" className="w-full sm:w-[160px] shrink-0 h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:ring-2 focus:ring-[#0f1f3d]/20 focus:border-[#0f1f3d] [&>span]:text-slate-700">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
@@ -317,7 +335,7 @@ export default function TransactionsPage() {
                   updateFilter('wallet_id', val === 'ALL' ? undefined : val)
                 }
               >
-                <SelectTrigger id="filter-wallet" className="rounded-xl border-slate-200 text-sm">
+                <SelectTrigger id="filter-wallet" className="w-full sm:w-[140px] shrink-0 h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:ring-2 focus:ring-[#0f1f3d]/20 focus:border-[#0f1f3d] [&>span]:text-slate-700">
                   <SelectValue placeholder="All Wallets" />
                 </SelectTrigger>
                 <SelectContent>
@@ -337,7 +355,7 @@ export default function TransactionsPage() {
                 max={filters.end_date}
                 value={filters.start_date ?? ''}
                 onChange={(e) => updateFilter('start_date', e.target.value || undefined)}
-                className="rounded-xl border-slate-200 text-sm text-slate-400"
+                className="w-full sm:w-[135px] shrink-0 h-10 pl-3 pr-8 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0f1f3d]/20 focus:border-[#0f1f3d]"
                 title="From date"
               />
               <Input
@@ -346,23 +364,9 @@ export default function TransactionsPage() {
                 min={filters.start_date}
                 value={filters.end_date ?? ''}
                 onChange={(e) => updateFilter('end_date', e.target.value || undefined)}
-                className="rounded-xl border-slate-200 text-sm text-slate-400"
+                className="w-full sm:w-[135px] shrink-0 h-10 pl-3 pr-8 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0f1f3d]/20 focus:border-[#0f1f3d]"
                 title="To date"
               />
-            </div>
-
-            {/* Reset */}
-            <div className="mt-3 flex justify-end">
-              <Button
-                id="reset-filters-btn"
-                variant="ghost"
-                size="sm"
-                onClick={resetFilters}
-                className="text-slate-500 hover:text-[#0f1f3d] flex items-center gap-1.5 text-xs"
-              >
-                <RotateCcw size={13} />
-                Reset Filters
-              </Button>
             </div>
           </CardContent>
         </Card>

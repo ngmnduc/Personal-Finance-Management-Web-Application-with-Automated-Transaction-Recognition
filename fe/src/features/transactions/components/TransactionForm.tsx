@@ -114,20 +114,20 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
       {/* Row 1: Type Toggle */}
-      <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+      <div className="flex gap-1 p-1 bg-[#f1f5f9] rounded-full border border-slate-200">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setValue('type', t)}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all duration-200 ${watchedType === t
+            className={`flex-1 py-2 px-4 rounded-full text-sm font-semibold transition-all duration-200 ${watchedType === t
                 ? t === 'INCOME'
                   ? 'bg-emerald-500 text-white shadow-sm'
                   : 'bg-red-500 text-white shadow-sm'
-                : 'bg-transparent text-slate-500 hover:text-slate-800'
+                : 'text-slate-500 hover:text-slate-700'
               }`}
           >
-            {t === 'INCOME' ? '↑ Income' : '↓ Expense'}
+            {t === 'INCOME' ? 'Income' : 'Expense'}
           </button>
         ))}
       </div>
@@ -138,16 +138,15 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
           Amount
         </label>
         <div className="relative">
-          <DollarSign
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+            VND
+          </span>
           <Input
             type="number"
             min="0"
             step="any"
             placeholder="0"
-            className="pl-9 rounded-xl border-slate-200 focus:ring-[#0f1f3d]"
+            className="pl-12 bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]"
             {...register('amount', { valueAsNumber: true })}
           />
         </div>
@@ -165,7 +164,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
           value={watch('categoryId')}
           onValueChange={(val) => setValue('categoryId', val, { shouldValidate: true })}
         >
-          <SelectTrigger className="rounded-xl border-slate-200">
+          <SelectTrigger className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]">
             <SelectValue placeholder="Select category..." />
           </SelectTrigger>
           <SelectContent>
@@ -191,7 +190,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
             value={watch('walletId')}
             onValueChange={(val) => setValue('walletId', val, { shouldValidate: true })}
           >
-            <SelectTrigger className="rounded-xl border-slate-200">
+            <SelectTrigger className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]">
               <SelectValue placeholder="Select wallet..." />
             </SelectTrigger>
             <SelectContent>
@@ -214,7 +213,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
           <Input
             type="date"
             max={todayString()}
-            className="rounded-xl border-slate-200 focus:ring-[#0f1f3d]"
+            className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]"
             {...register('transactionDate')}
           />
           {errors.transactionDate && (
@@ -223,15 +222,15 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
         </div>
       </div>
 
-      {/* Row 5: Merchant */}
+      {/* Row 5: Person */}
       <div>
         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-          Merchant <span className="text-slate-300 normal-case font-normal">(optional)</span>
+          Person <span className="text-slate-300 normal-case font-normal">(optional)</span>
         </label>
         <Input
           type="text"
           placeholder="e.g. Grab, Netflix..."
-          className="rounded-xl border-slate-200 focus:ring-[#0f1f3d]"
+          className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]"
           {...register('merchant')}
         />
       </div>
@@ -244,7 +243,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
         <textarea
           rows={3}
           placeholder="Add a note..."
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f1f3d] focus:ring-offset-2 resize-none"
+          className="w-full bg-white rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d] resize-none"
           {...register('note')}
         />
       </div>

@@ -243,7 +243,7 @@ export default function CategoriesPage() {
           )
         })}
 
-        {/* Create New dashed card */}
+        {/* Create New dashed card 
         <Card
           onClick={openCreate}
           className="bg-transparent rounded-[2rem] border-2 border-dashed border-slate-300 hover:border-[#10b981] hover:shadow-md transition-all cursor-pointer h-[160px] p-0"
@@ -254,7 +254,7 @@ export default function CategoriesPage() {
             </div>
             <span className="font-semibold text-sm text-slate-500">Create New</span>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <CategoryDialog

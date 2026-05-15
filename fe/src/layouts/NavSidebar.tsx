@@ -8,8 +8,7 @@ const mainNavItems = [
   { icon: Wallet, label: 'Wallets', path: ROUTES.WALLETS },
   { icon: ArrowRightLeft, label: 'Transactions', path: ROUTES.TRANSACTIONS },
   { icon: Tags, label: 'Categories', path: ROUTES.CATEGORIES },
-  { icon: PiggyBank, label: 'Budgets', path: ROUTES.BUDGETS },
-  { icon: Target, label: 'Saving Goals', path: ROUTES.GOALS },
+  { icon: Target, label: 'Planning', path: ROUTES.GOALS },
 ]
 
 export default function NavSidebar() {

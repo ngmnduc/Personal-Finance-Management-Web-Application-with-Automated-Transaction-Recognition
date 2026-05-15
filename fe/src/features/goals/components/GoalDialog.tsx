@@ -114,33 +114,42 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#0f1f3d]">
-            {isEdit ? 'Edit Goal' : 'Create Saving Goal'}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-2">
+        {/* Header — Navy Split */}
+        <div className="bg-[#0f1f3d] px-8 py-6">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-bold">
+              {isEdit ? 'Edit Goal' : 'Create Saving Goal'}
+            </DialogTitle>
+            <p className="text-slate-300 text-sm mt-1">
+              {isEdit ? 'Update your saving goal details.' : 'Set a new financial target to work towards.'}
+            </p>
+          </DialogHeader>
+        </div>
+
+        {/* Body — White */}
+        <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white">
+
           {/* Name */}
-          <div className="space-y-1.5">
-            <Label htmlFor="goal-name" className="text-sm font-semibold text-[#0f1f3d]">
+          <div>
+            <Label htmlFor="goal-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               Goal Name
             </Label>
             <Input
               id="goal-name"
               placeholder="e.g. Emergency Fund, New Laptop..."
               {...register('name')}
-              className="rounded-xl border-slate-200"
+              className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]"
             />
             {errors.name && (
-              <p className="text-xs text-red-500">{errors.name.message}</p>
+              <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
             )}
           </div>
 
           {/* Target Amount */}
-          <div className="space-y-1.5">
-            <Label htmlFor="goal-amount" className="text-sm font-semibold text-[#0f1f3d]">
+          <div>
+            <Label htmlFor="goal-amount" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               Target Amount (VND)
             </Label>
             <Input
@@ -148,22 +157,22 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
               type="number"
               placeholder="e.g. 50000000"
               {...register('targetAmount', { valueAsNumber: true })}
-              className="rounded-xl border-slate-200"
+              className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]"
             />
             {errors.targetAmount && (
-              <p className="text-xs text-red-500">{errors.targetAmount.message}</p>
+              <p className="text-xs text-red-500 mt-1">{errors.targetAmount.message}</p>
             )}
           </div>
 
           {/* Source Wallet — disabled in edit mode */}
           {!isEdit && (
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-[#0f1f3d]">Source Wallet</Label>
+            <div>
+              <Label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Source Wallet</Label>
               <Select
                 value={selectedWalletId || undefined}
                 onValueChange={(v) => setValue('sourceWalletId', v, { shouldValidate: true })}
               >
-                <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d] [&>span]:text-slate-800">
                   <SelectValue placeholder="Select a wallet..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -178,7 +187,7 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
                 </SelectContent>
               </Select>
               {selectedWallet && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 mt-1">
                   Available:{' '}
                   <AmountDisplay
                     value={Number(selectedWallet.currentBalance)}
@@ -187,40 +196,41 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
                 </p>
               )}
               {errors.sourceWalletId && (
-                <p className="text-xs text-red-500">{errors.sourceWalletId.message}</p>
+                <p className="text-xs text-red-500 mt-1">{errors.sourceWalletId.message}</p>
               )}
             </div>
           )}
 
           {/* Deadline */}
-          <div className="space-y-1.5">
-            <Label htmlFor="goal-deadline" className="text-sm font-semibold text-[#0f1f3d]">
-              Deadline <span className="text-slate-400 font-normal">(optional)</span>
+          <div>
+            <Label htmlFor="goal-deadline" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+              Deadline <span className="text-slate-400 font-normal normal-case tracking-normal">(optional)</span>
             </Label>
             <Input
               id="goal-deadline"
               type="date"
               {...register('deadline')}
-              className="rounded-xl border-slate-200"
+              className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#0f1f3d] pr-8"
             />
             {errors.deadline && (
-              <p className="text-xs text-red-500">{errors.deadline.message}</p>
+              <p className="text-xs text-red-500 mt-1">{errors.deadline.message}</p>
             )}
           </div>
 
-          <DialogFooter className="pt-2">
+          {/* Actions */}
+          <DialogFooter className="flex gap-3 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl"
+              className="flex-1 rounded-xl border-slate-200 text-slate-500 hover:text-slate-800"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || createGoal.isPending || updateGoal.isPending}
-              className="bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57]"
+              className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-60"
             >
               {isSubmitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Goal'}
             </Button>
