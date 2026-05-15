@@ -14,6 +14,7 @@ import budgetRoutes from './routes/budget.routes';
 import recurringIncomeRoutes from './routes/recurringIncome.routes';
 import goalRoutes from './routes/goal.routes';
 import recurringRuleRoutes from './routes/recurringRule.routes';
+import exportRoutes from './routes/export.routes';
 
 if (!(BigInt.prototype as any).toJSON) {
   (BigInt.prototype as any).toJSON = function () {
@@ -93,7 +94,7 @@ app.get('/health', (_req, res) => {
  app.use('/api/v1/recurring', recurringRuleRoutes);
 // app.use('/api/v1/recurring', recurringRoutes); // legacy — replaced by recurringRuleRoutes
 app.use('/api/v1/dashboard', dashboardRoutes);
-// app.use('/api/v1/export', exportRoutes);
+ app.use('/api/v1/export', exportRoutes);
 
 // --------------- 404 fallback ---------------
 app.use((_req, res) => {

@@ -1,18 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import * as ocrService from '../services/ocr.service';
 import { sendSuccess } from '../utils/response';
+import { AppError } from '../utils/errors';
 
 // ── POST /api/v1/ocr/scan ─────────────────────────────────────────────────────
 
 export const scan = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
-      res.status(400).json({
-        success: false,
-        message: 'No file uploaded. Please attach an image or PDF.',
-        code: 'MISSING_FILE',
-      });
-      return;
+      throw AppError.BadRequest('No file uploaded. Please attach an image or PDF.');
     }
 
     const scanContext: string = req.body.scan_context ?? 'EXPENSE';
@@ -55,12 +51,7 @@ export const scanBulk = async (req: Request, res: Response, next: NextFunction) 
     const files = req.files as Express.Multer.File[];
 
     if (!files || files.length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'No files uploaded. Please attach at least one image or PDF.',
-        code: 'MISSING_FILES',
-      });
-      return;
+      throw AppError.BadRequest('No files uploaded. Please attach at least one image or PDF.');
     }
 
     const scanContext: string = req.body.scan_context ?? 'EXPENSE';

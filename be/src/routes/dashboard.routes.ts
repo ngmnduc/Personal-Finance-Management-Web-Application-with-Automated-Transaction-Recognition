@@ -1,11 +1,14 @@
-import { Router } from "express";
-import { requireAuth } from "../middlewares/auth.middleware";
-import { dashboardController } from "../controllers/dashboard.controller";
+import { Router } from 'express';
+import { requireAuth } from '../middlewares/auth.middleware';
+import { dashboardController } from '../controllers/dashboard.controller';
 
 const router = Router();
 router.use(requireAuth);
 
-router.get("/overview", dashboardController.getOverview);
-router.get("/goals/summary", dashboardController.getGoalsSummary);
+
+router.get('/overview',       dashboardController.getOverview);
+router.get('/goals/summary',  dashboardController.getGoalsSummary);
+router.get('/charts/monthly',     dashboardController.getMonthlyCharts);
+router.get('/charts/categories',  dashboardController.getCategoryBreakdown);
 
 export default router;

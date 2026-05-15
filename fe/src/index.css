@@ -122,10 +122,18 @@ code {
   * {
     -webkit-tap-highlight-color: transparent;
   }
-  input, select, textarea {
-    font-size: 16px;
-  }
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+  /* iOS Safari zoom prevention */
+  input, select, textarea { font-size: 16px !important; }
+  /* Safe area bottom padding */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+
+  :root {
+    --color-navy: #0f1f3d;
+    --color-accent: #10b981;
+    --color-bg: #f0f4f8;
+    --color-surface: #ffffff;
+    --color-text-primary: #0f1f3d;
+    --color-text-secondary: #64748b;
+    --color-border: #e2e8f0;
   }
 }

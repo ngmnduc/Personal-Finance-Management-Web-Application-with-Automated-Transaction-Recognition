@@ -10,7 +10,6 @@ const mainNavItems = [
   { icon: Tags, label: 'Categories', path: ROUTES.CATEGORIES },
   { icon: PiggyBank, label: 'Budgets', path: ROUTES.BUDGETS },
   { icon: Target, label: 'Saving Goals', path: ROUTES.GOALS },
-  { icon: BarChart3, label: 'Reports', path: ROUTES.REPORTS },
 ]
 
 export default function NavSidebar() {

@@ -28,6 +28,7 @@ const updateMeSchema = z.object({
     name: z.string().min(2).optional(),
     currentPassword: z.string().min(1).optional(),
     newPassword: z.string().min(6).optional(),
+    avatarUrl: z.string().url('Must be a valid URL').startsWith('https://', 'Must be HTTPS').optional(),
   }).refine(data => {
     // Nếu có newPassword thì bắt buộc phải có currentPassword
     if (data.newPassword && !data.currentPassword) return false;

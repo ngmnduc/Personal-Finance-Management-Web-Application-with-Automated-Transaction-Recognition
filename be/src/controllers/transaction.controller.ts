@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as transactionService from '../services/transaction.service';
 import { sendSuccess } from '../utils/response';
 import { getPaginationMeta } from '../utils/pagination';
+import { serializeBigInt } from '../utils/bigint';
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -18,7 +19,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
       note,
     });
 
-    sendSuccess(res, { transaction, budget_alert }, 'Transaction created successfully', 201);
+    sendSuccess(res, serializeBigInt({ transaction, budget_alert }), 'Transaction created successfully', 201);
   } catch (err) {
     next(err);
   }
@@ -33,7 +34,7 @@ export const findById = async (req: Request, res: Response, next: NextFunction) 
 
     const transaction = await transactionService.findById(id, userId);
 
-    sendSuccess(res, transaction, 'Transaction fetched successfully', 200);
+    sendSuccess(res, serializeBigInt(transaction), 'Transaction fetched successfully', 200);
   } catch (err) {
     next(err);
   }
@@ -57,7 +58,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
       note,
     });
 
-    sendSuccess(res, transaction, 'Transaction updated successfully', 200);
+    sendSuccess(res, serializeBigInt(transaction), 'Transaction updated successfully', 200);
   } catch (err) {
     next(err);
   }
@@ -100,7 +101,7 @@ export const findMany = async (req: Request, res: Response, next: NextFunction) 
 
     const pagination = getPaginationMeta(total, page, limit);
 
-    sendSuccess(res, { transactions: data, pagination }, 'Transactions fetched successfully', 200);
+    sendSuccess(res, serializeBigInt({ transactions: data, pagination }), 'Transactions fetched successfully', 200);
   } catch (err) {
     next(err);
   }
@@ -117,7 +118,7 @@ export const getMonthlySummary = async (req: Request, res: Response, next: NextF
 
     const summary = await transactionService.getMonthlySummary(userId, year, walletId);
 
-    sendSuccess(res, summary, 'Monthly summary fetched successfully', 200);
+    sendSuccess(res, serializeBigInt(summary), 'Monthly summary fetched successfully', 200);
   } catch (err) {
     next(err);
   }

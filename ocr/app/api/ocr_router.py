@@ -16,6 +16,7 @@ from app.services.nlp_extractor import (
     calculate_confidence,
 )
 from app.services.bank_parser import detect_bank
+from app.services.pdf_export_service import generate_pdf
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -210,3 +211,30 @@ async def scan_bulk(
 
     processed = sum(1 for r in results if r.status == "ready")
     return BulkScanResponse(total=total, processed=processed, results=results)
+
+# ── PDF Export ────────────────────────────────────────────────────────────────
+
+from fastapi import Body
+from fastapi.responses import Response as FastAPIResponse
+from pydantic import BaseModel
+from typing import Any
+
+class PdfExportPayload(BaseModel):
+    transactions: list[dict[str, Any]]
+
+@router.post("/api/v1/export/pdf")
+def export_pdf(payload: PdfExportPayload):
+    """
+    Accepts a JSON list of transaction dicts from the Node.js backend and returns
+    a binary PDF file ready for download.
+    """
+    try:
+        pdf_bytes = generate_pdf(payload.transactions)
+        return FastAPIResponse(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=\"transactions.pdf\""},
+        )
+    except Exception as exc:
+        logger.error("PDF generation failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(exc)}")

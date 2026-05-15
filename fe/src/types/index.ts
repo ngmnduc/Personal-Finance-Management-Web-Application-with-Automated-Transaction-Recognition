@@ -32,7 +32,10 @@ export interface Category {
 
 export interface DashboardOverview {
   totalBalance: number
-  wallets: Wallet[]
+  wallets: Array<{ id: string; name: string; type: string; currentBalance: number; isDefault: boolean }>
+  this_month: { income: number; expense: number; net: number }
+  capital_health: { savingsRatio: number; burnRate: number }
+  budget_alerts: Array<{ category: string; percent: number; status: string }>
 }
 
 export interface Transaction {

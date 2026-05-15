@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import PageSkeleton from "../../components/shared/PageSkeleton"
 import { Wallet } from "../../types"
+import { formatCurrency } from "../../lib/utils"
 import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard, TrendingUp } from "lucide-react"
 
 export default function WalletsPage() {
@@ -119,42 +120,56 @@ export default function WalletsPage() {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0f1f3d]">Wallet Management</h1>
             <p className="text-slate-500 text-sm mt-1">Configure and monitor your financial flows.</p>
           </div>
-          {/* Pill Tab Switcher */}
-          <div className="flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0">
-            <button
-              onClick={() => setActiveTab('wallets')}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-                activeTab === 'wallets'
-                  ? 'bg-[#0f1f3d] text-white shadow-sm'
-                  : 'text-slate-500 hover:text-[#0f1f3d]'
-              }`}
-            >
-              My Wallets
-            </button>
-            <button
-              onClick={() => setActiveTab('automations')}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-                activeTab === 'automations'
-                  ? 'bg-[#0f1f3d] text-white shadow-sm'
-                  : 'text-slate-500 hover:text-[#0f1f3d]'
-              }`}
-            >
-              Automations
-            </button>
+          <div className="flex flex-row items-center flex-wrap gap-3">
+            {/* Pill Tab Switcher */}
+            <div className="flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0">
+              <button
+                onClick={() => setActiveTab('wallets')}
+                className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+                  activeTab === 'wallets'
+                    ? 'bg-[#0f1f3d] text-white shadow-sm'
+                    : 'text-slate-500 hover:text-[#0f1f3d]'
+                }`}
+              >
+                My Wallets
+              </button>
+              <button
+                onClick={() => setActiveTab('automations')}
+                className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+                  activeTab === 'automations'
+                    ? 'bg-[#0f1f3d] text-white shadow-sm'
+                    : 'text-slate-500 hover:text-[#0f1f3d]'
+                }`}
+              >
+                Automations
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Tab Content ── */}
       {activeTab === 'wallets' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Wallet Grid */}
-          <div className="col-span-1 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
-          {displayedWallets.map((w) => (
+        <section className="flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-xl font-bold text-[#0f1f3d]">My Wallets</h2>
+              <p className="text-sm text-slate-500 mt-0.5">Manage your active wallets and balances.</p>
+            </div>
+            <Button
+              onClick={openCreate}
+              className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-10 flex-shrink-0 font-semibold shadow-sm"
+            >
+              <Plus size={16} /> New Wallet
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 pb-8">
+            {displayedWallets.map((w) => (
             <Card 
               key={w.id} 
               onClick={() => setSelectedWallet(w.id)}
-              className={`relative bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-[#10b981] cursor-pointer ${selectedWalletId === w.id ? 'ring-2 ring-[#10b981] border-transparent' : ''}`}
+              className={`relative bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-[#10b981] cursor-pointer min-h-[240px] ${selectedWalletId === w.id ? 'ring-2 ring-[#10b981] border-transparent' : ''}`}
             >
               <div className="absolute inset-x-0 bottom-0 bg-slate-50/50 h-24 rounded-b-2xl pointer-events-none" style={{ clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)' }}></div>
               
@@ -171,12 +186,12 @@ export default function WalletsPage() {
                   </div>
                 </div>
               
-              <div className="mt-8 relative z-10">
+              <div className="mt-8 relative z-10 flex flex-col justify-end flex-1">
                 <p className="text-sm font-semibold text-slate-600 mb-1 flex items-center gap-2">
                   {w.name} {w.isDefault && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
                 </p>
-                <h3 className="text-2xl sm:text-3xl lg:text-[2.5rem] font-bold tracking-tight text-[#0f1f3d] leading-none mb-4 lg:mb-6 break-all">
-                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(w.currentBalance))}
+                <h3 className="text-2xl sm:text-3xl lg:text-[2.5rem] font-bold tracking-tight text-[#0f1f3d] leading-none mb-4 lg:mb-6 truncate">
+                  {formatCurrency(Number(w.currentBalance))}
                 </h3>
                 
                 <div className="flex items-center justify-between border-t border-slate-100 pt-3 lg:pt-4 gap-2">
@@ -231,36 +246,8 @@ export default function WalletsPage() {
           </Card>
           ))}
 
-          {/* Connect Institution Box */}
-          <div 
-            onClick={openCreate}
-            className="bg-transparent rounded-2xl p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-50 transition-all flex flex-col items-center justify-center cursor-pointer min-h-[240px] text-slate-400"
-          >
-            <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center mb-3">
-              <Plus size={24} className="text-slate-500" />
-            </div>
-            <span className="font-semibold text-sm">Connect Institution</span>
           </div>
-        </div>
-        
-        {/* Right Side Widgets Placeholder */}
-        <div className="col-span-1 flex flex-col gap-6 mt-2 lg:mt-0">
-          <div className="bg-white rounded-2xl p-5 lg:p-6 shadow-sm border border-slate-100 h-56 lg:h-64 flex flex-col">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">NET DISTRIBUTION</h3>
-            <div className="flex-1 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400">
-              Chart Placeholder
-            </div>
-          </div>
-          
-          <div className="bg-[#0f1f3d] rounded-2xl p-5 lg:p-6 shadow-sm h-56 lg:h-64 flex flex-col text-white relative overflow-hidden">
-             <div className="absolute inset-0 bg-gradient-to-t from-[rgba(16,185,129,0.2)] to-transparent pointer-events-none"></div>
-             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 relative z-10">MONTHLY VELOCITY</h3>
-             <div className="flex-1 border-2 border-dashed border-slate-700 rounded-xl flex items-center justify-center text-slate-500 relative z-10">
-               Bar Chart Placeholder
-             </div>
-          </div>
-        </div>
-      </div>
+        </section>
       ) : (
         <RecurringTab />
       )}

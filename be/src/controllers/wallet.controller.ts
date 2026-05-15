@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { walletService } from "../services/wallet.service";
 import { sendSuccess } from "../utils/response";
+import { serializeBigInt } from "../utils/bigint";
 
 export const walletController = {
   getWallets: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.userId;
       const wallets = await walletService.getWallets(userId);
-      sendSuccess(res, wallets, "Get wallets successfully", 200);
+      sendSuccess(res, serializeBigInt(wallets), "Get wallets successfully", 200);
     } catch (error) {
       next(error);
     }
@@ -18,7 +19,7 @@ export const walletController = {
       const userId = req.user!.userId;
       const { name, type, initialBalance } = req.body;
       const wallet = await walletService.createWallet(userId, { name, type, initialBalance });
-      sendSuccess(res, wallet, "Wallet created successfully", 201);
+      sendSuccess(res, serializeBigInt(wallet), "Wallet created successfully", 201);
     } catch (error) {
       next(error);
     }
@@ -30,7 +31,7 @@ export const walletController = {
       const { id } = req.params as {id:string};
       const { name, type, initialBalance } = req.body;
       const wallet = await walletService.updateWallet(id, userId, { name, type, initialBalance });
-      sendSuccess(res, wallet, "Wallet updated successfully", 200);
+      sendSuccess(res, serializeBigInt(wallet), "Wallet updated successfully", 200);
     } catch (error) {
       next(error);
     }
@@ -57,7 +58,7 @@ export const walletController = {
       const userId = req.user!.userId;
       const { id } = req.params as {id:string};
       const wallet = await walletService.setDefaultWallet(userId, id);
-      sendSuccess(res, wallet, "Default wallet set successfully", 200);
+      sendSuccess(res, serializeBigInt(wallet), "Default wallet set successfully", 200);
     } catch (error) {
       next(error);
     }

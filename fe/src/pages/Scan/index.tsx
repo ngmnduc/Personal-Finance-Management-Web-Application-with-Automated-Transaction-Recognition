@@ -377,44 +377,46 @@ export default function ScanPage() {
         </div>
 
         {/* ── Tabs (Single / Bulk) ── */}
-        <div className="flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0 mb-8">
-          <button
-            onClick={() => setActiveTab('single')}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-              activeTab === 'single'
-                ? 'bg-[#0f1f3d] text-white shadow-sm'
-                : 'text-slate-500 hover:text-[#0f1f3d]'
-            }`}
-          >
-            Single Scan
-          </button>
-          <button
-            onClick={() => setActiveTab('bulk')}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-              activeTab === 'bulk'
-                ? 'bg-[#0f1f3d] text-white shadow-sm'
-                : 'text-slate-500 hover:text-[#0f1f3d]'
-            }`}
-          >
-            Bulk Mode
-          </button>
-        </div>
+        {/* ════════════════════════════════ CONTROL BAR ════════════════════════════════ */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
+          {/* Left: Mode Toggle */}
+          <div className="flex w-full sm:w-auto gap-1 p-1 bg-slate-100/50 rounded-xl sm:rounded-full border border-slate-200/50 shrink-0">
+            <button
+              onClick={() => setActiveTab('single')}
+              className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'single'
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-[#0f1f3d]'
+              }`}
+            >
+              Single Scan
+            </button>
+            <button
+              onClick={() => setActiveTab('bulk')}
+              className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
+                activeTab === 'bulk'
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-[#0f1f3d]'
+              }`}
+            >
+              Multiple Scans
+            </button>
+          </div>
 
-        {/* ═══════════════════════════════════════ SINGLE MODE ══════════════════════════════════════════ */}
-        {activeTab === 'single' && (
-          <>
-        {/* ════════════════════════════════ UPLOAD PHASE ══════════════════════ */}
-        {scanPhase === 'upload' && (
-          <div className="max-w-2xl mx-auto">
-            {/* Context toggle */}
-            <div className="flex gap-2 mb-6 p-1 bg-white rounded-xl border border-slate-100 shadow-sm w-fit">
-              {(['expense', 'income'] as ScanContext[]).map((ctx) => (
+          {/* Right: Type Toggle */}
+          <div className="flex w-full sm:w-auto gap-2 p-1 bg-white rounded-xl border border-slate-100 shadow-sm shrink-0">
+            {(['expense', 'income'] as const).map((ctx) => {
+              const isActive = activeTab === 'single' ? scanContext === ctx : globalScanContext === ctx;
+              return (
                 <button
                   key={ctx}
                   type="button"
-                  onClick={() => setScanContext(ctx)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${
-                    scanContext === ctx
+                  onClick={() => {
+                    if (activeTab === 'single') setScanContext(ctx);
+                    else setGlobalScanContext(ctx);
+                  }}
+                  className={`flex-1 sm:flex-none text-center justify-center px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${
+                    isActive
                       ? ctx === 'income'
                         ? 'bg-emerald-500 text-white'
                         : 'bg-red-500 text-white'
@@ -423,15 +425,23 @@ export default function ScanPage() {
                 >
                   {ctx}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+        </div>
 
+        {/* ═══════════════════════════════════════ SINGLE MODE ══════════════════════════════════════════ */}
+        {activeTab === 'single' && (
+          <>
+        {/* ════════════════════════════════ UPLOAD PHASE ══════════════════════ */}
+        {scanPhase === 'upload' && (
+          <div className="max-w-2xl mx-auto">
             {/* Drop zone */}
             <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
               <CardContent className="p-0">
                 <div
                   {...getRootProps()}
-                  className={`flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed ${
+                  className={`min-h-[360px] flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed ${
                     isDragActive
                       ? 'border-[#10b981] bg-emerald-50/40'
                       : 'border-slate-200 hover:border-[#0f1f3d]/40 hover:bg-slate-50/50'
@@ -805,18 +815,10 @@ export default function ScanPage() {
             {/* ── Upload phase ── */}
             {bulkPhase === 'upload' && (
               <div className="max-w-2xl mx-auto">
-                {/* Context toggle */}
-                <div className="flex gap-2 mb-6 p-1 bg-white rounded-xl border border-slate-100 shadow-sm w-fit">
-                  {(['expense', 'income'] as const).map((ctx) => (
-                    <button key={ctx} type="button" onClick={() => setGlobalScanContext(ctx)}
-                      className={`px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${ globalScanContext === ctx ? ctx === 'income' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white' : 'text-slate-500 hover:text-slate-800' }`}>
-                      {ctx}
-                    </button>
-                  ))}
-                </div>
+
                 <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
                   <CardContent className="p-0">
-                    <label htmlFor="bulk-file-input" className="flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed border-slate-200 hover:border-[#0f1f3d]/40 hover:bg-slate-50/50">
+                    <label htmlFor="bulk-file-input" className="min-h-[360px] flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed border-slate-200 hover:border-[#0f1f3d]/40 hover:bg-slate-50/50">
                       <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center">
                         <Upload size={36} className="text-slate-400" />
                       </div>
@@ -824,6 +826,13 @@ export default function ScanPage() {
                         <p className="text-xl font-bold text-[#0f1f3d]">Drop multiple receipts here</p>
                         <p className="text-sm text-slate-400 mt-2">Supports JPEG, PNG, WebP and PDF — max {MAX_BULK_FILES} files</p>
                       </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="h-px w-16 bg-slate-200" />
+                        <span className="text-xs text-slate-400 font-medium">or</span>
+                        <div className="h-px w-16 bg-slate-200" />
+                      </div>
+
                       <span className="px-6 py-2.5 bg-[#0f1f3d] text-white text-sm font-bold rounded-xl hover:bg-[#1a2f57] transition-colors">
                         Choose Files
                       </span>

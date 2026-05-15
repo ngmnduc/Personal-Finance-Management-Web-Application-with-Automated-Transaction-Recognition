@@ -117,8 +117,8 @@ export default function TransactionsPage() {
           return (
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${type === 'INCOME'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-red-100 text-red-600'
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-red-100 text-red-600'
                 }`}
             >
               {type === 'INCOME' ? '' : ''} {type}

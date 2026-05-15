@@ -120,7 +120,7 @@ export const getMe = async (userId: string) => {
 
 export const updateMe = async (
   userId: string,
-  data: { name?: string; currentPassword?: string; newPassword?: string }
+  data: { name?: string; currentPassword?: string; newPassword?: string; avatarUrl?: string }
 ) => {
   const updateData: any = {};
 
@@ -142,7 +142,18 @@ export const updateMe = async (
     updateData.passwordHash = await hashPassword(data.newPassword);
   }
 
-  // 3. Update DB
+  // 3. Cập nhật avatarUrl nếu có
+  if (data.avatarUrl) {
+    updateData.avatarUrl = data.avatarUrl;
+  }
+
+  // 4. Return early if no fields provided
+  if (Object.keys(updateData).length === 0) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    return excludePassword(user);
+  }
+
+  // 5. Update DB
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: updateData,
