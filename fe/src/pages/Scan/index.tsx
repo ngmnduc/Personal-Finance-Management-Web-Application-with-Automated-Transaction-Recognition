@@ -25,7 +25,6 @@ import { Input } from '../../components/ui/input'
 import { Card, CardContent } from '../../components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import ConfidenceBadge from '../../components/shared/ConfidenceBadge'
-import PageSkeleton from '../../components/shared/PageSkeleton'
 
 import { useWallets } from '../../features/wallets/api/wallet.api'
 import { useCategories } from '../../features/categories/api/category.api'
@@ -86,8 +85,6 @@ export default function ScanPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [scanResult, setScanResult] = useState<ScanResponse | null>(null)
   const [currentFile, setCurrentFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isLockClick, setIsLockClick] = useState(false)
 
   // ── Bulk state ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single')
@@ -355,7 +352,7 @@ export default function ScanPage() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'image/*': [], 'application/pdf': [] },
     multiple: false,
-    disabled: scanPhase !== 'upload' || isLockClick,
+    disabled: scanPhase !== 'upload',
     onDropAccepted: ([file]) => handleScan(file),
     onDropRejected: () => toast.error('Unsupported file type. Use images or PDF.'),
   })
@@ -477,37 +474,7 @@ export default function ScanPage() {
                     <div className="h-px w-16 bg-slate-200" />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (isLockClick) return // Nếu đang khóa thì bỏ qua click 
-                      
-                      setIsLockClick(true) // Bật khóa
-                      fileInputRef.current?.click() // Mở cửa sổ chọn file
-                      
-                      // Tự động mở khóa sau 1 giây (1000ms) để chống bấm đúp
-                      setTimeout(() => setIsLockClick(false), 1000)
-                    }}
-                    // Thêm disabled để UI mờ đi nếu dính spam click
-                    disabled={isLockClick || scanPhase !== 'upload'}
-                    className="px-6 py-2.5 bg-[#0f1f3d] text-white text-sm font-bold rounded-xl hover:bg-[#1a2f57] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Choose from Library
-                  </button>
-
-                  {/* Hidden native file input for "Choose from Library" */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleScan(file)
-                      e.target.value = ''
-                    }}
-                  />
+                  <span className="px-6 py-2.5 bg-[#0f1f3d] text-white text-sm font-bold rounded-xl hover:bg-[#1a2f57] transition-colors inline-block cursor-pointer">Choose from Library</span>
                 </div>
               </CardContent>
             </Card>
@@ -524,7 +491,6 @@ export default function ScanPage() {
               <p className="text-lg font-bold text-[#0f1f3d]">Analyzing transfer receipt...</p>
               <p className="text-sm text-slate-400 mt-1">AI is extracting transaction details</p>
             </div>
-            <PageSkeleton />
           </div>
         )}
 
@@ -587,26 +553,6 @@ export default function ScanPage() {
                       <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and link to wallet</p>
                     </div>
 
-                    {/* Type Toggle */}
-                    <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                      {(['EXPENSE', 'INCOME'] as const).map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => form.setValue('type', t)}
-                          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 ${
-                            watchedType === t
-                              ? t === 'INCOME'
-                                ? 'bg-emerald-500 text-white shadow-sm'
-                                : 'bg-red-500 text-white shadow-sm'
-                              : 'bg-transparent text-slate-500'
-                          }`}
-                        >
-                          {t === 'INCOME' ? '↑ Income' : '↓ Expense'}
-                        </button>
-                      ))}
-                    </div>
-
                     {/* Amount — large text input */}
                     <div>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
@@ -638,7 +584,7 @@ export default function ScanPage() {
                         </label>
                         <Input
                           type="date"
-                          className="rounded-xl border-slate-200 text-sm"
+                          className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
                           {...form.register('transactionDate')}
                         />
                         {form.formState.errors.transactionDate && (
@@ -657,7 +603,7 @@ export default function ScanPage() {
                             form.setValue('categoryId', v, { shouldValidate: true })
                           }
                         >
-                          <SelectTrigger className="rounded-xl border-slate-200 text-sm">
+                          <SelectTrigger className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#0f1f3d] w-full [&>span]:text-slate-800">
                             <SelectValue placeholder="Pick..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -684,7 +630,7 @@ export default function ScanPage() {
                       <Input
                         type="text"
                         placeholder="e.g. Grab, Netflix..."
-                        className="rounded-xl border-slate-200 text-sm"
+                        className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
                         {...form.register('merchant')}
                       />
                     </div>
@@ -760,7 +706,7 @@ export default function ScanPage() {
                       <textarea
                         rows={2}
                         placeholder="Add a note..."
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f1f3d] focus:ring-offset-2 resize-none"
+                        className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0f1f3d] focus:ring-offset-0 px-3 py-2 resize-none"
                         {...form.register('note')}
                       />
                     </div>
@@ -998,15 +944,6 @@ export default function ScanPage() {
                                 <p className="text-lg font-bold text-[#0f1f3d]">Confirm Details</p>
                                 <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and save transaction</p>
                               </div>
-                              {/* Type toggle */}
-                              <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                                {(['EXPENSE', 'INCOME'] as const).map((t) => (
-                                  <button key={t} type="button" onClick={() => bulkForm.setValue('type', t)}
-                                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 ${ bulkWatchedType === t ? t === 'INCOME' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-red-500 text-white shadow-sm' : 'bg-transparent text-slate-500' }`}>
-                                    {t === 'INCOME' ? '↑ Income' : '↓ Expense'}
-                                  </button>
-                                ))}
-                              </div>
                               {/* Amount */}
                               <div>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Amount</p>
@@ -1022,12 +959,12 @@ export default function ScanPage() {
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
                                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Date</label>
-                                  <input type="date" className="flex h-10 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400" {...bulkForm.register('transactionDate')} />
+                                  <input type="date" className="flex h-11 w-full rounded-xl border border-slate-200 bg-white text-slate-800 px-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d]" {...bulkForm.register('transactionDate')} />
                                 </div>
                                 <div>
                                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Category</label>
                                   <Select value={bulkForm.watch('categoryId')} onValueChange={(v) => bulkForm.setValue('categoryId', v, { shouldValidate: true })}>
-                                    <SelectTrigger className="rounded-xl border-slate-200 text-sm"><SelectValue placeholder="Pick..." /></SelectTrigger>
+                                    <SelectTrigger className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#0f1f3d] w-full [&>span]:text-slate-800"><SelectValue placeholder="Pick..." /></SelectTrigger>
                                     <SelectContent>{bulkCategories.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}</SelectContent>
                                   </Select>
                                 </div>
@@ -1035,7 +972,7 @@ export default function ScanPage() {
                               {/* Merchant */}
                               <div>
                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Merchant</label>
-                                <input type="text" placeholder="e.g. Grab, Netflix..." className="flex h-10 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400" {...bulkForm.register('merchant')} />
+                                <input type="text" placeholder="e.g. Grab, Netflix..." className="flex h-11 w-full rounded-xl border border-slate-200 bg-white text-slate-800 px-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d]" {...bulkForm.register('merchant')} />
                               </div>
                               {/* Wallet */}
                               <div>
