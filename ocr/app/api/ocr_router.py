@@ -46,7 +46,7 @@ def get_supported_banks():
 # ── Scan ──────────────────────────────────────────────────────────────────────
 
 @router.post("/api/v1/ocr/scan", response_model=ScanResponse)
-@limiter.limit("10/minute")
+# @limiter.limit("10/minute")
 async def scan_receipt(
     request: Request,
     file: UploadFile = File(...),

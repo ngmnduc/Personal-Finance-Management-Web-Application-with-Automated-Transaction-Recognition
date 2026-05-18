@@ -132,7 +132,7 @@ async def call_openrouter(image_bytes: bytes, mime_type: str, model_id: str) -> 
     return content.strip()
 
 gemini_limiter = ProviderRateLimiter(max_calls=15, period_seconds=60.0)
-openrouter_limiter = ProviderRateLimiter(max_calls=20, period_seconds=60.0)
+openrouter_limiter = ProviderRateLimiter(max_calls=10, period_seconds=30.0)
 
 async def call_gemini_with_limit(img: bytes, mt: str) -> str:
     await gemini_limiter.acquire()
@@ -175,28 +175,28 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     num_keys = len(settings.GEMINI_API_KEYS)
 
     # ── Phase 1: cycle through every Gemini key ──
-    for attempt in range(num_keys):
-        key = settings.GEMINI_API_KEYS[(_key_index + attempt) % num_keys]
-        try:
-            logger.info("Gemini attempt %d/%d (key …%s)", attempt + 1, num_keys, key[-6:])
-            await gemini_limiter.acquire()
-            result = await call_gemini(image_bytes, mime_type, api_key=key)
-            logger.info("Gemini succeeded on attempt %d", attempt + 1)
-            # Advance the global index so the next request starts from a fresh key
-            _key_index = (_key_index + attempt + 1) % num_keys
-            return result
-        except Exception as exc:
-            err_str = str(exc)
-            logger.warning("Gemini key …%s failed: %s", key[-6:], exc)
-            errors.append(f"Gemini[{attempt}]: {exc}")
-
-            if "429" in err_str or "quota" in err_str.lower() or "rate" in err_str.lower():
-                logger.info("Gemini rate limited, trying next key")
-                continue  # try next Gemini key
-
-            if "400" in err_str:
-                logger.error("Non-retryable Gemini error, skipping to OpenRouter")
-                break  # bad prompt / image — no point retrying other keys
+    # for attempt in range(num_keys):
+    #     key = settings.GEMINI_API_KEYS[(_key_index + attempt) % num_keys]
+    #     try:
+    #         logger.info("Gemini attempt %d/%d (key …%s)", attempt + 1, num_keys, key[-6:])
+    #         await gemini_limiter.acquire()
+    #         result = await call_gemini(image_bytes, mime_type, api_key=key)
+    #         logger.info("Gemini succeeded on attempt %d", attempt + 1)
+    #         # Advance the global index so the next request starts from a fresh key
+    #         _key_index = (_key_index + attempt + 1) % num_keys
+    #         return result
+    #     except Exception as exc:
+    #         err_str = str(exc)
+    #         logger.warning("Gemini key …%s failed: %s", key[-6:], exc)
+    #         errors.append(f"Gemini[{attempt}]: {exc}")
+    # 
+    #         if "429" in err_str or "quota" in err_str.lower() or "rate" in err_str.lower():
+    #             logger.info("Gemini rate limited, trying next key")
+    #             continue  # try next Gemini key
+    # 
+    #         if "400" in err_str:
+    #             logger.error("Non-retryable Gemini error, skipping to OpenRouter")
+    #             break  # bad prompt / image — no point retrying other keys
 
     # ── Phase 2: OpenRouter fallback chain ──
     openrouter_models = [

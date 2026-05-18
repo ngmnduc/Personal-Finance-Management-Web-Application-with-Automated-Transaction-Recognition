@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 # Fix for WeasyPrint on Apple Silicon (M1/M2/M3)
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = "/opt/homebrew/lib"
-
+os.add_dll_directory(r"C:\Users\PC\GTK3-Runtime Win64\bin")
 from app.api.ocr_router import router as ocr_router
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded

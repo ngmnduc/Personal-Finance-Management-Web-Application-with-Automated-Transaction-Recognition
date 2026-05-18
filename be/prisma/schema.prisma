@@ -1,4 +1,4 @@
-// FinTrack — Prisma Schema
+// Finman — Prisma Schema
 // Sau khi điền DATABASE_URL vào .env, chạy:
 //   npm run prisma:generate   → tạo Prisma Client
 //   npm run prisma:migrate    → tạo bảng trên Supabase
