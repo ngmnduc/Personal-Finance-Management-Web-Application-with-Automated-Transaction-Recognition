@@ -51,10 +51,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-navy px-4 [filter:saturate(150%)]">
-      {/* Glassmorphism Card chuẩn bản cũ */}
-      <div className="w-[480px] max-w-[95vw] rounded-3xl border border-white/20 bg-white/10 p-8 shadow-lg shadow-[0_8px_32px_rgba(31,38,135,0.37)] backdrop-blur-[30px]">
-        
+    <div className="w-[480px] max-w-[95vw] rounded-3xl border border-white/20 bg-white/10 p-8 shadow-lg shadow-[0_8px_32px_rgba(31,38,135,0.37)] backdrop-blur-[30px]">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-white">Create account</h1>
           <p className="mt-2 text-sm text-gray-300">Manage your finances smarter</p>
@@ -143,6 +140,5 @@ export default function RegisterPage() {
           </a>
         </p>
       </div>
-    </section>
   );
 }

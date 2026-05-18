@@ -85,20 +85,24 @@ h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
+
   @media (max-width: 1024px) {
     font-size: 36px;
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
+
   @media (max-width: 1024px) {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
 }
@@ -122,12 +126,34 @@ code {
   * {
     -webkit-tap-highlight-color: transparent;
   }
+
   /* iOS Safari zoom prevention */
-  input, select, textarea { font-size: 16px !important; }
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
   /* Safe area bottom padding */
-  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
 
   :root {
+    --background: 210 33% 96%;
+    /* #f0f4f8 */
+    --foreground: 222 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 84% 4.9%;
+    --primary: 219 60% 15%;
+    /* #0f1f3d */
+    --primary-foreground: 210 40% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 88%;    /* slate-200 equivalent — visible for inputs/cards */
+    --ring: 219 60% 15%;           /* focus ring color = primary navy */
+
+    /* Legacy colors if needed */
     --color-navy: #0f1f3d;
     --color-accent: #10b981;
     --color-bg: #f0f4f8;
@@ -135,5 +161,19 @@ code {
     --color-text-primary: #0f1f3d;
     --color-text-secondary: #64748b;
     --color-border: #e2e8f0;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    /* Very dark navy */
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 219 60% 15%;
+    --muted: 217 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217 32.6% 25%;       /* visible border on dark bg */
+    --ring: 210 40% 98%;           /* focus ring = light on dark */
   }
 }

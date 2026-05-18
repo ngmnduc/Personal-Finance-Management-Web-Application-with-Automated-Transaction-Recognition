@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useGetMe, useUpdateProfile, useChangePassword } from '../../features/auth/api/auth.api'
 import { useWallets, useSetDefaultWallet } from '../../features/wallets/api/wallet.api'
 import { useAuthStore } from '../../store/auth.store'
+import { useTheme } from '../../components/ThemeProvider'
 
 import PageSkeleton from '../../components/shared/PageSkeleton'
 import { Card, CardContent } from '../../components/ui/card'
@@ -32,27 +33,27 @@ export default function SettingsPage() {
   const user = useAuthStore((s) => s.user)
 
   // Profile edit state
-  const [editMode, setEditMode]       = useState(false)
-  const [editName, setEditName]       = useState('')
-  const [editAvatar, setEditAvatar]   = useState('')
-  const [profileErr, setProfileErr]   = useState('')
+  const [editMode, setEditMode] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editAvatar, setEditAvatar] = useState('')
+  const [profileErr, setProfileErr] = useState('')
 
   // Password state
-  const [oldPwd, setOldPwd]     = useState('')
-  const [newPwd, setNewPwd]     = useState('')
-  const [confPwd, setConfPwd]   = useState('')
-  const [pwdErr, setPwdErr]     = useState('')
+  const [oldPwd, setOldPwd] = useState('')
+  const [newPwd, setNewPwd] = useState('')
+  const [confPwd, setConfPwd] = useState('')
+  const [pwdErr, setPwdErr] = useState('')
 
   // UI prefs
-  const [darkMode, setDarkMode] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   // Wallet
-  const { data: wallets = [] }    = useWallets()
-  const defaultWalletId           = wallets.find((w) => w.isDefault)?.id ?? ''
-  const [walletId, setWalletId]   = useState<string>('')
-  const setDefault                = useSetDefaultWallet()
+  const { data: wallets = [] } = useWallets()
+  const defaultWalletId = wallets.find((w) => w.isDefault)?.id ?? ''
+  const [walletId, setWalletId] = useState<string>('')
+  const setDefault = useSetDefaultWallet()
 
-  const updateProfile  = useUpdateProfile()
+  const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
 
   if (meLoading) return <PageSkeleton />
@@ -115,9 +116,11 @@ export default function SettingsPage() {
   }
 
   return (
+    // TODO [DARK MODE]: Đổi bg-[#f0f4f8] → bg-background khi triển khai dark mode
     <div className="p-4 sm:p-6 lg:p-8 min-h-full bg-[#f0f4f8] max-w-[1200px] mx-auto">
 
       {/* ── Header ── */}
+      {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground | text-slate-500 → text-muted-foreground */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#0f1f3d]">Settings</h1>
         <p className="text-sm text-slate-500 mt-1">Manage your institutional presence and security parameters.</p>
@@ -129,9 +132,11 @@ export default function SettingsPage() {
         <div className="lg:col-span-2 flex flex-col gap-6">
 
           {/* Card 1: Profile */}
+          {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-white → bg-card */}
           <Card className="rounded-2xl border border-slate-100 bg-white p-0">
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-6">
+                {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground */}
                 <h2 className="text-base font-bold text-[#0f1f3d] flex items-center gap-2">
                   <Shield size={16} className="text-[#10b981]" /> Personal Information
                 </h2>
@@ -153,6 +158,7 @@ export default function SettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
+                  {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground | text-slate-400 → text-muted-foreground */}
                   <p className="text-lg font-bold text-[#0f1f3d]">{user?.name ?? '—'}</p>
                   <p className="text-sm text-slate-400">{user?.email ?? '—'}</p>
                 </div>
@@ -160,7 +166,9 @@ export default function SettingsPage() {
 
               {editMode && (
                 <div className="flex flex-col gap-4 border-t border-slate-100 pt-6">
+                  {/* TODO [DARK MODE]: border-slate-100 → border-border */}
                   <div>
+                    {/* TODO [DARK MODE]: text-slate-400 → text-muted-foreground */}
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1.5">
                       Display Name
                     </label>
@@ -205,13 +213,16 @@ export default function SettingsPage() {
           </Card>
 
           {/* Card 2: Change Password */}
+          {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-white → bg-card */}
           <Card className="rounded-2xl border border-slate-100 bg-white p-0">
             <CardContent className="p-6 sm:p-8">
+              {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground */}
               <h2 className="text-base font-bold text-[#0f1f3d] flex items-center gap-2 mb-6">
                 <Lock size={16} className="text-[#10b981]" /> Security
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
+                  {/* TODO [DARK MODE]: text-slate-400 → text-muted-foreground */}
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1.5">
                     Old Password
                   </label>
@@ -265,27 +276,37 @@ export default function SettingsPage() {
         {/* ── Right: 1/3 ── */}
         <div className="lg:col-span-1 flex flex-col gap-6">
 
-          {/* Card 3: Appearance */}
+          {/* Card 3: Appearance — Dark Mode Toggle (LOCKED - Coming Soon) */}
+          {/* TODO [DARK MODE PHASE 2]:
+              - Unlock Switch: xóa disabled + opacity-50
+              - Kết nối: checked={theme === 'dark'} onCheckedChange={(c) => setTheme(c ? 'dark' : 'light')}
+              - Đảm bảo input.tsx + page components đã migrate semantic classes xong
+          */}
           <Card className="rounded-2xl border-none bg-[#0f1f3d] text-white p-0">
             <CardContent className="p-6">
-              <h2 className="text-base font-bold mb-1">Appearance</h2>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-base font-bold">Appearance</h2>
+                <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full tracking-wide uppercase">
+                  Coming Soon
+                </span>
+              </div>
               <p className="text-xs text-slate-400 mb-6">Set your interface preference.</p>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between opacity-50 cursor-not-allowed">
                 <div>
                   <p className="text-sm font-semibold">Dark Mode</p>
                   <p className="text-xs text-slate-400 mt-0.5">Switch to dark interface</p>
                 </div>
-                <Switch
-                  checked={darkMode}
-                  onCheckedChange={setDarkMode}
-                />
+                {/* LOCKED: disabled cho đến khi hoàn tất dark mode migration */}
+                <Switch checked={false} disabled onCheckedChange={() => {}} />
               </div>
             </CardContent>
           </Card>
 
           {/* Card 4: Default Wallet */}
+          {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-white → bg-card */}
           <Card className="rounded-2xl border border-slate-100 bg-white p-0">
             <CardContent className="p-6">
+              {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground */}
               <h2 className="text-base font-bold text-[#0f1f3d] flex items-center gap-2 mb-1">
                 <WalletIcon size={16} className="text-[#10b981]" /> Default Wallet
               </h2>
@@ -294,6 +315,7 @@ export default function SettingsPage() {
                 value={walletId || defaultWalletId}
                 onValueChange={handleSetDefaultWallet}
               >
+                {/* TODO [DARK MODE]: border-slate-200 → border-border | text-[#0f1f3d] → text-foreground */}
                 <SelectTrigger className="rounded-xl border-slate-200 text-[#0f1f3d] text-sm">
                   <SelectValue placeholder="Select wallet…" />
                 </SelectTrigger>
@@ -313,6 +335,7 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Bottom full-width ── */}
+        {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-slate-50 → bg-muted/50 */}
         <div className="lg:col-span-3">
           <Card className="rounded-2xl border border-slate-100 bg-slate-50 p-0">
             <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -321,10 +344,12 @@ export default function SettingsPage() {
                   <Info size={18} className="text-slate-500" />
                 </div>
                 <div>
+                  {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground | text-slate-400 → text-muted-foreground */}
                   <p className="text-sm font-bold text-[#0f1f3d]">Thông tin ứng dụng</p>
                   <p className="text-xs text-slate-400 mt-0.5 font-mono tracking-wider">BUILD VERSION v1.0.0</p>
                 </div>
               </div>
+              {/* TODO [DARK MODE]: border-slate-200 → border-border | text-slate-600 → text-muted-foreground */}
               <Button
                 variant="outline"
                 className="border-slate-200 text-slate-600 hover:text-[#0f1f3d] text-xs font-bold self-start sm:self-auto"
@@ -335,6 +360,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
+          {/* TODO [DARK MODE]: text-slate-400 → text-muted-foreground */}
           <p className="text-center text-xs text-slate-400 mt-5">
             © {new Date().getFullYear()} FinMan. All rights reserved.
           </p>

@@ -4,7 +4,7 @@ import BottomTabBar from './BottomTabBar'
 
 export default function AppLayout() {
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-surface">
+    <div className="flex h-screen w-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <NavSidebar />
@@ -12,7 +12,7 @@ export default function AppLayout() {
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto bg-surface p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6 pb-20 lg:pb-6">
           <Outlet />
         </main>
 

@@ -133,14 +133,14 @@ export default function CategoriesPage() {
     <div className="p-8 text-slate-800 min-h-full max-w-[1400px] mx-auto bg-[#f0f4f8]">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#0f1f3d]">Category Management</h1>
-          <p className="text-slate-500 mt-2">Organize and manage your income and expenses systematically.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#0f1f3d]">Category Management</h1>
+          <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">Organize and manage your income and expenses systematically.</p>
         </div>
         <Button
           onClick={openCreate}
-          className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-10 text-sm font-semibold"
+          className="w-full md:w-auto gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-12 md:h-10 text-sm font-semibold"
         >
           <Plus size={18} /> Add New Category
         </Button>
@@ -171,7 +171,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* ── Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
         {sortedCategories.map((c) => {
           const Icon = resolveIcon(c.icon)
           const isSystem = !c.userId
@@ -179,34 +179,44 @@ export default function CategoriesPage() {
           return (
             <Card
               key={c.id}
-              className="relative bg-white rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md transition-shadow h-[160px] p-0 overflow-visible"
+              className="relative bg-white rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md transition-shadow h-auto md:h-[160px] p-0 overflow-visible"
             >
-              <CardContent className="flex flex-col justify-between h-full p-6">
-                {/* Top row */}
-                <div className="flex items-start justify-between">
-                  {/* Icon */}
+              <CardContent className="flex flex-row justify-between items-center md:items-start h-full p-4 md:p-6 gap-3 md:gap-0">
+                
+                {/* Khối Trái (Mobile) / Khối Trên & Dưới (Desktop) */}
+                <div className="flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 w-full">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${iconWrapClass}`}>
                     <Icon size={22} />
                   </div>
+                  
+                  {/* Tên & Type: Ép xuống đáy khi ở màn hình Desktop (md:absolute) */}
+                  <div className="md:absolute md:bottom-6 md:left-6">
+                    <h3 className="text-sm md:text-base font-bold text-[#0f1f3d] leading-snug">{c.name}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 md:mt-1">
+                      {c.type === "EXPENSE" ? "Expense" : "Income"}
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Badge / Actions */}
+                {/* Khối Phải (Mobile) / Khối Góc Trái Trên (Desktop) */}
+                <div className="md:absolute md:top-6 md:right-6 flex-shrink-0">
                   {isSystem ? (
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                      <Lock size={11} /> System
+                    <span className="flex items-center gap-1 px-2 md:px-2.5 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                      <Lock size={11} /> <span className="hidden sm:inline">System</span>
                     </span>
                   ) : (
                     <div
-                      className="flex items-center gap-2 relative"
+                      className="flex items-center gap-1 md:gap-2 relative"
                       ref={activeDropdown === c.id ? dropdownRef : null}
                     >
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                      <span className="hidden sm:block px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
                         Custom
                       </span>
                       <button
                         className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-50 transition-colors"
                         onClick={(e) => toggleDropdown(c.id, e)}
                       >
-                        <MoreVertical size={16} />
+                        <MoreVertical size={18} />
                       </button>
 
                       {activeDropdown === c.id && (
@@ -229,14 +239,6 @@ export default function CategoriesPage() {
                       )}
                     </div>
                   )}
-                </div>
-
-                {/* Bottom: name + type label */}
-                <div>
-                  <h3 className="text-base font-bold text-[#0f1f3d] leading-snug">{c.name}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                    {c.type === "EXPENSE" ? "Expense" : "Income"}
-                  </p>
                 </div>
               </CardContent>
             </Card>

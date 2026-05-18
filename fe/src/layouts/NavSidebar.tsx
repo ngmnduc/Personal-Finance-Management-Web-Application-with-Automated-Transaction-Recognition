@@ -54,13 +54,13 @@ export default function NavSidebar() {
       </div>
 
       {/* Bottom Links */}
-      <div className="flex flex-col gap-1 px-3 pb-6 text-xs text-slate-500">
-        <button className="flex items-center gap-2 px-3 py-1.5 hover:text-slate-300">
+      <div className="flex flex-col gap-1 px-3 pb-6 text-xs text-slate-400">
+        <button className="flex items-center gap-2 px-3 py-1.5 hover:text-slate-300 transition-colors">
           <LifeBuoy size={14} /> Support
         </button>
         <button 
           onClick={() => navigate(ROUTES.SETTINGS)}
-          className={`flex items-center gap-2 px-3 py-1.5 hover:text-slate-300 ${
+          className={`flex items-center gap-2 px-3 py-1.5 transition-colors hover:text-slate-300 ${
             isActive(ROUTES.SETTINGS) ? 'text-brand-green' : ''
           }`}
         >
