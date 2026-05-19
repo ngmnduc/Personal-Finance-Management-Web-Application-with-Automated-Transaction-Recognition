@@ -7,6 +7,9 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    fontFamily: {
+      sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+    },
     extend: {
       colors: {
         background: 'hsl(var(--background))',

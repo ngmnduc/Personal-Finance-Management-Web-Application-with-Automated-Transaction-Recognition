@@ -5,6 +5,7 @@ import AppLayout from '../layouts/AppLayout'
 import PageSkeleton from '../components/shared/PageSkeleton'
 import AuthLayout from '../layouts/AuthLayout'
 
+const LandingPage = lazy(() => import('../pages/Landing/index'))
 const LoginPage = lazy(() => import('../pages/Auth/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/Auth/RegisterPage'))
 const DashboardPage = lazy(() => import('../pages/Dashboard/index'))
@@ -18,10 +19,12 @@ const CategoriesPage = lazy(() => import('../pages/categories/index'))
 
 const router = createBrowserRouter([
   {
+    path: '/',
+    element: <Suspense fallback={<PageSkeleton />}><LandingPage /></Suspense>,
+  },
+  {
     element: <AuthLayout />,
     children: [
-      { path: '/', element: <Navigate to="/login" replace /> },
-
       { path: '/login', element: <Suspense fallback={<PageSkeleton />}><LoginPage /></Suspense> },
       { path: '/register', element: <Suspense fallback={<PageSkeleton />}><RegisterPage /></Suspense> },
     ],
