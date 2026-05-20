@@ -138,6 +138,15 @@ code {
     font-size: 16px !important;
   }
 
+  /* Override browser autofill styling */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #0f1f3d !important;
+  }
+
   /* Safe area bottom padding */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 16px);

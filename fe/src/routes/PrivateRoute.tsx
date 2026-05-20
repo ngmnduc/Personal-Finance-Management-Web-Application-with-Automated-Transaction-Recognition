@@ -7,7 +7,8 @@ export default function PrivateRoute() {
   const isAuthLoading = useAuthStore((state) => state.isAuthLoading); 
 
   if(isAuthLoading) {return <PageSkeleton/>}
-  if (!useIsAuthenticated) {
+  const isAuthenticated = useIsAuthenticated();
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 

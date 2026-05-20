@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Edit2, Lock, Wallet as WalletIcon, Shield, Info } from 'lucide-react'
+import { Edit2, Lock, Wallet as WalletIcon, Shield, Info, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { useGetMe, useUpdateProfile, useChangePassword } from '../../features/auth/api/auth.api'
+import { useGetMe, useUpdateProfile, useChangePassword, useLogout } from '../../features/auth/api/auth.api'
 import { useWallets, useSetDefaultWallet } from '../../features/wallets/api/wallet.api'
 import { useAuthStore } from '../../store/auth.store'
 import { useTheme } from '../../components/ThemeProvider'
@@ -55,6 +55,7 @@ export default function SettingsPage() {
 
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
+  const logoutMutation = useLogout()
 
   if (meLoading) return <PageSkeleton />
 
@@ -356,6 +357,25 @@ export default function SettingsPage() {
                 onClick={() => window.open('mailto:support@finman.app')}
               >
                 Support Center
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Account Actions / Danger Zone */}
+          <Card className="rounded-2xl border border-red-100 bg-red-50/30 p-0 mt-6">
+            <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-red-600">Account Actions</p>
+                <p className="text-xs text-slate-500 mt-0.5">Securely log out of your account on this device.</p>
+              </div>
+              <Button
+                variant="destructive"
+                className="bg-red-500 hover:bg-red-600 text-white font-bold w-full sm:w-auto flex items-center gap-2"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+              >
+                <LogOut size={16} />
+                {logoutMutation.isPending ? 'Logging out...' : 'Log Out'}
               </Button>
             </CardContent>
           </Card>

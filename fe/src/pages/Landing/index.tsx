@@ -54,13 +54,13 @@ export default function LandingPage() {
   }, [])
 
   const handleGetStarted = () => {
-    navigate('/login')
+    navigate('/register')
   }
 
   if (!isMounted) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b1120] via-[#0f1f3d] to-[#0b1120] text-white font-sans overflow-hidden">
+    <div className="w-full min-h-screen bg-gradient-to-b from-[#0b1120] via-[#0f1f3d] to-[#0b1120] text-white font-sans overflow-hidden">
       {/* Animated background gradient */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -394,7 +394,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative border-t border-white/5 mt-20 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto text-center text-[#64748b]">
-          <p>&copy; 2024 Finman. All rights reserved.</p>
+          <p>&copy; 2026 Finman. All rights reserved.</p>
         </div>
       </footer>
     </div>

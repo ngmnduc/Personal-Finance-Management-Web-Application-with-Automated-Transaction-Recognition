@@ -1,4 +1,5 @@
 import axiosInstance from '../../../lib/axios';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { API_ENDPOINTS, QUERY_KEYS } from '../../../lib/constants';
@@ -24,6 +25,17 @@ export const authApi = {
 
   logout: async () => {
     await axiosInstance.post(API_ENDPOINTS.AUTH.LOGOUT);
+  },
+
+  checkHealth: async (): Promise<boolean> => {
+    try {
+      // Sử dụng trực tiếp axiosInstance hoặc tạo một request độc lập hướng tới endpoint /health
+      // Định cấu hình timeout cực ngắn (ví dụ: 5000ms) vì endpoint này không truy vấn DB
+      await axiosInstance.get('/health', { timeout: 5000 });
+      return true;
+    } catch (error) {
+      return false;
+    }
   },
 };
 
@@ -68,3 +80,25 @@ export const useChangePassword = () =>
     onSuccess: () => toast.success('Password changed successfully!'),
     onError: (err: Error) => toast.error(err.message || 'Failed to change password'),
   })
+
+export const useLogout = () => {
+  const queryClient = useQueryClient();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: authApi.logout,
+    onSuccess: () => {
+      clearAuth();
+      queryClient.clear();
+      navigate('/login');
+      toast.success('Logged out successfully');
+    },
+    onError: () => {
+      // Force clear local state even if backend fails
+      clearAuth();
+      queryClient.clear();
+      navigate('/login');
+    },
+  });
+};
