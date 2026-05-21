@@ -5,12 +5,44 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+# NOTE CẦN SỬA: Di chuyển dòng khai báo đối tượng logger lên vị trí này, ngay sau cấu hình logging toàn cục
+# để đảm bảo các khối logic xử lý tự động phát hiện thư viện phía dưới có thể sử dụng mà không gặp lỗi NameError.
+logger = logging.getLogger(__name__)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+
+# ── Dynamic GTK3 Discovery (WeasyPrint Dependency) ─────────────────────────────
 # Fix for WeasyPrint on Apple Silicon (M1/M2/M3)
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = "/opt/homebrew/lib"
-os.add_dll_directory(r"C:\Users\PC\GTK3-Runtime Win64\bin")
+
+# Windows: Avoid hardcoding by using Dynamic Discovery
+if os.name == 'nt' and hasattr(os, 'add_dll_directory'):
+    gtk_path = None
+    
+    # 1. Priority: Custom Environment Variable
+    gtk_path = os.environ.get("GTK_WIN_PATH")
+    
+    # 2. Fallback: Standard Installation Path
+    if not gtk_path:
+        std_path = r"C:\Program Files\GTK3-Runtime Win64\bin"
+        if os.path.exists(std_path):
+            gtk_path = std_path
+            
+    # 3. Fallback: Search System PATH
+    if not gtk_path:
+        for path in os.environ.get('PATH', '').split(os.pathsep):
+            if ('GTK3' in path or 'GTK' in path) and os.path.exists(path):
+                gtk_path = path
+                break
+    
+    # Apply configuration
+    if gtk_path:
+        os.add_dll_directory(gtk_path)
+        logger.info(f"Windows: GTK3 library loaded from '{gtk_path}'")
+    else:
+        logger.warning("Windows: GTK3 library not found. WeasyPrint may fail.")
 from app.api.ocr_router import router as ocr_router
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -18,8 +50,6 @@ from app.utils.rate_limiter import limiter
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.services.recurring_service import process_recurring_incomes, process_recurring_rules
-
-logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Finman OCR Service", version="1.0.0")
 
