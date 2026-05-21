@@ -6,9 +6,9 @@ import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import authRoutes from './routes/auth.routes';
 import dashboardRoutes from './routes/dashboard.routes';
-import  walletRoutes from './routes/wallet.routes';
-import  categoryRoutes from './routes/category.routes';
-import  transactionRoutes from './routes/transaction.routes';
+import walletRoutes from './routes/wallet.routes';
+import categoryRoutes from './routes/category.routes';
+import transactionRoutes from './routes/transaction.routes';
 import ocrRoutes from './routes/ocr.routes';
 import budgetRoutes from './routes/budget.routes';
 import recurringIncomeRoutes from './routes/recurringIncome.routes';
@@ -45,7 +45,7 @@ app.use(cors({
   origin: env.CORS_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 // --------------- Body parser ---------------
@@ -83,18 +83,18 @@ app.get('/health', (_req, res) => {
 });
 
 // --------------- Routes (mount here) ---------------
- app.use('/api/v1/auth', authRoutes);
- app.use('/api/v1/wallets', walletRoutes);
- app.use('/api/v1/categories', categoryRoutes);
- app.use('/api/v1/transactions', transactionRoutes);
- app.use('/api/v1/ocr', ocrRoutes);
- app.use('/api/v1/budgets', budgetRoutes);
- app.use('/api/v1/goals', goalRoutes);
- app.use('/api/v1/recurring-incomes', recurringIncomeRoutes);
- app.use('/api/v1/recurring', recurringRuleRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/wallets', walletRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/transactions', transactionRoutes);
+app.use('/api/v1/ocr', ocrRoutes);
+app.use('/api/v1/budgets', budgetRoutes);
+app.use('/api/v1/goals', goalRoutes);
+app.use('/api/v1/recurring-incomes', recurringIncomeRoutes);
+app.use('/api/v1/recurring', recurringRuleRoutes);
 // app.use('/api/v1/recurring', recurringRoutes); // legacy — replaced by recurringRuleRoutes
 app.use('/api/v1/dashboard', dashboardRoutes);
- app.use('/api/v1/export', exportRoutes);
+app.use('/api/v1/export', exportRoutes);
 
 // --------------- 404 fallback ---------------
 app.use((_req, res) => {
