@@ -32,11 +32,10 @@ export default function NavSidebar() {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive(item.path)
-                  ? 'border-l-[3px] border-brand-green bg-navy-light text-white'
-                  : 'text-slate-400 hover:bg-navy-light hover:text-white'
-              }`}
+              className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${isActive(item.path)
+                ? 'border-l-[3px] border-brand-green bg-navy-light text-white'
+                : 'text-slate-400 hover:bg-navy-light hover:text-white'
+                }`}
             >
               <item.icon size={18} />
               {item.label}
@@ -58,11 +57,10 @@ export default function NavSidebar() {
         <button className="flex items-center gap-2 px-3 py-1.5 hover:text-slate-300 transition-colors">
           <LifeBuoy size={14} /> Support
         </button>
-        <button 
+        <button
           onClick={() => navigate(ROUTES.SETTINGS)}
-          className={`flex items-center gap-2 px-3 py-1.5 transition-colors hover:text-slate-300 ${
-            isActive(ROUTES.SETTINGS) ? 'text-brand-green' : ''
-          }`}
+          className={`flex items-center gap-2 px-3 py-1.5 transition-colors hover:text-slate-300 ${isActive(ROUTES.SETTINGS) ? 'text-brand-green' : ''
+            }`}
         >
           <Settings size={14} /> Settings
         </button>

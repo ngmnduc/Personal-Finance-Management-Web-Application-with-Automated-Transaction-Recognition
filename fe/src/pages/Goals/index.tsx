@@ -89,8 +89,8 @@ function BudgetProgressBar({ percent }: { percent: number }) {
   const clamped = Math.min(percent, 100)
   const color =
     percent > 100 ? 'bg-red-500 animate-pulse' :
-    percent >= 80  ? 'bg-amber-500' :
-                     'bg-emerald-500'
+      percent >= 80 ? 'bg-amber-500' :
+        'bg-emerald-500'
   return (
     <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
       <div
@@ -106,8 +106,8 @@ function BudgetProgressBar({ percent }: { percent: number }) {
 function BudgetStatusBadge({ status }: { status: Budget['status'] }) {
   const config = {
     exceeded: { label: 'HIGH ALERT', className: 'bg-red-50 text-red-600 border border-red-200' },
-    warning:  { label: 'NEAR LIMIT', className: 'bg-amber-50 text-amber-600 border border-amber-200' },
-    ok:       { label: 'ON TRACK',   className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+    warning: { label: 'NEAR LIMIT', className: 'bg-amber-50 text-amber-600 border border-amber-200' },
+    ok: { label: 'ON TRACK', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
   }[status]
 
   return (
@@ -130,8 +130,8 @@ const BudgetCard = memo(function BudgetCard({ budget, onEdit, onDelete }: Budget
 
   const amountColor =
     budget.status === 'exceeded' ? 'text-red-500' :
-    budget.status === 'warning'  ? 'text-amber-500' :
-                                   'text-[#0f1f3d]'
+      budget.status === 'warning' ? 'text-amber-500' :
+        'text-[#0f1f3d]'
 
   const handleDelete = () => {
     if (window.confirm(`Delete budget for "${budget.category.name}"? This action cannot be undone.`)) {
@@ -239,11 +239,10 @@ function GoalStatusBadge({ status }: { status: Goal['status'] }) {
   if (status === 'ACTIVE') return null
   return (
     <span
-      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-        status === 'COMPLETED'
-          ? 'bg-[#10b981]/10 text-[#10b981]'
-          : 'bg-slate-200 text-slate-500'
-      }`}
+      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${status === 'COMPLETED'
+        ? 'bg-[#10b981]/10 text-[#10b981]'
+        : 'bg-slate-200 text-slate-500'
+        }`}
     >
       {status === 'COMPLETED' ? 'Completed' : 'Abandoned'}
     </span>
@@ -265,9 +264,8 @@ function GoalCard({ goal, onEdit, onDeposit, onDelete }: GoalCardProps) {
 
   return (
     <div
-      className={`bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col gap-4 transition-opacity ${
-        goal.status === 'ABANDONED' ? 'opacity-50' : isCompleted ? 'opacity-75' : ''
-      }`}
+      className={`bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col gap-4 transition-opacity ${goal.status === 'ABANDONED' ? 'opacity-50' : isCompleted ? 'opacity-75' : ''
+        }`}
     >
       {/* Header: name + status + menu */}
       <div className="flex items-center gap-2">
@@ -338,9 +336,9 @@ function GoalCard({ goal, onEdit, onDeposit, onDelete }: GoalCardProps) {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
                 Goal
               </p>
-              <AmountDisplay 
-                value={goal.targetAmount} 
-                className="text-sm text-slate-400 truncate block" 
+              <AmountDisplay
+                value={goal.targetAmount}
+                className="text-sm text-slate-400 truncate block"
               />
             </div>
           </div>
@@ -427,8 +425,8 @@ export default function PlanningHubPage() {
   const activeGoals = goals.filter((g) => g.status === 'ACTIVE')
 
   return (
-    <div className="min-h-full bg-[#f0f4f8]">
-      <div className="max-w-[1400px] mx-auto p-8 space-y-16">
+    <div className="min-h-full">
+      <div className="max-w-[1400px] mx-auto p-8">
 
         {/* ══════════════════════════════════════════════════════════════════
             SECTION 1 — ACTIVE BUDGETS
@@ -436,15 +434,14 @@ export default function PlanningHubPage() {
         <section className="flex flex-col gap-6">
 
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Budget Control</p>
               <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Active Budgets</h1>
               <p className="text-slate-500 text-sm mt-1">Real-time expenditure tracking vs. allocated limits.</p>
             </div>
             <Button
               onClick={openCreateBudget}
-              className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-11 flex-shrink-0 font-semibold shadow-sm"
+              className="bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl flex items-center gap-2 px-5"
             >
               <Plus size={18} /> Create Budget
             </Button>
@@ -456,11 +453,10 @@ export default function PlanningHubPage() {
               <button
                 key={value}
                 onClick={() => setBudgetFilter(value)}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
-                  budgetFilter === value
-                    ? 'bg-[#0f1f3d] text-white shadow-sm'
-                    : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'
-                }`}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${budgetFilter === value
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'
+                  }`}
               >
                 {label}
               </button>
@@ -502,7 +498,7 @@ export default function PlanningHubPage() {
         <section className="flex flex-col gap-6">
 
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Goal Tracking</p>
               <h2 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Saving Goals</h2>
@@ -510,7 +506,7 @@ export default function PlanningHubPage() {
             </div>
             <Button
               onClick={handleCreateGoal}
-              className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-11 flex-shrink-0 font-semibold shadow-sm"
+              className="bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl flex items-center gap-2 px-5"
             >
               <Plus size={18} /> Create Goal
             </Button>

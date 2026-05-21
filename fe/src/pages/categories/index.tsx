@@ -130,19 +130,20 @@ export default function CategoriesPage() {
     : "text-emerald-600 bg-emerald-50"
 
   return (
-    <div className="p-8 text-slate-800 min-h-full max-w-[1400px] mx-auto bg-[#f0f4f8]">
+    <div className="min-h-full">
+      <div className="max-w-[1400px] mx-auto p-8">
 
       {/* ── Header ── */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#0f1f3d]">Category Management</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1 md:mt-2">Organize and manage your income and expenses systematically.</p>
+          <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Category Management</h1>
+          <p className="text-slate-500 text-sm mt-1">Organize and manage your income and expenses systematically.</p>
         </div>
         <Button
           onClick={openCreate}
-          className="w-full md:w-auto gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-12 md:h-10 text-sm font-semibold"
+          className="bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl flex items-center gap-2 px-5"
         >
-          <Plus size={18} /> Add New Category
+          <Plus size={18} /> Create Category
         </Button>
       </div>
 
@@ -150,21 +151,19 @@ export default function CategoriesPage() {
       <div className="mb-8 flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0">
         <button
           onClick={() => setActiveTab("EXPENSE")}
-          className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-            activeTab === "EXPENSE"
-              ? "bg-[#0f1f3d] text-white shadow-sm"
-              : "text-slate-500 hover:text-[#0f1f3d]"
-          }`}
+          className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === "EXPENSE"
+            ? "bg-[#0f1f3d] text-white shadow-sm"
+            : "text-slate-500 hover:text-[#0f1f3d]"
+            }`}
         >
           Expenses
         </button>
         <button
           onClick={() => setActiveTab("INCOME")}
-          className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-            activeTab === "INCOME"
-              ? "bg-[#0f1f3d] text-white shadow-sm"
-              : "text-slate-500 hover:text-[#0f1f3d]"
-          }`}
+          className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === "INCOME"
+            ? "bg-[#0f1f3d] text-white shadow-sm"
+            : "text-slate-500 hover:text-[#0f1f3d]"
+            }`}
         >
           Income
         </button>
@@ -179,16 +178,16 @@ export default function CategoriesPage() {
           return (
             <Card
               key={c.id}
-              className="relative bg-white rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md transition-shadow h-auto md:h-[160px] p-0 overflow-visible"
+              className="relative bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow h-auto md:h-[160px] p-0 overflow-visible"
             >
               <CardContent className="flex flex-row justify-between items-center md:items-start h-full p-4 md:p-6 gap-3 md:gap-0">
-                
+
                 {/* Khối Trái (Mobile) / Khối Trên & Dưới (Desktop) */}
                 <div className="flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 w-full">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${iconWrapClass}`}>
                     <Icon size={22} />
                   </div>
-                  
+
                   {/* Tên & Type: Ép xuống đáy khi ở màn hình Desktop (md:absolute) */}
                   <div className="md:absolute md:bottom-6 md:left-6">
                     <h3 className="text-sm md:text-base font-bold text-[#0f1f3d] leading-snug">{c.name}</h3>
@@ -265,6 +264,8 @@ export default function CategoriesPage() {
         category={editingCategory}
         defaultType={activeTab}
       />
+      </div>
     </div>
   )
 }
+

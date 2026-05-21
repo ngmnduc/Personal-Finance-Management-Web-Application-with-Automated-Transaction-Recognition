@@ -9,9 +9,8 @@ export default function BottomTabBar() {
 
   const isActive = (path: string) => location.pathname === path
 
-  const navButtonClass = (path: string) => `flex flex-col items-center justify-center gap-1 py-1 w-[20%] text-[10px] font-medium transition-colors ${
-    isActive(path) ? 'text-[#10b981]' : 'text-muted-foreground'
-  }`
+  const navButtonClass = (path: string) => `flex flex-col items-center justify-center gap-1 py-1 w-[20%] text-[10px] font-medium transition-colors ${isActive(path) ? 'text-[#10b981]' : 'text-muted-foreground'
+    }`
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-between px-2 pb-[env(safe-area-inset-bottom)] bg-card border-t border-border h-16">

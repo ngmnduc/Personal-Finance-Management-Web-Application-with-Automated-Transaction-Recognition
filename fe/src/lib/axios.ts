@@ -4,9 +4,10 @@ import { useAuthStore } from '../store/auth.store'
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 45000,
-  withCredentials: true,
   headers: { 'Content-Type': 'application/json' }
+
 })
+delete apiClient.defaults.headers.common['X-Requested-With'];
 
 let isRefreshing = false
 let failedQueue: Array<{ resolve: Function; reject: Function }> = []
@@ -25,7 +26,6 @@ const processQueue = (error: any, token: string | null = null) => {
 // Request Interceptor: Gắn Access Token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    config.headers['X-Requested-With'] = 'XMLHttpRequest'
     const token = useAuthStore.getState().accessToken
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -73,17 +73,17 @@ apiClient.interceptors.response.use(
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
           refreshToken
         })
-        
+
         const newAccessToken = res.data.data.accessToken
         const newRefreshToken = res.data.data.refreshToken || refreshToken
-        
+
         // Cập nhật state global
         if (user) {
           setAuth(user, newAccessToken, newRefreshToken)
         }
 
         processQueue(null, newAccessToken)
-        
+
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return apiClient(originalRequest)
       } catch (refreshError) {
@@ -97,14 +97,14 @@ apiClient.interceptors.response.use(
     }
 
     // Các lỗi khác: extract message
-    // Bổ sung logic kiểm tra lỗi Timeout do ECONNABORTED
+    // logic kiểm tra lỗi Timeout do ECONNABORTED
     if (error.code === 'ECONNABORTED') {
       return Promise.reject(new Error('Request timeout'))
     }
 
     // Đối với các lỗi khác, trích xuất dữ liệu message từ error.response?.data hoặc trả về lỗi mặc định
     const message = (error.response?.data as any)?.message || 'An error occurred'
-    
+
     // Tạo thực thể lỗi mới và đính kèm thêm các thuộc tính response, code để hỗ trợ nhận biết lỗi mất kết nối ở FE
     const customError = new Error(message) as any
     if (error.response) {

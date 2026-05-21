@@ -13,14 +13,14 @@ import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Sma
 export default function WalletsPage() {
   const { data: wallets, isLoading } = useWallets()
   const { selectedWalletId, setSelectedWallet } = useUiStore()
-  
+
   const setDefaultWallet = useSetDefaultWallet()
   const deleteWallet = useDeleteWallet()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
   const [activeTab, setActiveTab] = useState<'wallets' | 'automations'>('wallets')
-  
+
   // Pagination
   const [currentPage] = useState(1) // Keep logic, ignore UI update for simple display
   const itemsPerPage = 100 // Show all for now based on mockup
@@ -41,7 +41,7 @@ export default function WalletsPage() {
   if (isLoading) return <PageSkeleton />
 
   const safeWallets = wallets || []
-  
+
   const displayedWallets = safeWallets.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -96,7 +96,7 @@ export default function WalletsPage() {
       default: return <CreditCard size={20} className="text-white" />
     }
   }
-  
+
   const getWalletColor = (type: string) => {
     switch (type) {
       case 'bank': return 'bg-[#0f1f3d]' // Dark navy for bank
@@ -111,13 +111,13 @@ export default function WalletsPage() {
   }
 
   return (
-    <div className="p-8 text-slate-800 min-h-full bg-[#f8fafc]">
+    <div className="min-h-full">
+      <div className="max-w-[1400px] mx-auto p-8">
       {/* ── Header ── */}
       <div className="mb-8">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Asset Overview</p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0f1f3d]">Wallet Management</h1>
+            <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Wallet Management</h1>
             <p className="text-slate-500 text-sm mt-1">Configure and monitor your financial flows.</p>
           </div>
           <div className="flex flex-row items-center flex-wrap gap-3">
@@ -125,21 +125,19 @@ export default function WalletsPage() {
             <div className="flex gap-1 p-1 bg-slate-100/50 rounded-full w-fit border border-slate-200/50 flex-shrink-0">
               <button
                 onClick={() => setActiveTab('wallets')}
-                className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-                  activeTab === 'wallets'
-                    ? 'bg-[#0f1f3d] text-white shadow-sm'
-                    : 'text-slate-500 hover:text-[#0f1f3d]'
-                }`}
+                className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === 'wallets'
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-[#0f1f3d]'
+                  }`}
               >
                 My Wallets
               </button>
               <button
                 onClick={() => setActiveTab('automations')}
-                className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-                  activeTab === 'automations'
-                    ? 'bg-[#0f1f3d] text-white shadow-sm'
-                    : 'text-slate-500 hover:text-[#0f1f3d]'
-                }`}
+                className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === 'automations'
+                  ? 'bg-[#0f1f3d] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-[#0f1f3d]'
+                  }`}
               >
                 Automations
               </button>
@@ -160,97 +158,98 @@ export default function WalletsPage() {
               onClick={openCreate}
               className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-10 flex-shrink-0 font-semibold shadow-sm"
             >
-              <Plus size={16} /> New Wallet
+              <Plus size={16} /> Create Wallet
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 pb-8">
             {displayedWallets.map((w) => (
-            <Card 
-              key={w.id} 
-              onClick={() => setSelectedWallet(w.id)}
-              className={`relative bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-[#10b981] cursor-pointer min-h-[240px] ${selectedWalletId === w.id ? 'ring-2 ring-[#10b981] border-transparent' : ''}`}
-            >
-              <div className="absolute inset-x-0 bottom-0 bg-slate-50/50 h-24 rounded-b-2xl pointer-events-none" style={{ clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)' }}></div>
-              
-              <CardContent className="p-4 sm:p-6 z-10 flex flex-col h-full justify-between relative">
-                <div>
-                  <div className="flex items-start justify-between">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getWalletColor(w.type)}`}>
-                      {getWalletIcon(w.type)}
-                    </div>
-                    
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#86efac]/20 text-[#166534]`}>
-                      {getWalletBadgeType(w.type)}
-                    </span>
-                  </div>
-                </div>
-              
-              <div className="mt-8 relative z-10 flex flex-col justify-end flex-1">
-                <p className="text-sm font-semibold text-slate-600 mb-1 flex items-center gap-2">
-                  {w.name} {w.isDefault && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
-                </p>
-                <h3 className="text-2xl sm:text-3xl lg:text-[2.5rem] font-bold tracking-tight text-[#0f1f3d] leading-none mb-4 lg:mb-6 truncate">
-                  {formatCurrency(Number(w.currentBalance))}
-                </h3>
-                
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3 lg:pt-4 gap-2">
-                  <div className="flex items-center text-xs sm:text-sm font-medium text-slate-500 min-w-0">
-                    <span className="text-[#10b981] flex items-center">
-                       <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /> +12.4% 
-                    </span>
-                    <span className="ml-1 text-slate-400 truncate">this month</span>
-                  </div>
-                  
-                  <div className="relative flex-shrink-0" ref={activeDropdown === w.id ? dropdownRef : null}>
-                    <button 
-                      className="text-[#0f1f3d] font-bold text-sm tracking-wide hover:underline focus:outline-none"
-                      onClick={(e) => toggleDropdown(w.id, e)}
-                    >
-                      Manage
-                    </button>
-                    
-                    {activeDropdown === w.id && (
-                      <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-50 py-1 overflow-hidden origin-bottom-right">
-                        {!w.isDefault && (
-                          <Button 
-                            variant="ghost" size="sm"
-                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-start gap-2 h-auto rounded-none"
-                            onClick={(e) => handleSetDefault(w, e)}
-                          >
-                            <Star size={14} /> Set Default
-                          </Button>
-                        )}
-                        <Button 
-                          variant="ghost" size="sm"
-                          className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-start gap-2 h-auto rounded-none"
-                          onClick={(e) => handleEdit(w, e)}
-                        >
-                          <Edit2 size={14} /> Edit
-                        </Button>
-                        <div className="h-px bg-slate-100 my-1"></div>
-                        <Button 
-                          variant="ghost" size="sm"
-                          className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center justify-start gap-2 h-auto rounded-none"
-                          onClick={(e) => handleDelete(w, e)}
-                        >
-                          {Number(w.currentBalance) > 0 ? <Archive size={14} /> : <Trash2 size={14} />} 
-                          {Number(w.currentBalance) > 0 ? 'Archive' : 'Delete'}
-                        </Button>
+              <Card
+                key={w.id}
+                onClick={() => setSelectedWallet(w.id)}
+                className={`relative bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-[#10b981] cursor-pointer min-h-[240px] ${selectedWalletId === w.id ? 'ring-2 ring-[#10b981] border-transparent' : ''}`}
+              >
+                <div className="absolute inset-x-0 bottom-0 bg-slate-50/50 h-24 rounded-b-2xl pointer-events-none" style={{ clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)' }}></div>
+
+                <CardContent className="p-4 sm:p-6 z-10 flex flex-col h-full justify-between relative">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getWalletColor(w.type)}`}>
+                        {getWalletIcon(w.type)}
                       </div>
-                    )}
+
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#86efac]/20 text-[#166534]`}>
+                        {getWalletBadgeType(w.type)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          ))}
+
+                  <div className="mt-8 relative z-10 flex flex-col justify-end flex-1">
+                    <p className="text-sm font-semibold text-slate-600 mb-1 flex items-center gap-2">
+                      {w.name} {w.isDefault && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
+                    </p>
+                    <h3 className="text-2xl sm:text-3xl lg:text-[2.5rem] font-bold tracking-tight text-[#0f1f3d] leading-none mb-4 lg:mb-6 truncate">
+                      {formatCurrency(Number(w.currentBalance))}
+                    </h3>
+
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 lg:pt-4 gap-2">
+                      <div className="flex items-center text-xs sm:text-sm font-medium text-slate-500 min-w-0">
+                        <span className="text-[#10b981] flex items-center">
+                          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /> +12.4%
+                        </span>
+                        <span className="ml-1 text-slate-400 truncate">this month</span>
+                      </div>
+
+                      <div className="relative flex-shrink-0" ref={activeDropdown === w.id ? dropdownRef : null}>
+                        <button
+                          className="text-[#0f1f3d] font-bold text-sm tracking-wide hover:underline focus:outline-none"
+                          onClick={(e) => toggleDropdown(w.id, e)}
+                        >
+                          Manage
+                        </button>
+
+                        {activeDropdown === w.id && (
+                          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-50 py-1 overflow-hidden origin-bottom-right">
+                            {!w.isDefault && (
+                              <Button
+                                variant="ghost" size="sm"
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-start gap-2 h-auto rounded-none"
+                                onClick={(e) => handleSetDefault(w, e)}
+                              >
+                                <Star size={14} /> Set Default
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost" size="sm"
+                              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-start gap-2 h-auto rounded-none"
+                              onClick={(e) => handleEdit(w, e)}
+                            >
+                              <Edit2 size={14} /> Edit
+                            </Button>
+                            <div className="h-px bg-slate-100 my-1"></div>
+                            <Button
+                              variant="ghost" size="sm"
+                              className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center justify-start gap-2 h-auto rounded-none"
+                              onClick={(e) => handleDelete(w, e)}
+                            >
+                              {Number(w.currentBalance) > 0 ? <Archive size={14} /> : <Trash2 size={14} />}
+                              {Number(w.currentBalance) > 0 ? 'Archive' : 'Delete'}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
 
           </div>
         </section>
       ) : (
         <RecurringTab />
       )}
+      </div>
 
       <WalletDialog open={dialogOpen} onOpenChange={setDialogOpen} wallet={editingWallet} />
     </div>

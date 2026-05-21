@@ -362,7 +362,7 @@ export default function ScanPage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-full bg-[#f0f4f8]">
+    <div className="min-h-full">
       <div className="max-w-[1400px] mx-auto p-8">
 
         {/* ── Header ── */}
@@ -380,21 +380,19 @@ export default function ScanPage() {
           <div className="flex w-full sm:w-auto gap-1 p-1 bg-slate-100/50 rounded-xl sm:rounded-full border border-slate-200/50 shrink-0">
             <button
               onClick={() => setActiveTab('single')}
-              className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-                activeTab === 'single'
-                  ? 'bg-[#0f1f3d] text-white shadow-sm'
-                  : 'text-slate-500 hover:text-[#0f1f3d]'
-              }`}
+              className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === 'single'
+                ? 'bg-[#0f1f3d] text-white shadow-sm'
+                : 'text-slate-500 hover:text-[#0f1f3d]'
+                }`}
             >
               Single Scan
             </button>
             <button
               onClick={() => setActiveTab('bulk')}
-              className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${
-                activeTab === 'bulk'
-                  ? 'bg-[#0f1f3d] text-white shadow-sm'
-                  : 'text-slate-500 hover:text-[#0f1f3d]'
-              }`}
+              className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === 'bulk'
+                ? 'bg-[#0f1f3d] text-white shadow-sm'
+                : 'text-slate-500 hover:text-[#0f1f3d]'
+                }`}
             >
               Multiple Scans
             </button>
@@ -412,13 +410,12 @@ export default function ScanPage() {
                     if (activeTab === 'single') setScanContext(ctx);
                     else setGlobalScanContext(ctx);
                   }}
-                  className={`flex-1 sm:flex-none text-center justify-center px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${
-                    isActive
-                      ? ctx === 'income'
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-red-500 text-white'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
+                  className={`flex-1 sm:flex-none text-center justify-center px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${isActive
+                    ? ctx === 'income'
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-red-500 text-white'
+                    : 'text-slate-500 hover:text-slate-800'
+                    }`}
                 >
                   {ctx}
                 </button>
@@ -430,328 +427,324 @@ export default function ScanPage() {
         {/* ═══════════════════════════════════════ SINGLE MODE ══════════════════════════════════════════ */}
         {activeTab === 'single' && (
           <>
-        {/* ════════════════════════════════ UPLOAD PHASE ══════════════════════ */}
-        {scanPhase === 'upload' && (
-          <div className="max-w-2xl mx-auto">
-            {/* Drop zone */}
-            <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
-              <CardContent className="p-0">
-                <div
-                  {...getRootProps()}
-                  className={`min-h-[360px] flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed ${
-                    isDragActive
-                      ? 'border-[#10b981] bg-emerald-50/40'
-                      : 'border-slate-200 hover:border-[#0f1f3d]/40 hover:bg-slate-50/50'
-                  }`}
-                >
-                  <input {...getInputProps()} />
-
-                  <div
-                    className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-colors ${
-                      isDragActive ? 'bg-emerald-100' : 'bg-slate-100'
-                    }`}
-                  >
-                    <Upload
-                      size={36}
-                      className={isDragActive ? 'text-emerald-600' : 'text-slate-400'}
-                    />
-                  </div>
-
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-[#0f1f3d]">
-                      {isDragActive
-                        ? 'Drop it here!'
-                        : 'Drop your bank transfer screenshot here'}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-2">
-                      Supports JPEG, PNG, WebP and PDF — max 10 MB
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="h-px w-16 bg-slate-200" />
-                    <span className="text-xs text-slate-400 font-medium">or</span>
-                    <div className="h-px w-16 bg-slate-200" />
-                  </div>
-
-                  <span className="px-6 py-2.5 bg-[#0f1f3d] text-white text-sm font-bold rounded-xl hover:bg-[#1a2f57] transition-colors inline-block cursor-pointer">Choose from Library</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* ═════════════════════════════ SCANNING PHASE ══════════════════════ */}
-        {scanPhase === 'scanning' && (
-          <div className="flex flex-col items-center justify-center py-32 gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-[#0f1f3d]/5 flex items-center justify-center">
-              <Loader2 size={32} className="text-[#0f1f3d] animate-spin" />
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-[#0f1f3d]">Analyzing transfer receipt...</p>
-              <p className="text-sm text-slate-400 mt-1">AI is extracting transaction details</p>
-            </div>
-          </div>
-        )}
-
-        {/* ══════════════════════════════ CONFIRM PHASE ══════════════════════ */}
-        {scanPhase === 'confirm' && scanResult && currentFile && previewUrl && (
-          <form onSubmit={form.handleSubmit(handleConfirm)}>
-            {/* 3-panel grid: [thumbnail | preview | form] */}
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_380px] gap-6">
-
-              {/* ── Panel 1 (mobile: order 3, desktop: order 1) — Documents ── */}
-              <div className="order-3 lg:order-1 flex flex-col gap-4">
+            {/* ════════════════════════════════ UPLOAD PHASE ══════════════════════ */}
+            {scanPhase === 'upload' && (
+              <div className="max-w-2xl mx-auto">
+                {/* Drop zone */}
                 <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
-                  <CardContent className="p-5">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-                      Documents
-                    </p>
-                    <SingleThumbnailItem file={currentFile} previewUrl={previewUrl} />
-
-                    <button
-                      type="button"
-                      onClick={resetToUpload}
-                      className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-slate-500 hover:text-[#0f1f3d] rounded-xl border border-slate-200 hover:border-[#0f1f3d]/30 transition-all"
+                  <CardContent className="p-0">
+                    <div
+                      {...getRootProps()}
+                      className={`min-h-[360px] flex flex-col items-center justify-center gap-5 py-20 px-8 rounded-[2rem] cursor-pointer transition-all duration-200 border-2 border-dashed ${isDragActive
+                        ? 'border-[#10b981] bg-emerald-50/40'
+                        : 'border-slate-200 hover:border-[#0f1f3d]/40 hover:bg-slate-50/50'
+                        }`}
                     >
-                      <RotateCcw size={14} />
-                      Scan Another
-                    </button>
-                  </CardContent>
-                </Card>
-              </div>
+                      <input {...getInputProps()} />
 
-              {/* ── Panel 2 (mobile: order 1, desktop: order 2) — Preview ── */}
-              <div className="order-1 lg:order-2">
-                <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 h-full">
-                  <CardContent className="p-4 flex items-center justify-center h-full min-h-[400px]">
-                    {currentFile.type.startsWith('image/') ? (
-                      <img
-                        src={previewUrl}
-                        alt="Scanned document"
-                        className="max-h-[600px] w-full object-contain rounded-2xl"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-3 text-slate-400">
-                        <ImageIcon size={48} />
-                        <p className="text-sm font-medium">PDF Document</p>
-                        <p className="text-xs">{currentFile.name}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* ── Panel 3 (mobile: order 2, desktop: order 3) — Confirm Form ── */}
-              <div className="order-2 lg:order-3 flex flex-col gap-4">
-                <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
-                  <CardContent className="p-6 flex flex-col gap-5">
-
-                    {/* Title */}
-                    <div>
-                      <p className="text-xl font-bold text-[#0f1f3d]">Confirm Details</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and link to wallet</p>
-                    </div>
-
-                    {/* Amount — large text input */}
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                        Total Amount
-                      </p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-slate-400">₫</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          placeholder="0"
-                          className="text-4xl font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-200"
-                          {...form.register('amount', { valueAsNumber: true })}
+                      <div
+                        className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-colors ${isDragActive ? 'bg-emerald-100' : 'bg-slate-100'
+                          }`}
+                      >
+                        <Upload
+                          size={36}
+                          className={isDragActive ? 'text-emerald-600' : 'text-slate-400'}
                         />
                       </div>
-                      {form.formState.errors.amount && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {form.formState.errors.amount.message}
+
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-[#0f1f3d]">
+                          {isDragActive
+                            ? 'Drop it here!'
+                            : 'Drop your bank transfer screenshot here'}
                         </p>
-                      )}
-                    </div>
-
-                    {/* Date + Category */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                          Date
-                        </label>
-                        <Input
-                          type="date"
-                          className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
-                          {...form.register('transactionDate')}
-                        />
-                        {form.formState.errors.transactionDate && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {form.formState.errors.transactionDate.message}
-                          </p>
-                        )}
+                        <p className="text-sm text-slate-400 mt-2">
+                          Supports JPEG, PNG, WebP and PDF — max 10 MB
+                        </p>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                          Category
-                        </label>
-                        <Select
-                          value={form.watch('categoryId')}
-                          onValueChange={(v) =>
-                            form.setValue('categoryId', v, { shouldValidate: true })
-                          }
+
+                      <div className="flex items-center gap-3">
+                        <div className="h-px w-16 bg-slate-200" />
+                        <span className="text-xs text-slate-400 font-medium">or</span>
+                        <div className="h-px w-16 bg-slate-200" />
+                      </div>
+
+                      <span className="px-6 py-2.5 bg-[#0f1f3d] text-white text-sm font-bold rounded-xl hover:bg-[#1a2f57] transition-colors inline-block cursor-pointer">Choose from Library</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* ═════════════════════════════ SCANNING PHASE ══════════════════════ */}
+            {scanPhase === 'scanning' && (
+              <div className="flex flex-col items-center justify-center py-32 gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-[#0f1f3d]/5 flex items-center justify-center">
+                  <Loader2 size={32} className="text-[#0f1f3d] animate-spin" />
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-[#0f1f3d]">Analyzing transfer receipt...</p>
+                  <p className="text-sm text-slate-400 mt-1">AI is extracting transaction details</p>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════ CONFIRM PHASE ══════════════════════ */}
+            {scanPhase === 'confirm' && scanResult && currentFile && previewUrl && (
+              <form onSubmit={form.handleSubmit(handleConfirm)}>
+                {/* 3-panel grid: [thumbnail | preview | form] */}
+                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_380px] gap-6">
+
+                  {/* ── Panel 1 (mobile: order 3, desktop: order 1) — Documents ── */}
+                  <div className="order-3 lg:order-1 flex flex-col gap-4">
+                    <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+                      <CardContent className="p-5">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                          Documents
+                        </p>
+                        <SingleThumbnailItem file={currentFile} previewUrl={previewUrl} />
+
+                        <button
+                          type="button"
+                          onClick={resetToUpload}
+                          className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-slate-500 hover:text-[#0f1f3d] rounded-xl border border-slate-200 hover:border-[#0f1f3d]/30 transition-all"
                         >
-                          <SelectTrigger className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#0f1f3d] w-full [&>span]:text-slate-800">
-                            <SelectValue placeholder="Pick..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {form.formState.errors.categoryId && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {form.formState.errors.categoryId.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                          <RotateCcw size={14} />
+                          Scan Another
+                        </button>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                    {/* Merchant */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                        Merchant
-                      </label>
-                      <Input
-                        type="text"
-                        placeholder="e.g. Grab, Netflix..."
-                        className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
-                        {...form.register('merchant')}
-                      />
-                    </div>
-
-                    {/* Source Wallet — card radio list (no <Select>) */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          Source Wallet
-                        </label>
-                        {scanResult.extracted.bank_detected && (
-                          <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
-                            ✦ Auto-detected
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1">
-                        {wallets.map((wallet) => {
-                          const isSelected = wallet.id === watchedWalletId
-                          const isDetected =
-                            wallet.id === scanResult.default_wallet_id &&
-                            !!scanResult.extracted.bank_detected
-
-                          return (
-                            <button
-                              key={wallet.id}
-                              type="button"
-                              onClick={() =>
-                                form.setValue('walletId', wallet.id, { shouldValidate: true })
-                              }
-                              className={`w-full text-left flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 ${
-                                isSelected
-                                  ? 'border-[#0f1f3d] bg-[#0f1f3d]/5 ring-1 ring-[#0f1f3d]/20'
-                                  : 'border-slate-200 hover:border-slate-300 bg-white'
-                              }`}
-                            >
-                              <div className="min-w-0">
-                                <p
-                                  className={`text-sm font-semibold truncate ${
-                                    isSelected ? 'text-[#0f1f3d]' : 'text-slate-700'
-                                  }`}
-                                >
-                                  {wallet.name}
-                                </p>
-                                {isDetected && (
-                                  <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold mt-1 inline-block">
-                                    ✓ DETECTED: {scanResult.extracted.bank_detected}
-                                  </span>
-                                )}
-                              </div>
-                              {isSelected && (
-                                <CheckCircle2 size={18} className="flex-shrink-0 text-[#0f1f3d]" />
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {form.formState.errors.walletId && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {form.formState.errors.walletId.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Note */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                        Note{' '}
-                        <span className="text-slate-300 normal-case font-normal">(optional)</span>
-                      </label>
-                      <textarea
-                        rows={2}
-                        placeholder="Add a note..."
-                        className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0f1f3d] focus:ring-offset-0 px-3 py-2 resize-none"
-                        {...form.register('note')}
-                      />
-                    </div>
-
-                    {/* Confidence badge */}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                      <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
-                        AI Confidence
-                      </span>
-                      <ConfidenceBadge score={scanResult.extracted.confidence} />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="flex-1 rounded-xl text-slate-500 hover:text-[#0f1f3d]"
-                        onClick={resetToUpload}
-                      >
-                        Discard
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={confirmMutation.isPending}
-                        className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-60"
-                      >
-                        {confirmMutation.isPending ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 size={14} className="animate-spin" />
-                            Saving...
-                          </span>
+                  {/* ── Panel 2 (mobile: order 1, desktop: order 2) — Preview ── */}
+                  <div className="order-1 lg:order-2">
+                    <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 h-full">
+                      <CardContent className="p-4 flex items-center justify-center h-full min-h-[400px]">
+                        {currentFile.type.startsWith('image/') ? (
+                          <img
+                            src={previewUrl}
+                            alt="Scanned document"
+                            className="max-h-[600px] w-full object-contain rounded-2xl"
+                          />
                         ) : (
-                          'Confirm & Save'
+                          <div className="flex flex-col items-center gap-3 text-slate-400">
+                            <ImageIcon size={48} />
+                            <p className="text-sm font-medium">PDF Document</p>
+                            <p className="text-xs">{currentFile.name}</p>
+                          </div>
                         )}
-                      </Button>
-                    </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                  </CardContent>
-                </Card>
-              </div>
+                  {/* ── Panel 3 (mobile: order 2, desktop: order 3) — Confirm Form ── */}
+                  <div className="order-2 lg:order-3 flex flex-col gap-4">
+                    <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+                      <CardContent className="p-6 flex flex-col gap-5">
 
-            </div>
-          </form>
-        )}
+                        {/* Title */}
+                        <div>
+                          <p className="text-xl font-bold text-[#0f1f3d]">Confirm Details</p>
+                          <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and link to wallet</p>
+                        </div>
+
+                        {/* Amount — large text input */}
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                            Total Amount
+                          </p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-bold text-slate-400">₫</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              placeholder="0"
+                              className="text-4xl font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-200"
+                              {...form.register('amount', { valueAsNumber: true })}
+                            />
+                          </div>
+                          {form.formState.errors.amount && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {form.formState.errors.amount.message}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Date + Category */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                              Date
+                            </label>
+                            <Input
+                              type="date"
+                              className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
+                              {...form.register('transactionDate')}
+                            />
+                            {form.formState.errors.transactionDate && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {form.formState.errors.transactionDate.message}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                              Category
+                            </label>
+                            <Select
+                              value={form.watch('categoryId')}
+                              onValueChange={(v) =>
+                                form.setValue('categoryId', v, { shouldValidate: true })
+                              }
+                            >
+                              <SelectTrigger className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#0f1f3d] w-full [&>span]:text-slate-800">
+                                <SelectValue placeholder="Pick..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {form.formState.errors.categoryId && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {form.formState.errors.categoryId.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Merchant */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Merchant
+                          </label>
+                          <Input
+                            type="text"
+                            placeholder="e.g. Grab, Netflix..."
+                            className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
+                            {...form.register('merchant')}
+                          />
+                        </div>
+
+                        {/* Source Wallet — card radio list (no <Select>) */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                              Source Wallet
+                            </label>
+                            {scanResult.extracted.bank_detected && (
+                              <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
+                                ✦ Auto-detected
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1">
+                            {wallets.map((wallet) => {
+                              const isSelected = wallet.id === watchedWalletId
+                              const isDetected =
+                                wallet.id === scanResult.default_wallet_id &&
+                                !!scanResult.extracted.bank_detected
+
+                              return (
+                                <button
+                                  key={wallet.id}
+                                  type="button"
+                                  onClick={() =>
+                                    form.setValue('walletId', wallet.id, { shouldValidate: true })
+                                  }
+                                  className={`w-full text-left flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 ${isSelected
+                                    ? 'border-[#0f1f3d] bg-[#0f1f3d]/5 ring-1 ring-[#0f1f3d]/20'
+                                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                                    }`}
+                                >
+                                  <div className="min-w-0">
+                                    <p
+                                      className={`text-sm font-semibold truncate ${isSelected ? 'text-[#0f1f3d]' : 'text-slate-700'
+                                        }`}
+                                    >
+                                      {wallet.name}
+                                    </p>
+                                    {isDetected && (
+                                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold mt-1 inline-block">
+                                        ✓ DETECTED: {scanResult.extracted.bank_detected}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isSelected && (
+                                    <CheckCircle2 size={18} className="flex-shrink-0 text-[#0f1f3d]" />
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          {form.formState.errors.walletId && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {form.formState.errors.walletId.message}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Note */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Note{' '}
+                            <span className="text-slate-300 normal-case font-normal">(optional)</span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="Add a note..."
+                            className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0f1f3d] focus:ring-offset-0 px-3 py-2 resize-none"
+                            {...form.register('note')}
+                          />
+                        </div>
+
+                        {/* Confidence badge */}
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+                            AI Confidence
+                          </span>
+                          <ConfidenceBadge score={scanResult.extracted.confidence} />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="flex-1 rounded-xl text-slate-500 hover:text-[#0f1f3d]"
+                            onClick={resetToUpload}
+                          >
+                            Discard
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={confirmMutation.isPending}
+                            className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-60"
+                          >
+                            {confirmMutation.isPending ? (
+                              <span className="flex items-center gap-2">
+                                <Loader2 size={14} className="animate-spin" />
+                                Saving...
+                              </span>
+                            ) : (
+                              'Confirm & Save'
+                            )}
+                          </Button>
+                        </div>
+
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                </div>
+              </form>
+            )}
           </>
         )}
 
@@ -822,15 +815,15 @@ export default function ScanPage() {
                       ))}
                     </div>
                     {doneCount === bulkQueue.length && bulkQueue.length > 0 ? (
-                      <Button 
+                      <Button
                         onClick={() => navigate(ROUTES.TRANSACTIONS)}
                         className="w-full bg-[#10b981] text-white rounded-xl hover:bg-[#0ea572] shadow-md"
                       >
                         <CheckCircle2 size={16} className="mr-2" /> Finish & View Transactions
                       </Button>
                     ) : (
-                      <Button 
-                        onClick={handleConfirmAll} 
+                      <Button
+                        onClick={handleConfirmAll}
                         disabled={autoConfirmCount === 0 || confirmMutation.isPending}
                         className="w-full bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-50"
                       >
@@ -982,8 +975,8 @@ export default function ScanPage() {
                                     const isSel = wallet.id === bulkWatchedWalletId
                                     return (
                                       <button key={wallet.id} type="button" onClick={() => bulkForm.setValue('walletId', wallet.id, { shouldValidate: true })}
-                                        className={`w-full text-left flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 ${ isSel ? 'border-[#0f1f3d] bg-[#0f1f3d]/5' : 'border-slate-200 hover:border-slate-300 bg-white' }`}>
-                                        <p className={`text-sm font-semibold truncate ${ isSel ? 'text-[#0f1f3d]' : 'text-slate-700' }`}>{wallet.name}</p>
+                                        className={`w-full text-left flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-150 ${isSel ? 'border-[#0f1f3d] bg-[#0f1f3d]/5' : 'border-slate-200 hover:border-slate-300 bg-white'}`}>
+                                        <p className={`text-sm font-semibold truncate ${isSel ? 'text-[#0f1f3d]' : 'text-slate-700'}`}>{wallet.name}</p>
                                         {isSel && <CheckCircle2 size={16} className="flex-shrink-0 text-[#0f1f3d]" />}
                                       </button>
                                     )
@@ -1019,4 +1012,4 @@ export default function ScanPage() {
       </div>
     </div>
   )
-}
+}

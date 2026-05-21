@@ -230,11 +230,11 @@ export default function TransactionsPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-full bg-[#f0f4f8]">
+    <div className="min-h-full">
       <div className="max-w-[1400px] mx-auto p-8">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Transactions</h1>
             <p className="text-slate-600 text-sm mt-1">Track and manage all your financial activity</p>
@@ -248,12 +248,12 @@ export default function TransactionsPage() {
             className="bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] flex items-center gap-2 px-5"
           >
             <Plus size={18} />
-            New Transaction
+            Create Transaction
           </Button>
         </div>
 
         {/* ── Filter Bar ── */}
-        <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-6">
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
           <CardContent className="p-5 flex flex-col gap-4">
 
             {/* ROW 1: Search + Type + Reset */}
@@ -372,7 +372,7 @@ export default function TransactionsPage() {
         </Card>
 
         {/* ── Table Card ── */}
-        <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-100">
           <CardContent className="p-0">
 
             {/* Table */}
