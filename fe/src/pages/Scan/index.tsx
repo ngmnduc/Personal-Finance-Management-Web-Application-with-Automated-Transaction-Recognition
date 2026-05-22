@@ -363,7 +363,7 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-full">
-      <div className="max-w-[1400px] mx-auto p-8">
+      <div className="max-w-[1400px] mx-auto p-4 md:p-8">
 
         {/* ── Header ── */}
         <div className="mb-8">
@@ -375,7 +375,7 @@ export default function ScanPage() {
 
         {/* ── Tabs (Single / Bulk) ── */}
         {/* ════════════════════════════════ CONTROL BAR ════════════════════════════════ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           {/* Left: Mode Toggle */}
           <div className="flex w-full sm:w-auto gap-1 p-1 bg-slate-100/50 rounded-xl sm:rounded-full border border-slate-200/50 shrink-0">
             <button

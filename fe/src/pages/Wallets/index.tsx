@@ -114,10 +114,10 @@ export default function WalletsPage() {
 
   return (
     <div className="min-h-full">
-      <div className="max-w-[1400px] mx-auto p-8">
+      <div className="max-w-[1400px] mx-auto p-4 md:p-8">
       {/* ── Header ── */}
       <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Wallet Management</h1>
             <p className="text-slate-500 text-sm mt-1">Configure and monitor your financial flows.</p>
@@ -151,7 +151,7 @@ export default function WalletsPage() {
       {/* ── Tab Content ── */}
       {activeTab === 'wallets' ? (
         <section className="flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-xl font-bold text-[#0f1f3d]">My Wallets</h2>
               <p className="text-sm text-slate-500 mt-0.5">Manage your active wallets and balances.</p>
@@ -173,7 +173,7 @@ export default function WalletsPage() {
               >
                 <div className="absolute inset-x-0 bottom-0 bg-slate-50/50 h-24 rounded-b-2xl pointer-events-none" style={{ clipPath: 'polygon(0 40%, 100% 0, 100% 100%, 0 100%)' }}></div>
 
-                <CardContent className="p-4 sm:p-6 z-10 flex flex-col h-full justify-between relative">
+                <CardContent className="p-4 md:p-6 z-10 flex flex-col h-full justify-between relative">
                   <div>
                     <div className="flex items-start justify-between">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getWalletColor(w.type)}`}>

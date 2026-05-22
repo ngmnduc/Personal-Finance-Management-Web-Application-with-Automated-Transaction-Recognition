@@ -131,7 +131,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-full">
-      <div className="max-w-[1400px] mx-auto p-8">
+      <div className="max-w-[1400px] mx-auto p-4 md:p-8">
 
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">

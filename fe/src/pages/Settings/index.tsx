@@ -143,7 +143,7 @@ export default function SettingsPage() {
 
   return (
     // TODO [DARK MODE]: Đổi bg-[#f0f4f8] → bg-background khi triển khai dark mode
-    <div className="p-4 sm:p-6 lg:p-8 min-h-full bg-[#f0f4f8] max-w-[1200px] mx-auto">
+    <div className="p-4 md:p-8 min-h-full bg-[#f0f4f8] max-w-[1200px] mx-auto">
 
       {/* ── Header ── */}
       {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground | text-slate-500 → text-muted-foreground */}
@@ -160,7 +160,7 @@ export default function SettingsPage() {
           {/* Card 1: Profile */}
           {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-white → bg-card */}
           <Card className="rounded-2xl border border-slate-100 bg-white p-0">
-            <CardContent className="p-6 sm:p-8">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
                 {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground */}
                 <h2 className="text-base font-bold text-[#0f1f3d] flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function SettingsPage() {
           {/* Card 2: Change Password */}
           {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-white → bg-card */}
           <Card className="rounded-2xl border border-slate-100 bg-white p-0">
-            <CardContent className="p-6 sm:p-8">
+            <CardContent className="p-4 md:p-6">
               {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground */}
               <h2 className="text-base font-bold text-[#0f1f3d] flex items-center gap-2 mb-6">
                 <Lock size={16} className="text-[#10b981]" /> Security
@@ -309,7 +309,7 @@ export default function SettingsPage() {
               - Đảm bảo input.tsx + page components đã migrate semantic classes xong
           */}
           <Card className="rounded-2xl border-none bg-[#0f1f3d] text-white p-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="text-base font-bold">Appearance</h2>
                 <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full tracking-wide uppercase">
@@ -331,7 +331,7 @@ export default function SettingsPage() {
           {/* Card 4: Default Wallet */}
           {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-white → bg-card */}
           <Card className="rounded-2xl border border-slate-100 bg-white p-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground */}
               <h2 className="text-base font-bold text-[#0f1f3d] flex items-center gap-2 mb-1">
                 <WalletIcon size={16} className="text-[#10b981]" /> Default Wallet
@@ -417,7 +417,7 @@ export default function SettingsPage() {
         {/* TODO [DARK MODE]: border-slate-100 → border-border | bg-slate-50 → bg-muted/50 */}
         <div className="lg:col-span-3">
           <Card className="rounded-2xl border border-slate-100 bg-slate-50 p-0">
-            <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardContent className="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center">
                   <Info size={18} className="text-slate-500" />
@@ -441,7 +441,7 @@ export default function SettingsPage() {
 
           {/* Account Actions / Danger Zone */}
           <Card className="rounded-2xl border border-red-100 bg-red-50/30 p-0 mt-6">
-            <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardContent className="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-bold text-red-600">Account Actions</p>
                 <p className="text-xs text-slate-500 mt-0.5">Securely log out of your account on this device.</p>

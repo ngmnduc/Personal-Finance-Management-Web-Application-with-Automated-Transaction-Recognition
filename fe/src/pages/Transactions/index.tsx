@@ -227,11 +227,28 @@ export default function TransactionsPage() {
   const from = total === 0 ? 0 : (currentPage - 1) * activeFilters.limit + 1
   const to = Math.min(currentPage * activeFilters.limit, total)
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ──  nhóm giao dịch theo ngày (hàm helper cho giao diện mobile) ──
+  const groupTransactionsByDate = (list: typeof transactions) => {
+    return list.reduce((groups: Record<string, typeof transactions>, t) => {
+      // Định dạng ngày thành chuỗi làm Key nhóm (Ví dụ: "May 16, 2026")
+      const dateKey = new Date(t.transactionDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+      if (!groups[dateKey]) groups[dateKey] = []
+      groups[dateKey].push(t)
+      return groups
+    }, {})
+  }
+
+  const groupedData = groupTransactionsByDate(transactions)
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-full">
-      <div className="max-w-[1400px] mx-auto p-8">
+      <div className="max-w-[1400px] mx-auto p-4 md:p-8">
 
         {/* ── Header ── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -371,8 +388,69 @@ export default function TransactionsPage() {
           </CardContent>
         </Card>
 
-        {/* ── Table Card ── */}
-        <Card className="bg-white rounded-2xl shadow-sm border border-slate-100">
+        {/* ── Giao diện Mobile: Danh sách gộm nhóm theo ngày (chỉ hiện trên mobile) ── */}
+        <div className="flex flex-col gap-4 mt-4 md:hidden">
+          {isLoading ? (
+            <div className="py-16 flex flex-col items-center gap-3 text-slate-400">
+              <div className="w-8 h-8 border-2 border-slate-200 border-t-[#0f1f3d] rounded-full animate-spin" />
+              <span className="text-sm">Loading transactions...</span>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="py-16 flex flex-col items-center gap-2 text-slate-400">
+              <span className="text-4xl">📭</span>
+              <span className="text-sm font-medium">No transactions found</span>
+              <span className="text-xs">Try adjusting your filters or add a new transaction</span>
+            </div>
+          ) : (
+            Object.keys(groupedData).map((dateStr) => (
+              <div key={dateStr} className="flex flex-col gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+
+                {/* Header nhóm theo ngày */}
+                <div className="pb-2 border-b border-slate-100">
+                  <span className="text-xs font-bold text-slate-400 tracking-wider">
+                    {dateStr}
+                  </span>
+                </div>
+
+                {/* Danh sách giao dịch nội bộ trong ngày */}
+                <div className="flex flex-col gap-4">
+                  {groupedData[dateStr].map((t) => {
+                    const isExpense = t.type === 'EXPENSE'
+                    return (
+                      <div key={t.id} className="flex items-center justify-between py-0.5">
+
+                        {/* Khối tiêu điểm bên trái: Category gộp cùng Merchant và Wallet */}
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-bold text-[#0f1f3d] truncate">
+                            {t.category?.name || 'Uncategorized'}
+                          </span>
+                          <span className="text-xs text-slate-400 truncate mt-0.5 font-medium">
+                            {t.merchant || 'No merchant'} •{' '}
+                            <span className="text-slate-500 font-semibold">{t.wallet?.name}</span>
+                          </span>
+                        </div>
+
+                        {/* Khối số tiền bên phải: Phân định màu sắc theo Type */}
+                        <div className="text-right shrink-0 pl-3">
+                          <span className={`text-sm font-bold tracking-tight ${
+                            isExpense ? 'text-red-500' : 'text-emerald-500'
+                          }`}>
+                            {isExpense ? '-' : '+'}{Number(t.amount).toLocaleString('vi-VN')} ₫
+                          </span>
+                        </div>
+
+                      </div>
+                    )
+                  })}
+                </div>
+
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* ── Table Card Desktop: Ẩn trên mobile, hiện từ md trở lên ── */}
+        <Card className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-100">
           <CardContent className="p-0">
 
             {/* Table */}
