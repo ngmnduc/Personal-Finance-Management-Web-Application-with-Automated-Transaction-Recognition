@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { House, ScanLine, Wallet, Target, Menu, Tags, Settings, LifeBuoy,ReceiptText, LogOut, ChevronRight, User } from 'lucide-react'
 import { ROUTES } from '../lib/constants'
 import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet'
+import { useLogout } from '../features/auth/api/auth.api'
 
 // ── các Tab điều hướng ──
 const leftTabs = [
@@ -16,6 +17,7 @@ const rightTabs = [
 export default function BottomTabBar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const logout = useLogout()
 
   const isActive = (path: string) => location.pathname === path
 
@@ -133,9 +135,14 @@ export default function BottomTabBar() {
           {/* Footer */}
           <div className="mt-auto p-6 pt-4">
             <div className="border-t border-border mb-4" />
-            <button className="w-full flex items-center p-3 rounded-xl text-red-500 font-semibold text-sm hover:bg-red-50 transition-colors">
+            {/* Thêm onClick gọi hành động mutate của hook và chặn bấm liên tục bằng disabled khi đang xử lý */}
+            <button
+              onClick={() => logout.mutate()}
+              disabled={logout.isPending}
+              className="w-full flex items-center p-3 rounded-xl text-red-500 font-semibold text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
               <LogOut size={20} className="mr-3" />
-              Log Out
+              {logout.isPending ? 'Logging out...' : 'Log Out'}
             </button>
           </div>
         </SheetContent>
