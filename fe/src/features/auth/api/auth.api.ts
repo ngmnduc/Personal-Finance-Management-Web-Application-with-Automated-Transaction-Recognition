@@ -58,7 +58,7 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient()
   const updateUser = useAuthStore((s) => s.updateUser)
   return useMutation({
-    mutationFn: async (data: { name?: string; avatarUrl?: string }) => {
+    mutationFn: async (data: { name?: string; avatarUrl?: string; preferArchive?: boolean }) => {
       const res = await axiosInstance.patch<ApiResponse<User>>(API_ENDPOINTS.AUTH.ME, data)
       return res.data.data
     },

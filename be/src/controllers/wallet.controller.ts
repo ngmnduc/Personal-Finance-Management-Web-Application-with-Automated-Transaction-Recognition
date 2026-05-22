@@ -2,12 +2,24 @@ import { Request, Response, NextFunction } from "express";
 import { walletService } from "../services/wallet.service";
 import { sendSuccess } from "../utils/response";
 import { serializeBigInt } from "../utils/bigint";
+import { z } from "zod";
+
+const getWalletsSchema = z.object({
+  archived: z.enum(['true', 'false']).optional().default('false'),
+});
 
 export const walletController = {
   getWallets: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.userId;
-      const wallets = await walletService.getWallets(userId);
+      
+      const queryValidation = getWalletsSchema.safeParse(req.query);
+      if (!queryValidation.success) {
+        return res.status(400).json({ success: false, message: "Invalid query parameters" });
+      }
+
+      const includeArchived = queryValidation.data.archived === 'true';
+      const wallets = await walletService.getWallets(userId, includeArchived);
       sendSuccess(res, serializeBigInt(wallets), "Get wallets successfully", 200);
     } catch (error) {
       next(error);
@@ -48,6 +60,18 @@ export const walletController = {
         : "Wallet deleted successfully";
 
       sendSuccess(res, null, message, 200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  restoreWallet: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const { id } = req.params as {id:string};
+      
+      await walletService.restoreWallet(id, userId);
+      sendSuccess(res, null, "Wallet restored successfully", 200);
     } catch (error) {
       next(error);
     }

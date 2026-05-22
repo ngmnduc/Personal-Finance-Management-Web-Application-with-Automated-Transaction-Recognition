@@ -3,11 +3,16 @@ import apiClient from '../../../lib/axios'
 import { QUERY_KEYS, API_ENDPOINTS } from '../../../lib/constants'
 import { Wallet, ApiResponse } from '../../../types'
 
-export const useWallets = () => {
+export const useWallets = (options?: { archived?: boolean }) => {
   return useQuery({
-    queryKey: [QUERY_KEYS.WALLETS],
+    queryKey: [QUERY_KEYS.WALLETS, options?.archived],
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<Wallet[]>>(API_ENDPOINTS.WALLETS)
+      const params = new URLSearchParams()
+      if (options?.archived) {
+        params.append('archived', 'true')
+      }
+      const queryString = params.toString() ? `?${params.toString()}` : ''
+      const response = await apiClient.get<ApiResponse<Wallet[]>>(`${API_ENDPOINTS.WALLETS}${queryString}`)
       return response.data.data
     }
   })
@@ -57,6 +62,19 @@ export const useSetDefaultWallet = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await apiClient.post<ApiResponse<Wallet>>(`${API_ENDPOINTS.WALLETS}/${id}/set-default`)
+      return response.data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WALLETS] })
+    }
+  })
+}
+
+export const useRestoreWallet = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.post<ApiResponse<null>>(`${API_ENDPOINTS.WALLETS}/${id}/restore`)
       return response.data.data
     },
     onSuccess: () => {

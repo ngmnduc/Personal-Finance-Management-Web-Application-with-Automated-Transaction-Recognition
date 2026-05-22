@@ -1,7 +1,17 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, ScanLine, Wallet, Target, Menu, Tags, Settings, LifeBuoy, LogOut, ChevronRight, User } from 'lucide-react'
+import { House, ScanLine, Wallet, Target, Menu, Tags, Settings, LifeBuoy,ReceiptText, LogOut, ChevronRight, User } from 'lucide-react'
 import { ROUTES } from '../lib/constants'
 import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet'
+
+// ── các Tab điều hướng ──
+const leftTabs = [
+  { path: ROUTES.DASHBOARD, label: 'Home', icon: House },
+  { path: ROUTES.WALLETS, label: 'Wallets', icon: Wallet },
+];
+
+const rightTabs = [
+  { path: ROUTES.TRANSACTIONS, label: 'Transactions', icon: ReceiptText },
+];
 
 export default function BottomTabBar() {
   const navigate = useNavigate()
@@ -14,23 +24,20 @@ export default function BottomTabBar() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-between px-2 pb-[env(safe-area-inset-bottom)] bg-card border-t border-border h-16">
-      <button
-        onClick={() => navigate(ROUTES.DASHBOARD)}
-        className={navButtonClass(ROUTES.DASHBOARD)}
-      >
-        <House size={20} strokeWidth={isActive(ROUTES.DASHBOARD) ? 2.5 : 2} />
-        Home
-      </button>
+      
+      {/* Vòng lặp xuất các Tab điều hướng bên trái */}
+      {leftTabs.map((tab) => (
+        <button
+          key={tab.path}
+          onClick={() => navigate(tab.path)}
+          className={navButtonClass(tab.path)}
+        >
+          <tab.icon size={20} strokeWidth={isActive(tab.path) ? 2.5 : 2} />
+          {tab.label}
+        </button>
+      ))}
 
-      <button
-        onClick={() => navigate(ROUTES.WALLETS)}
-        className={navButtonClass(ROUTES.WALLETS)}
-      >
-        <Wallet size={20} strokeWidth={isActive(ROUTES.WALLETS) ? 2.5 : 2} />
-        Wallets
-      </button>
-
-      {/* FAB Scan */}
+      {/* khối Center FAB Scan cố định ở chính giữa */}
       <div className="relative -top-5 flex justify-center w-[20%]">
         <button
           onClick={() => navigate(ROUTES.SCAN)}
@@ -40,13 +47,17 @@ export default function BottomTabBar() {
         </button>
       </div>
 
-      <button
-        onClick={() => navigate(ROUTES.GOALS)}
-        className={navButtonClass(ROUTES.GOALS)}
-      >
-        <Target size={20} strokeWidth={isActive(ROUTES.GOALS) ? 2.5 : 2} />
-        Planning
-      </button>
+      {/* Vòng lặp xuất các Tab điều hướng bên phải */}
+      {rightTabs.map((tab) => (
+        <button
+          key={tab.path}
+          onClick={() => navigate(tab.path)}
+          className={navButtonClass(tab.path)}
+        >
+          <tab.icon size={20} strokeWidth={isActive(tab.path) ? 2.5 : 2} />
+          {tab.label}
+        </button>
+      ))}
 
       {/* Side Drawer Menu */}
       <Sheet>
@@ -77,6 +88,17 @@ export default function BottomTabBar() {
 
           {/* Menu List */}
           <div className="flex flex-col gap-1 px-4">
+            <div
+              onClick={() => navigate(ROUTES.GOALS)}
+              className="flex items-center justify-between p-3.5 rounded-xl hover:bg-muted transition-colors text-foreground cursor-pointer"
+            >
+              <div className="flex items-center">
+                <Target size={20} />
+                <span className="text-sm font-semibold ml-3">Planning</span>
+              </div>
+              <ChevronRight size={16} className="text-muted-foreground" />
+            </div>
+
             <div
               onClick={() => navigate(ROUTES.CATEGORIES)}
               className="flex items-center justify-between p-3.5 rounded-xl hover:bg-muted transition-colors text-foreground cursor-pointer"

@@ -134,7 +134,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
 
       {/* Row 2: Amount */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
           Amount
         </label>
         <div className="relative">
@@ -146,7 +146,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
             min="0"
             step="any"
             placeholder="0"
-            className="pl-12 bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]"
+            className="pl-12 bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]"
             {...register('amount', { valueAsNumber: true })}
           />
         </div>
@@ -157,14 +157,14 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
 
       {/* Row 3: Category */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
           Category
         </label>
         <Select
           value={watch('categoryId')}
           onValueChange={(val) => setValue('categoryId', val, { shouldValidate: true })}
         >
-          <SelectTrigger className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]">
+          <SelectTrigger className="bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]">
             <SelectValue placeholder="Select category..." />
           </SelectTrigger>
           <SelectContent>
@@ -183,14 +183,14 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
       {/* Row 4: Wallet + Date */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
             Wallet
           </label>
           <Select
             value={watch('walletId')}
             onValueChange={(val) => setValue('walletId', val, { shouldValidate: true })}
           >
-            <SelectTrigger className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]">
+            <SelectTrigger className="bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]">
               <SelectValue placeholder="Select wallet..." />
             </SelectTrigger>
             <SelectContent>
@@ -207,13 +207,13 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
             Date
           </label>
           <Input
             type="date"
             max={todayString()}
-            className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]"
+            className="bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]"
             {...register('transactionDate')}
           />
           {errors.transactionDate && (
@@ -224,26 +224,26 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
 
       {/* Row 5: Person */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
           Person <span className="text-slate-300 normal-case font-normal">(optional)</span>
         </label>
         <Input
           type="text"
           placeholder="e.g. Grab, Netflix..."
-          className="bg-white rounded-xl border border-slate-200 text-slate-700 focus-visible:ring-1 focus-visible:ring-[#0f1f3d]"
+          className="bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]"
           {...register('merchant')}
         />
       </div>
 
       {/* Row 6: Note */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
+        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
           Note <span className="text-slate-300 normal-case font-normal">(optional)</span>
         </label>
         <textarea
           rows={3}
           placeholder="Add a note..."
-          className="w-full bg-white rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d] resize-none"
+          className="w-full bg-white rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f3d] resize-none"
           {...register('note')}
         />
       </div>

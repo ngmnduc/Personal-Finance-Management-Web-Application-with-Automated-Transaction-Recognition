@@ -3,8 +3,8 @@ import { walletRepository } from "../repositories/wallet.repository";
 import { WalletType } from "@prisma/client";
 
 export const walletService = {
-  getWallets: async (userId: string) => {
-    return walletRepository.findManyByUserId(userId);
+  getWallets: async (userId: string, includeArchived: boolean = false) => {
+    return walletRepository.findManyByUserId(userId, includeArchived);
   },
 
   createWallet: async (userId: string, data: { name: string; type: string; initialBalance: number }) => {
@@ -24,7 +24,7 @@ export const walletService = {
   },
 
   updateWallet: async (id: string, userId: string, data: { name?: string; type?: string; initialBalance?: number }) => {
-    const existingWallet = await walletRepository.findByIdAndUserId(id, userId);
+    const existingWallet = await walletRepository.findActiveByIdAndUserId(id, userId);
     if (!existingWallet) {
       throw AppError.NotFound("Wallet not found");
     }
@@ -47,7 +47,7 @@ export const walletService = {
   },
 
   deleteWallet: async (id: string, userId: string) => {
-    const existingWallet = await walletRepository.findByIdAndUserId(id, userId);
+    const existingWallet = await walletRepository.findActiveByIdAndUserId(id, userId);
     if (!existingWallet) {
       throw AppError.NotFound("Wallet not found");
     }
@@ -59,6 +59,14 @@ export const walletService = {
       await walletRepository.softDelete(id);
       return { action: 'deleted' };
     }
+  },
+
+  restoreWallet: async (id: string, userId: string) => {
+    const existingWallet = await walletRepository.findByIdAndUserId(id, userId);
+    if (!existingWallet) {
+      throw AppError.NotFound("Wallet not found");
+    }
+    return walletRepository.restore(id);
   },
 
   setDefaultWallet: async (userId: string, newDefaultWalletId: string) => {

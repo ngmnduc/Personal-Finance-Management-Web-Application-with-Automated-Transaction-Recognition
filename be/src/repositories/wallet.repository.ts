@@ -2,22 +2,26 @@ import { WalletType } from "@prisma/client";
 import {prisma} from "../config/prisma";
 
 export const walletRepository = {
-  findManyByUserId: async (userId: string) => {
+  findManyByUserId: async (userId: string, includeArchived = false) => {
+    const where: any = { userId, deletedAt: null };
+    if (!includeArchived) {
+      where.archivedAt = null;
+    }
     return prisma.wallet.findMany({
-      where: { userId, deletedAt: null },
+      where,
       orderBy: { createdAt: 'desc' },
     });
   },
 
   findByIdAndUserId: async (id: string, userId: string) => {
     return prisma.wallet.findFirst({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, deletedAt: null},
     });
   },
 
   countByUserId: async (userId: string) => {
     return prisma.wallet.count({
-      where: { userId, deletedAt: null },
+      where: { userId, deletedAt: null, archivedAt: null },
     });
   },
 
@@ -69,6 +73,13 @@ export const walletRepository = {
     return prisma.wallet.update({
       where: { id },
       data: { archivedAt: new Date() },
+    });
+  },
+
+  restore: async (id: string) => {
+    return prisma.wallet.update({
+      where: { id },
+      data: { archivedAt: null },
     });
   },
 

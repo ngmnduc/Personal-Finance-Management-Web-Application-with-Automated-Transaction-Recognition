@@ -79,22 +79,29 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Wallet" : "Create Wallet"}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" placeholder="e.g. Main Bank" {...register("name")} />
-            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+      <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
+        <div className="bg-[#0f1f3d] px-8 py-6">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-bold">
+              {isEditing ? "Edit Wallet" : "Create Wallet"}
+            </DialogTitle>
+            <p className="text-slate-300 text-sm mt-1">
+              {isEditing ? "Update your wallet configuration." : "Set up your account balances and asset types."}
+            </p>
+          </DialogHeader>
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white">
+          <div>
+            <Label htmlFor="name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Name</Label>
+            <Input id="name" placeholder="e.g. Main Bank" {...register("name")} className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]" />
+            {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
+          <div>
+            <Label htmlFor="type" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Type</Label>
             <select
               id="type"
-              className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 hover:border-slate-300 transition-colors"
+              className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f3d] hover:border-slate-300 transition-colors"
               {...register("type")}
             >
               <option value="cash">Cash</option>
@@ -102,26 +109,27 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
               <option value="e-wallet">E-Wallet</option>
               <option value="general">General</option>
             </select>
-            {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
+            {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type.message}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="initialBalance">Initial Balance</Label>
+          <div>
+            <Label htmlFor="initialBalance" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Initial Balance</Label>
             <Input 
               id="initialBalance" 
               type="number" 
               step="any"
-              disabled={isEditing} // usually we don't edit initial balance once set
+              disabled={isEditing}
+              className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]"
               {...register("initialBalance", { valueAsNumber: true })} 
             />
-            {errors.initialBalance && <p className="text-sm text-red-500">{errors.initialBalance.message}</p>}
+            {errors.initialBalance && <p className="text-sm text-red-500 mt-1">{errors.initialBalance.message}</p>}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" className="flex-1 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57]">
               {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </div>

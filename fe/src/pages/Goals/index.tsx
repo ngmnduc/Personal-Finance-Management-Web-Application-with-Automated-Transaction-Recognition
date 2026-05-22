@@ -426,7 +426,7 @@ export default function PlanningHubPage() {
 
   return (
     <div className="min-h-full">
-      <div className="max-w-[1400px] mx-auto p-8">
+      <div className="max-w-[1400px] mx-auto p-8 flex flex-col gap-16">
 
         {/* ══════════════════════════════════════════════════════════════════
             SECTION 1 — ACTIVE BUDGETS

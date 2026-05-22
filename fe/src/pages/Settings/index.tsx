@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Edit2, Lock, Wallet as WalletIcon, Shield, Info, LogOut } from 'lucide-react'
+import { Edit2, Lock, Wallet as WalletIcon, Shield, Info, LogOut, Archive, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useGetMe, useUpdateProfile, useChangePassword, useLogout } from '../../features/auth/api/auth.api'
-import { useWallets, useSetDefaultWallet } from '../../features/wallets/api/wallet.api'
+import { useWallets, useSetDefaultWallet, useRestoreWallet } from '../../features/wallets/api/wallet.api'
 import { useAuthStore } from '../../store/auth.store'
 import { useTheme } from '../../components/ThemeProvider'
 
@@ -20,6 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function initials(name?: string | null) {
@@ -56,6 +62,13 @@ export default function SettingsPage() {
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
   const logoutMutation = useLogout()
+  const restoreWallet = useRestoreWallet()
+
+  const [archivedDialogOpen, setArchivedDialogOpen] = useState(false)
+  
+  // Lấy các ví đã bị archived (dành cho Pop-up Quản lý)
+  const { data: archivedWalletsData = [] } = useWallets({ archived: true })
+  const archivedWallets = archivedWalletsData.filter(w => w.archivedAt !== null)
 
   if (meLoading) return <PageSkeleton />
 
@@ -113,6 +126,18 @@ export default function SettingsPage() {
     setDefault.mutate(id, {
       onSuccess: () => toast.success('Default wallet updated!'),
       onError: () => toast.error('Failed to update default wallet'),
+    })
+  }
+
+  function handleRestoreWallet(id: string) {
+    restoreWallet.mutate(id, {
+      onSuccess: () => {
+        toast.success('Wallet restored successfully!')
+        if (archivedWallets.length <= 1) {
+          setArchivedDialogOpen(false)
+        }
+      },
+      onError: () => toast.error('Failed to restore wallet.')
     })
   }
 
@@ -331,6 +356,59 @@ export default function SettingsPage() {
               {setDefault.isPending && (
                 <p className="text-xs text-slate-400 mt-2 animate-pulse">Updating…</p>
               )}
+
+              {/* ── Archive Preference Toggle ── */}
+              <div className="flex items-center justify-between rounded-xl border border-slate-100 p-4 mt-4 bg-slate-50/60">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-[#0f1f3d]">Archive on Delete</p>
+                  <p className="text-xs text-slate-500">
+                   Automatically archive active wallets.
+                  </p>
+                </div>
+                <Switch
+                  checked={user?.preferArchive ?? false}
+                  disabled={updateProfile.isPending}
+                  onCheckedChange={(checked) => {
+                    // 1. Capture previous value for rollback
+                    const previousValue = useAuthStore.getState().user?.preferArchive ?? false
+
+                    // 2. Optimistically update the Zustand store instantly for smooth UI animation
+                    useAuthStore.getState().updateUser({ preferArchive: checked })
+
+                    // 3. Fire the async API mutation in the background
+                    updateProfile.mutate(
+                      { preferArchive: checked },
+                      {
+                        onSuccess: () => {
+                          toast.success('Archive preferences updated successfully!')
+                        },
+                        onError: () => {
+                          // 4. Rollback to original state on failure
+                          useAuthStore.getState().updateUser({ preferArchive: previousValue })
+                          toast.error('Failed to save configuration. Please try again.')
+                        },
+                      }
+                    )
+                  }}
+                />
+              </div>
+
+              {/* ── Button Mở Pop-up Quản Lý Ví Đã Archive ── */}
+              <div className="flex items-center justify-between rounded-xl border border-slate-100 p-4 mt-3 bg-white">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-[#0f1f3d]">Archived Wallets Storage</p>
+                  <p className="text-xs text-slate-500">Review and restore your archived wallets.</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2 border-slate-200"
+                  onClick={() => setArchivedDialogOpen(true)}
+                >
+                  <Archive size={14} />
+                  Manage
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -386,6 +464,52 @@ export default function SettingsPage() {
           </p>
         </div>
       </div>
+
+      {/* ── Archived Wallets Dialog ── */}
+      <Dialog open={archivedDialogOpen} onOpenChange={setArchivedDialogOpen}>
+        <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
+          <div className="bg-[#0f1f3d] px-8 py-6">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-white text-xl font-bold">
+                <Archive size={18} className="text-slate-300" />
+                Archived Wallets
+              </DialogTitle>
+              <p className="text-slate-300 text-sm mt-1">
+                Review and restore your archived wallets.
+              </p>
+            </DialogHeader>
+          </div>
+          <div className="px-8 py-6 bg-white flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2">
+            {archivedWallets.length === 0 ? (
+              <div className="py-8 text-center text-sm text-gray-500 border border-dashed rounded-xl border-gray-200">
+                No archived wallets found.
+              </div>
+            ) : (
+              archivedWallets.map((w) => (
+                <div 
+                  key={w.id} 
+                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
+                >
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{w.name}</p>
+                    <p className="text-xs text-gray-500 capitalize">{w.type.replace('-', ' ')}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 h-8 border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300"
+                    onClick={() => handleRestoreWallet(w.id)}
+                    disabled={restoreWallet.isPending}
+                  >
+                    <RotateCcw size={14} />
+                    Restore
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

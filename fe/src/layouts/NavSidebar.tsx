@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, ScanLine, Wallet, PiggyBank, Target, BarChart3, Settings, LifeBuoy, Plus, ArrowRightLeft, Tags } from 'lucide-react'
+import { LayoutDashboard, ScanLine, Wallet, PiggyBank, Target, BarChart3,ReceiptText, Settings, LifeBuoy, Plus, ArrowRightLeft, Tags } from 'lucide-react'
 import { ROUTES } from '../lib/constants'
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: ROUTES.DASHBOARD },
   { icon: ScanLine, label: 'Scan', path: ROUTES.SCAN },
   { icon: Wallet, label: 'Wallets', path: ROUTES.WALLETS },
-  { icon: ArrowRightLeft, label: 'Transactions', path: ROUTES.TRANSACTIONS },
+  { icon: ReceiptText, label: 'Transactions', path: ROUTES.TRANSACTIONS },
   { icon: Tags, label: 'Categories', path: ROUTES.CATEGORIES },
   { icon: Target, label: 'Planning', path: ROUTES.GOALS },
 ]

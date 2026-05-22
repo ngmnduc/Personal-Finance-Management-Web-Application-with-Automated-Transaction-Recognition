@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useWallets, useSetDefaultWallet, useDeleteWallet } from "../../features/wallets/api/wallet.api"
 import { useUiStore } from "../../store/ui.store"
+import { useAuthStore } from "../../store/auth.store"
 import { WalletDialog } from "../../features/wallets/components/WalletDialog"
 import RecurringTab from "../../features/recurring/components/RecurringTab"
 import { Button } from "../../components/ui/button"
@@ -11,6 +12,7 @@ import { formatCurrency } from "../../lib/utils"
 import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard, TrendingUp } from "lucide-react"
 
 export default function WalletsPage() {
+  const user = useAuthStore((s) => s.user)
   const { data: wallets, isLoading } = useWallets()
   const { selectedWalletId, setSelectedWallet } = useUiStore()
 
@@ -232,8 +234,8 @@ export default function WalletsPage() {
                               className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center justify-start gap-2 h-auto rounded-none"
                               onClick={(e) => handleDelete(w, e)}
                             >
-                              {Number(w.currentBalance) > 0 ? <Archive size={14} /> : <Trash2 size={14} />}
-                              {Number(w.currentBalance) > 0 ? 'Archive' : 'Delete'}
+                              {user?.preferArchive ? <Archive size={14} /> : <Trash2 size={14} />}
+                              {user?.preferArchive ? 'Archive Wallet' : 'Delete Wallet'}
                             </Button>
                           </div>
                         )}

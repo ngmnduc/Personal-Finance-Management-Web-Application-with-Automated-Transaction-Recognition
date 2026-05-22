@@ -130,25 +130,27 @@ export function CategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] rounded-[2rem] border border-slate-100 shadow-xl p-0 overflow-hidden bg-white">
+      <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
 
         {/* Dialog Header */}
-        <DialogHeader className="px-8 pt-8 pb-0">
-          <DialogTitle className="text-xl font-bold text-[#0f1f3d]">
-            {isEditing ? "Edit Category" : "New Category"}
-          </DialogTitle>
-          <p className="text-sm text-slate-500 mt-1">
-            {isEditing
-              ? "Update your category details below."
-              : "Create a custom category to track your transactions."}
-          </p>
-        </DialogHeader>
+        <div className="bg-[#0f1f3d] px-8 py-6">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-bold">
+              {isEditing ? "Edit Category" : "New Category"}
+            </DialogTitle>
+            <p className="text-slate-300 text-sm mt-1">
+              {isEditing
+                ? "Update your category details below."
+                : "Create a custom category to track your transactions."}
+            </p>
+          </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="px-8 pb-8 pt-6 space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white space-y-0">
 
           {/* ── Type Toggle ── */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          <div>
+            <p className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               Transaction Type
             </p>
             <div className="flex gap-1 p-1 bg-[#f1f5f9] rounded-full border border-slate-200">
@@ -179,25 +181,25 @@ export function CategoryDialog({
           </div>
 
           {/* ── Name Input ── */}
-          <div className="space-y-2">
+          <div>
             <Label
               htmlFor="name"
-              className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
             >
               Category Name
             </Label>
             <Input
               id="name"
               placeholder="e.g. Groceries, Freelance..."
-              className="rounded-xl border-slate-200 bg-[#f1f5f9] focus-visible:ring-1 focus-visible:ring-[#0f1f3d] h-11 text-[#0f1f3d]"
+              className="rounded-xl border border-slate-200 bg-white focus-visible:ring-2 focus-visible:ring-[#0f1f3d] h-11 text-slate-800"
               {...register("name")}
             />
             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           {/* ── Icon Picker ── */}
-          <div className="space-y-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Icon</p>
+          <div>
+            <p className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Icon</p>
             <div className="grid grid-cols-8 gap-2 max-h-[160px] overflow-y-auto pr-1">
               {ICONS.map(({ name, component: IconComp }) => {
                 const isSelected = selectedIcon === name
@@ -224,11 +226,11 @@ export function CategoryDialog({
           </div>
 
           {/* ── Actions ── */}
-          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+          <div className="flex gap-3 pt-2">
             <Button
               type="button"
-              variant="ghost"
-              className="rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+              variant="outline"
+              className="flex-1 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
               onClick={() => onOpenChange(false)}
             >
               Cancel
@@ -236,7 +238,7 @@ export function CategoryDialog({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] px-6 font-semibold"
+              className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57]"
             >
               {isSubmitting
                 ? "Saving..."

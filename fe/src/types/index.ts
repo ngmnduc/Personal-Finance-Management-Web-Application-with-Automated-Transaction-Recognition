@@ -3,6 +3,7 @@ export interface User {
   email: string
   name: string
   avatarUrl?: string
+  preferArchive?: boolean
   createdAt: string
 }
 
