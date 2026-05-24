@@ -129,7 +129,8 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
         </div>
 
         {/* Body — White */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white">
+        {/* Tách biệt padding px-6 py-5 trên di động và md:px-8 md:py-6 trên máy tính để tối ưu vùng hiển thị */}
+        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 md:px-8 md:py-6 flex flex-col gap-5 bg-white">
 
           {/* Name */}
           <div>

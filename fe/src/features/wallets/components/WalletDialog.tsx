@@ -90,7 +90,8 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
             </p>
           </DialogHeader>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white">
+        {/* Tách biệt padding px-6 py-5 trên mobile và md:px-8 md:py-6 trên desktop để tối ưu vùng hiển thị */}
+        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 md:px-8 md:py-6 flex flex-col gap-5 bg-white">
           <div>
             <Label htmlFor="name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Name</Label>
             <Input id="name" placeholder="e.g. Main Bank" {...register("name")} className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]" />

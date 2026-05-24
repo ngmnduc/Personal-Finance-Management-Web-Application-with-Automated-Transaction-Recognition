@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import authRoutes from './routes/auth.routes';
@@ -15,9 +17,12 @@ import recurringIncomeRoutes from './routes/recurringIncome.routes';
 import goalRoutes from './routes/goal.routes';
 import recurringRuleRoutes from './routes/recurringRule.routes';
 import exportRoutes from './routes/export.routes';
+import notificationRoutes from './routes/notification.routes';
+import { socketService, AuthenticatedSocket } from './services/socket.service';
+import { verifyAccessToken } from './utils/jwt';
 
-if (!(BigInt.prototype as any).toJSON) {
-  (BigInt.prototype as any).toJSON = function () {
+if (!(BigInt.prototype as unknown as Record<string, unknown>).toJSON) {
+  (BigInt.prototype as unknown as Record<string, unknown>).toJSON = function () {
     return this.toString();
   };
 }
@@ -72,11 +77,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-//app.use('/api/v1/auth/login', authRoutes);
-//app.use('/api/v1/auth/register', authRoutes);
-//app.use('/api/v1/auth/refresh', authRoutes);
-//app.use('/api', authRoutes);
-
 // --------------- Health check (cron-job.org ping) ---------------
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), env: env.NODE_ENV });
@@ -92,9 +92,9 @@ app.use('/api/v1/budgets', budgetRoutes);
 app.use('/api/v1/goals', goalRoutes);
 app.use('/api/v1/recurring-incomes', recurringIncomeRoutes);
 app.use('/api/v1/recurring', recurringRuleRoutes);
-// app.use('/api/v1/recurring', recurringRoutes); // legacy — replaced by recurringRuleRoutes
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/export', exportRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // --------------- 404 fallback ---------------
 app.use((_req, res) => {
@@ -104,4 +104,62 @@ app.use((_req, res) => {
 // --------------- Global error handler ---------------
 app.use(errorHandler);
 
+// ─── HTTP Server & Socket.IO ───
+
+// Bọc Express bằng HTTP Server để Socket.IO dùng chung cổng
+const httpServer = http.createServer(app);
+
+// Khởi tạo Socket.IO
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: env.CORS_ORIGIN,
+    credentials: true,
+    methods: ['GET', 'POST'],
+  },
+  transports: ['websocket', 'polling'],
+});
+
+// Auth Middleware cho Socket qua JWT
+io.use((socket, next) => {
+  try {
+    // Lấy token từ handshake hoặc header
+    const authToken = socket.handshake.auth?.token as string | undefined;
+    const headerToken = socket.handshake.headers.authorization?.split(' ')[1];
+    const token = authToken ?? headerToken;
+
+    if (!token) {
+      return next(new Error('Authentication token required'));
+    }
+
+    const result = verifyAccessToken(token);
+    if (!result.ok) {
+      return next(new Error(`Authentication failed: ${result.error}`));
+    }
+
+    // Gán userId vào session socket
+    (socket as AuthenticatedSocket).userId = result.payload.userId;
+    next();
+  } catch {
+    next(new Error('Socket authentication error'));
+  }
+});
+
+// Xử lý connection
+io.on('connection', (socket) => {
+  const authSocket = socket as AuthenticatedSocket;
+  const { userId } = authSocket;
+
+  // Đăng ký client
+  socketService.registerClient(userId, socket.id);
+
+  // Xóa client khi disconnect
+  socket.on('disconnect', () => {
+    socketService.unregisterClient(socket.id);
+  });
+});
+
+// Init SocketService
+socketService.init(io);
+
+export { httpServer };
 export default app;

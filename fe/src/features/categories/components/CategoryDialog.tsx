@@ -132,21 +132,20 @@ export function CategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
 
-        {/* Dialog Header */}
-        <div className="bg-[#0f1f3d] px-8 py-6">
-          <DialogHeader>
+        {/* Tối ưu tỷ lệ khoảng đệm Header trên di động px-6 py-5 và md:px-8 md:py-6 trên desktop */}
+        <div className="bg-[#0f1f3d] px-6 py-5 md:px-8 md:py-6">
+          <DialogHeader className="p-0">
             <DialogTitle className="text-white text-xl font-bold">
               {isEditing ? "Edit Category" : "New Category"}
             </DialogTitle>
             <p className="text-slate-300 text-sm mt-1">
-              {isEditing
-                ? "Update your category details below."
-                : "Create a custom category to track your transactions."}
+              {isEditing ? "Update your category details below." : "Create a custom category to track your transactions."}
             </p>
           </DialogHeader>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white space-y-0">
+        {/* Thay thế khoảng đệm form và khoảng cách dọc của các input */}
+        <form onSubmit={handleSubmit(onSubmit)} className="px-6 pb-6 pt-5 md:px-8 md:pb-8 md:pt-6 space-y-6 bg-white">
 
           {/* ── Type Toggle ── */}
           <div>

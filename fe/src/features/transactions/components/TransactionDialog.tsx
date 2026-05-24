@@ -31,7 +31,8 @@ export default function TransactionDialog({
             </p>
           </DialogHeader>
         </div>
-        <div className="px-8 py-6 bg-white">
+        {/* Tối ưu khoảng đệm di động giúp form hiển thị rộng rãi và đẹp mắt hơn */}
+        <div className="px-6 pb-6 pt-4 md:px-8 md:pb-6 md:pt-6 bg-white">
           <TransactionForm
             transaction={transaction}
             onSuccess={() => onOpenChange(false)}

@@ -9,8 +9,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl dùng kết nối trực tiếp (không qua PgBouncer) cho prisma migrate
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────
@@ -34,6 +36,8 @@ model User {
   savingGoals      SavingGoal[]
   recurringRules   RecurringRule[]
   recurringIncomes RecurringIncome[]
+  // Quan hệ 1-n với hệ thống thông báo
+  notifications    Notification[]
 
   @@map("users")
 }
@@ -245,4 +249,30 @@ model RecurringIncome {
 
   @@index([userId, isActive])
   @@map("recurring_incomes")
+}
+
+// ─────────────────────────────────────────
+// 9. NOTIFICATIONS (thông báo thời gian thực)
+// ─────────────────────────────────────────
+
+enum NotificationType {
+  BUDGET_ALERT        // Cảnh báo ngân sách vượt ngưỡng
+  AUTOMATION_TRIGGER  // Quy tắc định kỳ được kích hoạt
+  SYSTEM_NOTICE       // Thông báo hệ thống chung
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  content   String
+  metadata  Json?            // Lưu trữ tham chiếu như walletId, budgetId, transactionId
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
 }
