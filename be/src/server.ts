@@ -1,10 +1,12 @@
-import app from './app';
+import { httpServer } from './app';
 import { env } from './config/env';
 import { prisma } from './config/prisma';
 
 const startServer = () => {
-  const server = app.listen(env.PORT, () => {
+  // Bắt đầu server (Express + Socket.IO)
+  const server = httpServer.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+    console.log(`Socket.IO attached on same port ${env.PORT}`);
   });
 
   // --------------- Graceful shutdown ---------------

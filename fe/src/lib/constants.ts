@@ -26,6 +26,7 @@ export const QUERY_KEYS = {
   RECURRING_INCOMES: 'recurring-incomes',
   RECURRING_SUGGESTIONS: 'recurring-suggestions',
   RECURRING_RULES: 'recurring-rules',
+  NOTIFICATIONS: 'notifications',
 }
 
 export const API_ENDPOINTS = {
@@ -45,4 +46,5 @@ export const API_ENDPOINTS = {
   OCR: '/ocr',
   RECURRING_INCOMES: '/recurring-incomes',
   RECURRING: '/recurring',
+  NOTIFICATIONS: '/notifications',
 }
