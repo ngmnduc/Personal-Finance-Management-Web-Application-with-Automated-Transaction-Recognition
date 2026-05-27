@@ -49,7 +49,19 @@ export const register = async (data: { email: string; name: string; password: st
     return newUser;
   });
 
-  return excludePassword(user);
+  const accessToken = signAccessToken(user.id, user.tokenVersion);
+  const refreshToken = signRefreshToken(user.id, user.tokenVersion);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken },
+  });
+
+  return {
+    user: excludePassword(user),
+    accessToken,
+    refreshToken,
+  };
 };
 
 export const login = async (data: { email: string; password: string }) => {

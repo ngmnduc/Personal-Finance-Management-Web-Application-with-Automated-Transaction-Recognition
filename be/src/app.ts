@@ -59,11 +59,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // --------------- Rate limiting ---------------
 
-// Auth endpoints — brute-force protection
+// Auth endpoints — general protection (login has a stricter limiter in routes)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
-  message: { success: false, message: 'Too many login attempts, try again later', code: 'RATE_LIMITED' },
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  message: { success: false, message: 'Too many requests', code: 'RATE_LIMITED' },
   standardHeaders: true,
   legacyHeaders: false,
 });

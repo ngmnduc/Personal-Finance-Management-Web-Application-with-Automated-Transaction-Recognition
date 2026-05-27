@@ -1,8 +1,18 @@
 import { Router } from "express";
+import rateLimit from 'express-rate-limit';
 import { z } from "zod";
 import {validateRequest} from "../middlewares/validate.middleware";
 import * as authController from "../controllers/auth.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
+
+// Login brute-force protection
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { success: false, message: 'Too many login attempts, try again later', code: 'RATE_LIMITED' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const router = Router();
 
@@ -41,7 +51,7 @@ const updateMeSchema = z.object({
 
 // Routes
 router.post("/register", validateRequest(registerSchema), authController.register);
-router.post("/login", validateRequest(loginSchema), authController.login);
+router.post("/login", loginLimiter, validateRequest(loginSchema), authController.login);
 router.post("/logout", requireAuth, authController.logout);
 router.post("/refresh", authController.refresh);
 router.get("/me", requireAuth, authController.getMe);

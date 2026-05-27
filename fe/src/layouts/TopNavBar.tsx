@@ -26,7 +26,7 @@ export const TopNavBar: React.FC = () => {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#0f1f3d] to-[#1e3a6e] text-xs font-semibold text-white shadow">
             {initials}
           </div>
-          <div className="hidden xl:block text-left">
+          <div className="hidden lg:block text-left">
             <p className="text-[13px] font-bold leading-tight text-slate-800">
               {user?.name ?? 'User'}
             </p>
