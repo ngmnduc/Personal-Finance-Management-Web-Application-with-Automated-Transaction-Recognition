@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, Socket } from 'socket.io';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/error.middleware';
 import authRoutes from './routes/auth.routes';
@@ -83,18 +83,18 @@ app.get('/health', (_req, res) => {
 });
 
 // --------------- Routes (mount here) ---------------
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/wallets', walletRoutes);
-app.use('/api/v1/categories', categoryRoutes);
-app.use('/api/v1/transactions', transactionRoutes);
-app.use('/api/v1/ocr', ocrRoutes);
-app.use('/api/v1/budgets', budgetRoutes);
-app.use('/api/v1/goals', goalRoutes);
-app.use('/api/v1/recurring-incomes', recurringIncomeRoutes);
-app.use('/api/v1/recurring', recurringRuleRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
-app.use('/api/v1/export', exportRoutes);
-app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/auth', authLimiter, authRoutes);
+app.use('/api/v1/wallets', apiLimiter, walletRoutes);
+app.use('/api/v1/categories', apiLimiter, categoryRoutes);
+app.use('/api/v1/transactions', apiLimiter, transactionRoutes);
+app.use('/api/v1/ocr', apiLimiter, ocrRoutes);
+app.use('/api/v1/budgets', apiLimiter, budgetRoutes);
+app.use('/api/v1/goals', apiLimiter, goalRoutes);
+app.use('/api/v1/recurring-incomes', apiLimiter, recurringIncomeRoutes);
+app.use('/api/v1/recurring', apiLimiter, recurringRuleRoutes);
+app.use('/api/v1/dashboard', apiLimiter, dashboardRoutes);
+app.use('/api/v1/export', apiLimiter, exportRoutes);
+app.use('/api/v1/notifications', apiLimiter, notificationRoutes);
 
 // --------------- 404 fallback ---------------
 app.use((_req, res) => {
@@ -120,7 +120,7 @@ const io = new SocketIOServer(httpServer, {
 });
 
 // Auth Middleware cho Socket qua JWT
-io.use((socket, next) => {
+io.use((socket: Socket, next: (err?: Error) => void) => {
   try {
     // Lấy token từ handshake hoặc header
     const authToken = socket.handshake.auth?.token as string | undefined;
@@ -145,7 +145,7 @@ io.use((socket, next) => {
 });
 
 // Xử lý connection
-io.on('connection', (socket) => {
+io.on('connection', (socket: Socket) => {
   const authSocket = socket as AuthenticatedSocket;
   const { userId } = authSocket;
 

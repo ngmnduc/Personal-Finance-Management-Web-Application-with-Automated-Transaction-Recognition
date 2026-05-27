@@ -143,11 +143,11 @@ export default function SettingsPage() {
 
   return (
     // TODO [DARK MODE]: Đổi bg-[#f0f4f8] → bg-background khi triển khai dark mode
-    <div className="p-4 md:p-8 min-h-full bg-[#f0f4f8] max-w-[1200px] mx-auto">
+    <div className="px-4 pb-4 md:px-8 md:pb-8 min-h-full bg-[#f0f4f8] max-w-[1200px] mx-auto">
 
       {/* ── Header ── */}
       {/* TODO [DARK MODE]: text-[#0f1f3d] → text-foreground | text-slate-500 → text-muted-foreground */}
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold text-[#0f1f3d]">Settings</h1>
         <p className="text-sm text-slate-500 mt-1">Manage your institutional presence and security parameters.</p>
       </div>

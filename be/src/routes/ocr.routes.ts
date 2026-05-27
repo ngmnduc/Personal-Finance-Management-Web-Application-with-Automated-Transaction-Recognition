@@ -1,11 +1,29 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { requireAuth } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
 import { scan, confirm, getBanks, scanBulk } from '../controllers/ocr.controller';
+import { sendError } from '../utils/response';
 
 const router = Router();
+
+// ── Rate Limiting chuyên biệt cho OCR Upload (Chống spam RAM/OOM) ───────────────
+const ocrUploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: 5, // Tối đa 5 lần upload (single hoặc bulk)
+  handler: (req, res) => {
+    return sendError(
+      res,
+      'Too many OCR scan requests. Please try again after 15 minutes.',
+      'RATE_LIMITED',
+      429
+    );
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ── Multer (memory storage, max 10 MB) ───────────────────────────────────────
 
@@ -35,15 +53,12 @@ const confirmSchema = z.object({
 router.post(
   '/scan',
   requireAuth,
+  ocrUploadLimiter,
   (req, res, next) => {
     upload.single('file')(req, res, (err) => {
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({
-            success: false,
-            message: 'File too large. Maximum 10MB.',
-            code: 'FILE_TOO_LARGE',
-          });
+          return sendError(res, 'File too large. Maximum 10MB.', 'FILE_TOO_LARGE', 400);
         }
       }
       if (err) return next(err);
@@ -63,7 +78,22 @@ router.get('/banks', requireAuth, getBanks);
 router.post(
   '/bulk',
   requireAuth,
-  upload.array('files', 20),
+  ocrUploadLimiter,
+  (req, res, next) => {
+    // Chỉ cho phép tối đa 10 file để tránh OOM (tối đa 100MB RAM)
+    upload.array('files', 10)(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+          return sendError(res, 'Too many files. Maximum 10 files allowed for bulk scan.', 'TOO_MANY_FILES', 400);
+        }
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return sendError(res, 'One or more files too large. Maximum 10MB per file.', 'FILE_TOO_LARGE', 400);
+        }
+      }
+      if (err) return next(err);
+      next();
+    });
+  },
   scanBulk,
 );
 

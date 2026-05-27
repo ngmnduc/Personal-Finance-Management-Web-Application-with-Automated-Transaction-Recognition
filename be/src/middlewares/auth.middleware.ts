@@ -2,10 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken, JWT_ACCESS_TYPE, JWT_REFRESH_TYPE } from '../utils/jwt';
 import { sendError } from '../utils/response';
 import { AppError } from '../utils/errors';
+import { prisma } from '../config/prisma';
 
 // --------------- Access Token Auth ---------------
 
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return sendError(res, 'Missing or invalid authorization header', 'UNAUTHORIZED', 401);
@@ -18,13 +19,23 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     return sendError(res, 'Invalid or expired access token', 'UNAUTHORIZED', 401);
   }
 
+  // Verify tokenVersion against DB
+  const user = await prisma.user.findUnique({
+    where: { id: result.payload.userId },
+    select: { tokenVersion: true }
+  });
+
+  if (!user || user.tokenVersion !== result.payload.tokenVersion) {
+    return sendError(res, 'Token has been invalidated', 'UNAUTHORIZED', 401);
+  }
+
   req.user = { userId: result.payload.userId, tokenVersion: result.payload.tokenVersion };
   next();
 };
 
 // --------------- Refresh Token Auth ---------------
 
-export const requireRefreshToken = (req: Request, res: Response, next: NextFunction) => {
+export const requireRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return sendError(res, 'Missing refresh token', 'UNAUTHORIZED', 401);
@@ -35,6 +46,16 @@ export const requireRefreshToken = (req: Request, res: Response, next: NextFunct
 
   if (!result.ok) {
     return sendError(res, 'Invalid or expired refresh token', 'UNAUTHORIZED', 401);
+  }
+
+  // Verify tokenVersion against DB
+  const user = await prisma.user.findUnique({
+    where: { id: result.payload.userId },
+    select: { tokenVersion: true }
+  });
+
+  if (!user || user.tokenVersion !== result.payload.tokenVersion) {
+    return sendError(res, 'Refresh token has been invalidated', 'UNAUTHORIZED', 401);
   }
 
   req.user = { userId: result.payload.userId, tokenVersion: result.payload.tokenVersion };

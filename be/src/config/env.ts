@@ -13,6 +13,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   CORS_ORIGIN: z.string().default('*'),
   OCR_SERVICE_URL: z.string().optional(),
+  INTERNAL_SECRET: z.string().default('change_this_secret'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

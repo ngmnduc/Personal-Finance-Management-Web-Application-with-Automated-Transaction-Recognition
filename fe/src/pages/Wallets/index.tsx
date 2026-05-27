@@ -114,9 +114,9 @@ export default function WalletsPage() {
 
   return (
     <div className="min-h-full">
-      <div className="max-w-[1400px] mx-auto p-4 md:p-8">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-8 pb-4 md:pb-8">
       {/* ── Header ── */}
-      <div className="mb-8">
+      <div className="mb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Wallet Management</h1>

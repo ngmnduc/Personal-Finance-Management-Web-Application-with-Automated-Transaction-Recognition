@@ -65,8 +65,8 @@ export const login = async (data: { email: string; password: string }) => {
     throw AppError.Unauthorized("Invalid email or password");
   }
 
-  const accessToken = signAccessToken(user.id);
-  const refreshToken = signRefreshToken(user.id);
+  const accessToken = signAccessToken(user.id, user.tokenVersion);
+  const refreshToken = signRefreshToken(user.id, user.tokenVersion);
 
   await prisma.user.update({
     where: { id: user.id },
@@ -102,7 +102,7 @@ export const refresh = async (token: string) => {
     throw AppError.Unauthorized("Invalid or expired refresh token");
   }
 
-  const newAccessToken = signAccessToken(user.id);
+  const newAccessToken = signAccessToken(user.id, user.tokenVersion);
   return { accessToken: newAccessToken };
 };
 
@@ -140,6 +140,8 @@ export const updateMe = async (
     }
 
     updateData.passwordHash = await hashPassword(data.newPassword);
+    // Increment tokenVersion to invalidate all existing tokens
+    updateData.tokenVersion = { increment: 1 };
   }
 
   // 3. Cập nhật avatarUrl nếu có

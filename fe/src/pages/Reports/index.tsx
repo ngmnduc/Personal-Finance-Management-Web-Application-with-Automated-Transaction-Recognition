@@ -161,10 +161,10 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 min-h-full bg-[#f0f4f8] max-w-[1400px] mx-auto text-slate-800">
+    <div className="px-4 pb-4 md:px-8 md:pb-8 min-h-full bg-[#f0f4f8] max-w-[1400px] mx-auto text-slate-800">
 
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
             Vault &rsaquo; Reports & History

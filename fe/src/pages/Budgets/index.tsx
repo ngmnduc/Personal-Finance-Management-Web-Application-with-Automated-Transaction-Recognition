@@ -217,10 +217,10 @@ export default function BudgetsPage() {
 
   return (
     <div className="min-h-full bg-[#f0f4f8]">
-      <div className="max-w-[1400px] mx-auto p-8">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-8 pb-4 md:pb-8">
 
         {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Budget Control</p>
             <h1 className="text-3xl font-bold text-[#0f1f3d] tracking-tight">Active Budgets</h1>

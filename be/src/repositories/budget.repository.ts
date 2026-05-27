@@ -23,22 +23,27 @@ export const getCurrentPeriodRange = (
   const now = new Date();
 
   if (period === 'MONTHLY') {
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const endDate   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    // 1st day of current UTC month at 00:00:00.000
+    const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+    // Last day of current UTC month at 23:59:59.999
+    const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
     return { startDate, endDate };
   }
 
-  // WEEKLY — ISO week: Monday–Sunday
-  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, …, 6=Sat
-  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  // WEEKLY — ISO week: Monday–Sunday (UTC)
+  const dayOfUTCWeek = now.getUTCDay(); // 0=Sun, 1=Mon, …, 6=Sat
+  const diffToMonday = dayOfUTCWeek === 0 ? -6 : 1 - dayOfUTCWeek;
 
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diffToMonday);
-  monday.setHours(0, 0, 0, 0);
+  const monday = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + diffToMonday,
+    0, 0, 0, 0
+  ));
 
   const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  sunday.setUTCHours(23, 59, 59, 999);
 
   return { startDate: monday, endDate: sunday };
 };

@@ -28,6 +28,7 @@ model User {
   updatedAt     DateTime @updatedAt @map("updated_at")
   deleted_at DateTime?
   refreshToken  String?  @map("refresh_token")
+  tokenVersion  Int      @default(0) @map("token_version")
 
   wallets          Wallet[]
   categories       Category[]

@@ -21,7 +21,7 @@ export default function AppLayout() {
             <TopNavBar />
           </div>
 
-          <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6 pb-20 lg:pb-6">
+          <main className="flex-1 overflow-y-auto bg-background pb-20 lg:pb-0">
             <Outlet />
           </main>
 
