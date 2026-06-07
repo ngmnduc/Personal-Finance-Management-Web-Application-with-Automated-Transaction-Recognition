@@ -14,13 +14,13 @@ export class NotificationRepository {
     return prisma.notification.create({ data });
   }
 
-  // Lấy danh sách phân trang và số lượng chưa đọc
+  // Lấy danh sách phân trang và số lượng chưa đọc trong một transaction duy nhất để tối ưu hóa pool kết nối
   async findByUserId(
     userId: string,
     skip: number,
     limit: number,
   ): Promise<NotificationPage> {
-    const [notifications, totalCount, unreadCount] = await Promise.all([
+    const [notifications, totalCount, unreadCount] = await prisma.$transaction([
       // Lấy danh sách
       prisma.notification.findMany({
         where: { userId },

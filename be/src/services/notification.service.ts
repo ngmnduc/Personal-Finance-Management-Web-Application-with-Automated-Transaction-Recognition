@@ -5,6 +5,7 @@ import {
   NotificationPage,
 } from '../repositories/notification.repository';
 import { socketService } from './socket.service';
+import { prisma } from '../config/prisma';
 
 // ─── Notification Types ───
 
@@ -53,6 +54,11 @@ export class NotificationService {
           createdAt: notification.createdAt,
         };
         socketService.sendToUser<NotificationPayload>(userId, 'NEW_NOTIFICATION', payload);
+        
+        // Recalculate absolute unread notification metrics and broadcast to user sessions
+        this.syncUnreadCount(userId).catch((err) =>
+          console.error('[NotificationService] triggerNotification sync failed:', err)
+        );
       }
 
       return notification;
@@ -98,6 +104,20 @@ export class NotificationService {
   async markAllRead(userId: string): Promise<{ count: number }> {
     const result = await this.repo.markAllRead(userId);
     return { count: result.count };
+  }
+
+  // Recalculate absolute unread notification metrics directly from database and broadcast to user
+  async syncUnreadCount(userId: string): Promise<number> {
+    try {
+      const unreadCount = await prisma.notification.count({
+        where: { userId, read: false },
+      });
+      socketService.sendToUser(userId, 'UNREAD_COUNT_CHANGED', { unreadCount });
+      return unreadCount;
+    } catch (error) {
+      console.error('[NotificationService] syncUnreadCount failed:', error);
+      return 0;
+    }
   }
 }
 

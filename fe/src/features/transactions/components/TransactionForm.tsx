@@ -16,6 +16,7 @@ import { useWallets } from '../../wallets/api/wallet.api'
 import { useCategories } from '../../categories/api/category.api'
 import { useCreateTransaction, useUpdateTransaction } from '../api/transaction.api'
 import { Transaction } from '../../../types'
+import { VndCurrencyInput } from '../../../components/shared/VndCurrencyInput'
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -134,25 +136,13 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
 
       {/* Row 2: Amount */}
       <div>
-        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-          Amount
-        </label>
-        <div className="relative">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-            VND
-          </span>
-          <Input
-            type="number"
-            min="0"
-            step="any"
-            placeholder="0"
-            className="pl-12 bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]"
-            {...register('amount', { valueAsNumber: true })}
-          />
-        </div>
-        {errors.amount && (
-          <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>
-        )}
+        <VndCurrencyInput
+          control={control}
+          name="amount"
+          label="Amount"
+          error={errors.amount}
+          placeholder="0"
+        />
       </div>
 
       {/* Row 3: Category */}

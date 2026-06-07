@@ -41,8 +41,8 @@ export const walletController = {
     try {
       const userId = req.user!.userId;
       const { id } = req.params as {id:string};
-      const { name, type, initialBalance } = req.body;
-      const wallet = await walletService.updateWallet(id, userId, { name, type, initialBalance });
+      const { name, type, initialBalance, currentBalance } = req.body;
+      const wallet = await walletService.updateWallet(id, userId, { name, type, initialBalance, currentBalance });
       sendSuccess(res, serializeBigInt(wallet), "Wallet updated successfully", 200);
     } catch (error) {
       next(error);

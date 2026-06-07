@@ -9,7 +9,7 @@ import { Card, CardContent } from "../../components/ui/card"
 import PageSkeleton from "../../components/shared/PageSkeleton"
 import { Wallet } from "../../types"
 import { formatCurrency } from "../../lib/utils"
-import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard, TrendingUp } from "lucide-react"
+import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard } from "lucide-react"
 
 export default function WalletsPage() {
   const user = useAuthStore((s) => s.user)
@@ -195,12 +195,14 @@ export default function WalletsPage() {
                     </h3>
 
                     <div className="flex items-center justify-between border-t border-slate-100 pt-3 lg:pt-4 gap-2">
-                      <div className="flex items-center text-xs sm:text-sm font-medium text-slate-500 min-w-0">
+                      {/* TODO: monthly trend — tạm ẩn vì đang hardcode +12.4% (mockup data).
+                          Sẽ tính thật khi có field previousMonthBalance hoặc aggregate theo tháng. */}
+                      {/* <div className="flex items-center text-xs sm:text-sm font-medium text-slate-500 min-w-0">
                         <span className="text-[#10b981] flex items-center">
                           <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /> +12.4%
                         </span>
                         <span className="ml-1 text-slate-400 truncate">this month</span>
-                      </div>
+                      </div> */}
 
                       <div className="relative flex-shrink-0" ref={activeDropdown === w.id ? dropdownRef : null}>
                         <button

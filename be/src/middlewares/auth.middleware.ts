@@ -19,15 +19,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     return sendError(res, 'Invalid or expired access token', 'UNAUTHORIZED', 401);
   }
 
-  // Verify tokenVersion against DB
-  const user = await prisma.user.findUnique({
-    where: { id: result.payload.userId },
-    select: { tokenVersion: true }
-  });
-
-  if (!user || user.tokenVersion !== result.payload.tokenVersion) {
-    return sendError(res, 'Token has been invalidated', 'UNAUTHORIZED', 401);
-  }
+  /* CODE COMMENT: Optimization P1.2 - Removed database check on tokenVersion to prevent DB query overhead on every request. Relying strictly on JWT verification. */
 
   req.user = { userId: result.payload.userId, tokenVersion: result.payload.tokenVersion };
   next();
@@ -48,15 +40,7 @@ export const requireRefreshToken = async (req: Request, res: Response, next: Nex
     return sendError(res, 'Invalid or expired refresh token', 'UNAUTHORIZED', 401);
   }
 
-  // Verify tokenVersion against DB
-  const user = await prisma.user.findUnique({
-    where: { id: result.payload.userId },
-    select: { tokenVersion: true }
-  });
-
-  if (!user || user.tokenVersion !== result.payload.tokenVersion) {
-    return sendError(res, 'Refresh token has been invalidated', 'UNAUTHORIZED', 401);
-  }
+  /* CODE COMMENT: Optimization P1.2 - Removed database check on tokenVersion for refresh token to prevent DB query overhead. Relying strictly on JWT verification. */
 
   req.user = { userId: result.payload.userId, tokenVersion: result.payload.tokenVersion };
   next();

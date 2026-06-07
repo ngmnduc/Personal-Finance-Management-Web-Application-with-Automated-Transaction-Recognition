@@ -59,6 +59,9 @@ export const markAsRead = async (
 
     const notification = await notificationService.markAsRead(id, userId);
 
+    // Recalculate unread metrics and broadcast updated count to sync multitab sessions
+    await notificationService.syncUnreadCount(userId);
+
     sendSuccess(res, notification, 'Notification marked as read');
   } catch (error) {
     next(error);
@@ -75,6 +78,9 @@ export const markAllAsRead = async (
     const userId = req.user!.userId;
 
     const result = await notificationService.markAllRead(userId);
+
+    // Recalculate unread metrics and broadcast updated count to sync multitab sessions
+    await notificationService.syncUnreadCount(userId);
 
     sendSuccess(
       res,

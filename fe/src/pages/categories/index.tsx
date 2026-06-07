@@ -61,6 +61,15 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 function resolveIcon(raw: string): React.ElementType {
   if (!raw) return DollarSign
+
+  /* Implement dynamic string transformation to generate kebab-case slug */
+  const kebabSlug = raw
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/([a-zA-Z])([0-9])/g, "$1-$2")
+    .toLowerCase()
+
+  if (ICON_MAP[kebabSlug]) return ICON_MAP[kebabSlug]
+
   // 1. Exact match (handles both kebab-case slugs and PascalCase picker names)
   if (ICON_MAP[raw]) return ICON_MAP[raw]
   // 2. PascalCase fallback: "shoppingBag" → "ShoppingBag"

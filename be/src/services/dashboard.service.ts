@@ -23,10 +23,14 @@ export const getDashboardOverview = async (userId: string) => {
   const totalBalance = Number(balanceAggregate._sum.currentBalance ?? 0n);
 
   // ── 2. This-month income / expense ─────────────────────────────────────────
-  const [incomeAgg, expenseAgg] = await dashboardRepository.getMonthlyTransactionsSum(userId, startOfMonth, endOfMonth);
+  const transactionSums = await dashboardRepository.getMonthlyTransactionsSum(userId, startOfMonth, endOfMonth);
 
-  const totalIncome  = Number(incomeAgg._sum.amount  ?? 0n);
-  const totalExpense = Number(expenseAgg._sum.amount ?? 0n);
+  /* CODE COMMENT: Optimization P2.2 - Parsing consolidated type-grouped transaction sums with fallback values */
+  const incomeRow = transactionSums.find((r) => r.type === 'INCOME');
+  const expenseRow = transactionSums.find((r) => r.type === 'EXPENSE');
+
+  const totalIncome  = Number(incomeRow?._sum.amount ?? 0n);
+  const totalExpense = Number(expenseRow?._sum.amount ?? 0n);
   const net          = totalIncome - totalExpense;
 
   // ── 3. Capital health metrics ───────────────────────────────────────────────
@@ -38,15 +42,27 @@ export const getDashboardOverview = async (userId: string) => {
 
   // ── 4. Budget alerts (percent >= 80) ───────────────────────────────────────
   const budgets = await budgetRepo.findManyByUser(userId);
+  const budgetCategoryIds = budgets.map((b) => b.categoryId);
 
-  const alertPromises = budgets.map(async (b) => {
-    const spent   = await budgetRepo.calculateSpent(userId, b.categoryId, b.period as 'WEEKLY' | 'MONTHLY');
-    const limit   = Number(b.amountLimit);
+  /* CODE COMMENT: Optimization P2.1 - Resolved N+1 query issue by using a single groupBy to fetch all category spent amounts in the current month cycle. */
+  const spentGroups = await dashboardRepository.getSpentGroupedByCategories(
+    userId,
+    budgetCategoryIds,
+    startOfMonth,
+    endOfMonth
+  );
+
+  const spentMap = new Map<string, number>(
+    spentGroups.map((g) => [g.categoryId!, Number(g._sum.amount ?? 0n)])
+  );
+
+  const budgetResults = budgets.map((b) => {
+    const spent = spentMap.get(b.categoryId) ?? 0;
+    const limit = Number(b.amountLimit);
     const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
     return { budget: b, spent, percent };
   });
 
-  const budgetResults = await Promise.all(alertPromises);
   const budgetAlerts  = budgetResults
     .filter(({ percent }) => percent >= 80)
     .map(({ budget, percent }) => ({

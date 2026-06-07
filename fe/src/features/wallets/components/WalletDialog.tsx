@@ -9,6 +9,7 @@ import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
 import { Wallet, WalletType } from "../../../types"
 import { toast } from "sonner"
+import { VndCurrencyInput } from "../../../components/shared/VndCurrencyInput"
 
 const walletSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -34,6 +35,7 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<WalletFormValues>({
     resolver: zodResolver(walletSchema),
@@ -49,8 +51,9 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
       if (wallet) {
         reset({
           name: wallet.name,
-          type: wallet.type as WalletType,
-          initialBalance: Number(wallet.initialBalance),
+          /* Dynamically convert uppercase backend enums to lowercase select mappings */
+          type: (wallet.type as string).toLowerCase().replace('_', '-') as WalletType,
+          initialBalance: Number(wallet.currentBalance), /* Map to visual currentBalance field on edit */
         })
       } else {
         reset({
@@ -65,7 +68,13 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
   const onSubmit = async (data: WalletFormValues) => {
     try {
       if (isEditing && wallet) {
-        await updateWallet.mutateAsync({ id: wallet.id, ...data })
+        /* Map form balance value to currentBalance property key for adjustment logic */
+        const payload = {
+          name: data.name,
+          type: data.type,
+          currentBalance: data.initialBalance,
+        }
+        await updateWallet.mutateAsync({ id: wallet.id, ...payload })
         toast.success("Wallet updated successfully")
       } else {
         await createWallet.mutateAsync(data)
@@ -113,17 +122,13 @@ export function WalletDialog({ open, onOpenChange, wallet }: WalletDialogProps) 
             {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type.message}</p>}
           </div>
 
-          <div>
-            <Label htmlFor="initialBalance" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Initial Balance</Label>
-            <Input 
-              id="initialBalance" 
-              type="number" 
-              step="any"
-              disabled={isEditing}
-              className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]"
-              {...register("initialBalance", { valueAsNumber: true })} 
+          <div className="w-full">
+            <VndCurrencyInput
+              control={control}
+              name="initialBalance"
+              label={isEditing ? "Actual Current Balance" : "Initial Balance"}
+              error={errors.initialBalance}
             />
-            {errors.initialBalance && <p className="text-sm text-red-500 mt-1">{errors.initialBalance.message}</p>}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

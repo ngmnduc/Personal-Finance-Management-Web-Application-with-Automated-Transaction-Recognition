@@ -74,4 +74,16 @@ export const categoryRepository = {
       },
     });
   },
+
+  /* System category lookup for automated adjustments */
+  findSystemByNameAndType: async (name: string, type: string) => {
+    return prisma.category.findFirst({
+      where: {
+        name,
+        type: type as any,
+        userId: null,
+        deletedAt: null,
+      },
+    });
+  },
 };

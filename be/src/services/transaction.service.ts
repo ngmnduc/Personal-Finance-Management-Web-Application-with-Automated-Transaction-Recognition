@@ -1,9 +1,10 @@
-import { TransactionType } from '@prisma/client';
+import { TransactionType, NotificationType } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { prisma } from '../config/prisma';
 import * as transactionRepo from '../repositories/transaction.repository';
 import * as budgetService from './budget.service';
 import * as recurringRuleService from './recurringRule.service';
+import { notificationService } from './notification.service';
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -109,6 +110,20 @@ export const create = async (userId: string, input: CreateTransactionInput) => {
       input.categoryId,
       'MONTHLY',
     );
+
+    /* Asynchronously trigger budget alert notification in a failure-tolerant way to avoid blocking transactions */
+    if (budget_alert && budget_alert.triggered === true) {
+      notificationService.triggerNotification(
+        userId,
+        NotificationType.BUDGET_ALERT,
+        `Budget alert: Spent limit warning. You have breached your monthly budget limit, reaching ${budget_alert.percent}% of the ${budget_alert.limit} limit.`,
+        {
+          percent: budget_alert.percent,
+          limit: budget_alert.limit,
+          type: budget_alert.type
+        }
+      ).catch((err) => console.error('[Notification] Failed to trigger budget alert:', err));
+    }
   }
 
   // ── Recurring detection (fire-and-forget — must NOT block response) ──────

@@ -79,7 +79,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Khởi tạo Socket.IO với xác thực Bearer token qua handshake
     const socket = io(backendUrl, {
       auth: { token: accessToken },
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
@@ -101,6 +101,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     });
 
+    // Sync absolute unread count from the server to enforce a single source of truth across sessions
+    socket.on('UNREAD_COUNT_CHANGED', (data: { unreadCount: number }) => {
+      setUnreadCount(data.unreadCount);
+    });
+
+    // Trigger notification recovery upon reconnection to sync offline state mutations
+    socket.on('reconnect', () => {
+      fetchInitialNotifications();
+    });
+
     socket.on('disconnect', (reason) => {
       console.log('[Socket] Disconnected:', reason);
     });
@@ -113,6 +123,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     fetchInitialNotifications();
 
     return () => {
+      // Clean up event listeners and close socket connection to prevent memory leaks
+      socket.off('NEW_NOTIFICATION');
+      socket.off('UNREAD_COUNT_CHANGED');
+      socket.off('reconnect');
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
       socket.disconnect();
       socketRef.current = null;
     };

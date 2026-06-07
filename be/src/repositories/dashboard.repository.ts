@@ -23,26 +23,32 @@ export const dashboardRepository = {
   },
 
   getMonthlyTransactionsSum: async (userId: string, startOfMonth: Date, endOfMonth: Date) => {
-    return Promise.all([
-      prisma.transaction.aggregate({
-        _sum: { amount: true },
-        where: {
-          userId,
-          type: 'INCOME',
-          deletedAt: null,
-          transactionDate: { gte: startOfMonth, lte: endOfMonth },
-        },
-      }),
-      prisma.transaction.aggregate({
-        _sum: { amount: true },
-        where: {
-          userId,
-          type: 'EXPENSE',
-          deletedAt: null,
-          transactionDate: { gte: startOfMonth, lte: endOfMonth },
-        },
-      }),
-    ]);
+    /* CODE COMMENT: Optimization P2.2 - Consolidated monthly income and expense aggregation queries into a single groupBy operation */
+    return prisma.transaction.groupBy({
+      by: ['type'],
+      where: {
+        userId,
+        type: { in: ['INCOME', 'EXPENSE'] },
+        deletedAt: null,
+        transactionDate: { gte: startOfMonth, lte: endOfMonth },
+      },
+      _sum: { amount: true },
+    });
+  },
+
+  /* CODE COMMENT: Optimization P2.1 - Helper to fetch spent amount grouped by category IDs in a single query */
+  getSpentGroupedByCategories: async (userId: string, categoryIds: string[], startDate: Date, endDate: Date) => {
+    return prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: 'EXPENSE',
+        deletedAt: null,
+        categoryId: { in: categoryIds },
+        transactionDate: { gte: startDate, lte: endDate },
+      },
+      _sum: { amount: true },
+    });
   },
 
   getMonthlyChartsRaw: async (userId: string, startOfYear: Date, endOfYear: Date) => {

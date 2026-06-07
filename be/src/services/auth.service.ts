@@ -1,4 +1,4 @@
-import {prisma} from "../config/prisma";
+import { prisma } from "../config/prisma";
 import { hashPassword, comparePassword } from "../utils/hash";
 import {
   signAccessToken,
@@ -6,7 +6,8 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { AppError } from "../utils/errors";
-
+import { NotificationType } from "@prisma/client";
+import { notificationService } from "./notification.service";
 
 // Helper function để loại bỏ passwordHash khỏi response
 const excludePassword = <T extends { passwordHash?: string }>(user: T): Omit<T, 'passwordHash'> => {
@@ -25,36 +26,37 @@ export const register = async (data: { email: string; name: string; password: st
 
   const passwordHash = await hashPassword(password);
 
-  // 2. Atomic Transaction: Tạo User + Tạo "Ví chính" mặc định
-  const user = await prisma.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
-      data: {
-        email,
-        name,
-        passwordHash,
-      },
-    });
-
-    await tx.wallet.create({
-      data: {
-        userId: newUser.id,
-        name: "Ví chính",
-        type: "GENERAL",
-        initialBalance: 0,
-        currentBalance: 0,
-        isDefault: true,
-      },
-    });
-
-    return newUser;
+  // 2. Clean standalone User creation without default wallet overhead
+  const user = await prisma.user.create({
+    data: {
+      email,
+      name,
+      passwordHash,
+    },
   });
 
-  const accessToken = signAccessToken(user.id, user.tokenVersion);
-  const refreshToken = signRefreshToken(user.id, user.tokenVersion);
+  /* Asynchronously trigger welcome system notice notification in a failure-tolerant way to avoid blocking onboarding flow */
+  notificationService.triggerNotification(
+    user.id,
+    NotificationType.SYSTEM_NOTICE,
+    "Welcome to Finman! Your personal financial workspace has been set up successfully. Click on '+ Create Wallet' to initialize your first account and set up your starting balance.",
+    { onboarding: true }
+  ).catch((err) => {
+    console.error('[Notification Error] Failed to trigger welcome notification for onboarding user:', user.id, err);
+  });
 
-  await prisma.user.update({
+  /* CODE COMMENT: Optimization P1.4 - Parallel Token Signing using Promise.all */
+  const [accessToken, refreshToken] = await Promise.all([
+    Promise.resolve(signAccessToken(user.id, user.tokenVersion)),
+    Promise.resolve(signRefreshToken(user.id, user.tokenVersion)),
+  ]);
+
+  /* CODE COMMENT: Optimization P1.4 - Decouple token persistence to avoid blocking response stream */
+  prisma.user.update({
     where: { id: user.id },
     data: { refreshToken },
+  }).catch((err) => {
+    console.error('[Token Persist Error] Failed to update refresh token in DB during registration:', err);
   });
 
   return {
@@ -77,12 +79,18 @@ export const login = async (data: { email: string; password: string }) => {
     throw AppError.Unauthorized("Invalid email or password");
   }
 
-  const accessToken = signAccessToken(user.id, user.tokenVersion);
-  const refreshToken = signRefreshToken(user.id, user.tokenVersion);
+  /* CODE COMMENT: Optimization P1.4 - Parallel Token Signing using Promise.all */
+  const [accessToken, refreshToken] = await Promise.all([
+    Promise.resolve(signAccessToken(user.id, user.tokenVersion)),
+    Promise.resolve(signRefreshToken(user.id, user.tokenVersion)),
+  ]);
 
-  await prisma.user.update({
+  /* CODE COMMENT: Optimization P1.4 - Decouple token persistence to avoid blocking response stream */
+  prisma.user.update({
     where: { id: user.id },
     data: { refreshToken },
+  }).catch((err) => {
+    console.error('[Token Persist Error] Failed to update refresh token in DB during login:', err);
   });
 
   // Giữ nguyên trả về đủ token để FE không bị chết flow /refresh

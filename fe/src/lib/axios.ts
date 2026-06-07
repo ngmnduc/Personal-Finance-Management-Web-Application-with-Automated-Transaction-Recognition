@@ -3,7 +3,8 @@ import { useAuthStore } from '../store/auth.store'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 45000,
+  /* CODE COMMENT: Optimization P1.3 - Increased connection timeout to 50000ms to handle backend cold-starts */
+  timeout: 50000,
   headers: { 'Content-Type': 'application/json' }
 
 })

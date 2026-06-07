@@ -116,7 +116,7 @@ const io = new SocketIOServer(httpServer, {
     credentials: true,
     methods: ['GET', 'POST'],
   },
-  transports: ['websocket', 'polling'],
+  transports: ['websocket'],
 });
 
 // Auth Middleware cho Socket qua JWT
@@ -136,6 +136,11 @@ io.use((socket: Socket, next: (err?: Error) => void) => {
       return next(new Error(`Authentication failed: ${result.error}`));
     }
 
+    // Strict token type check rule to verify decoded payload explicitly corresponds to access token identity
+    if (result.payload.type !== 'access') {
+      return next(new Error('Authentication failed: Invalid token type'));
+    }
+
     // Gán userId vào session socket
     (socket as AuthenticatedSocket).userId = result.payload.userId;
     next();
@@ -151,6 +156,34 @@ io.on('connection', (socket: Socket) => {
 
   // Đăng ký client
   socketService.registerClient(userId, socket.id);
+
+  // Inbound packet rate limiter guard against packet flood attacks
+  let packetCount = 0;
+  let windowStart = Date.now();
+  const windowMs = 10000;
+  const maxPackets = 50;
+
+  socket.use((_event: any, next: (err?: Error) => void) => {
+    const now = Date.now();
+    if (now - windowStart > windowMs) {
+      packetCount = 1;
+      windowStart = now;
+      return next();
+    }
+
+    packetCount += 1;
+    if (packetCount > maxPackets) {
+      return next(new Error('Rate limit exceeded'));
+    }
+
+    next();
+  });
+
+  socket.on('error', (err: Error) => {
+    if (err && err.message === 'Rate limit exceeded') {
+      socket.disconnect(true);
+    }
+  });
 
   // Xóa client khi disconnect
   socket.on('disconnect', () => {

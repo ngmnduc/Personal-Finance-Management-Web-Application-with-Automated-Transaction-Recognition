@@ -1,7 +1,8 @@
-import { Prisma, TransactionType, TxSource } from '@prisma/client';
+import { Prisma, TransactionType, TxSource, NotificationType } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { prisma } from '../config/prisma';
 import * as recurringRuleRepo from '../repositories/recurringRule.repository';
+import { notificationService } from './notification.service';
 
 // ─── Input Types ──────────────────────────────────────────────────────────────
 
@@ -80,6 +81,14 @@ export const detectAndCreateSuggestion = async (
     intervalDays: 30,
     nextDueDate,
   });
+
+  /* Asynchronously trigger recurring suggestion notification in a failure-tolerant way to avoid blocking */
+  notificationService.triggerNotification(
+    userId,
+    'RECURRING_SUGGESTION' as NotificationType,
+    `New recurring pattern discovered for ${merchant}. Review the suggestion to activate.`,
+    { ruleId: rule.id }
+  ).catch((err) => console.error('[Notification] Failed to trigger recurring suggestion alert:', err));
 
   return serialise(rule);
 };
@@ -181,6 +190,17 @@ export const processRule = async (ruleId: string) => {
       data:  { currentBalance: { decrement: fullRule.amount } },
     }),
   ]);
+
+  /* Asynchronously trigger automation execution notification in a failure-tolerant way to avoid blocking */
+  notificationService.triggerNotification(
+    fullRule.userId,
+    NotificationType.AUTOMATION_TRIGGER,
+    `Automated recurring transaction for ${fullRule.merchant} was processed successfully.`,
+    {
+      ruleId,
+      transactionId: transaction.id
+    }
+  ).catch((err) => console.error('[Notification] Failed to trigger automation alert:', err));
 
   // Advance nextDueDate outside the transaction (non-critical)
   await recurringRuleRepo.updateNextDueDate(ruleId, fullRule.intervalDays);

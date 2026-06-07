@@ -22,6 +22,7 @@ import {
 import AmountDisplay from '@/components/shared/AmountDisplay'
 import { useWallets } from '@/features/wallets/api/wallet.api'
 import { useCreateGoal, useUpdateGoal, Goal } from '../api/goal.api'
+import { VndCurrencyInput } from '@/components/shared/VndCurrencyInput'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
     setValue,
     watch,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -150,19 +152,13 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
 
           {/* Target Amount */}
           <div>
-            <Label htmlFor="goal-amount" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Target Amount (VND)
-            </Label>
-            <Input
-              id="goal-amount"
-              type="number"
-              placeholder="e.g. 50000000"
-              {...register('targetAmount', { valueAsNumber: true })}
-              className="h-11 rounded-xl border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-[#0f1f3d]"
+            <VndCurrencyInput
+              control={control}
+              name="targetAmount"
+              label="Target Amount (VND)"
+              placeholder="e.g. 50.000.000"
+              error={errors.targetAmount}
             />
-            {errors.targetAmount && (
-              <p className="text-xs text-red-500 mt-1">{errors.targetAmount.message}</p>
-            )}
           </div>
 
           {/* Source Wallet — disabled in edit mode */}

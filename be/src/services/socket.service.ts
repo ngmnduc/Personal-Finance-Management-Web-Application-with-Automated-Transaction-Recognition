@@ -17,6 +17,9 @@ export class SocketService {
   // Map lưu userId -> mảng socketId (hỗ trợ đa thiết bị)
   private connections = new Map<string, string[]>();
 
+  // Tracks recently unregistered socketIds to protect against race conditions
+  private unregisteredSockets = new Set<string>();
+
   private constructor() {}
 
   // Lấy singleton instance
@@ -34,14 +37,32 @@ export class SocketService {
 
   // Thêm client connection
   registerClient(userId: string, socketId: string): void {
+    // Guard against late registration race conditions
+    if (this.unregisteredSockets.has(socketId)) {
+      this.unregisteredSockets.delete(socketId);
+      console.log(`[Socket] Skipped registering already unregistered socketId: ${socketId}`);
+      return;
+    }
+
     const existing = this.connections.get(userId) ?? [];
-    this.connections.set(userId, [...existing, socketId]);
+    if (!existing.includes(socketId)) {
+      this.connections.set(userId, [...existing, socketId]);
+    }
     console.log(`[Socket] User ${userId} connected (socketId: ${socketId}) | Total connections: ${existing.length + 1}`);
   }
 
   // Xóa client connection
   unregisterClient(socketId: string): void {
-    // Tìm và xóa socketId khỏi map
+    // Track socketId in case its registration is still pending
+    this.unregisteredSockets.add(socketId);
+
+    // Limit set size to prevent unbounded memory growth
+    if (this.unregisteredSockets.size > 5000) {
+      const firstVal = this.unregisteredSockets.values().next().value;
+      if (firstVal !== undefined) this.unregisteredSockets.delete(firstVal);
+    }
+
+    // Completely purge socketId from all connection lists and clean empty keys
     for (const [userId, socketIds] of this.connections.entries()) {
       const filtered = socketIds.filter((id) => id !== socketId);
       if (filtered.length !== socketIds.length) {
@@ -51,7 +72,6 @@ export class SocketService {
           this.connections.set(userId, filtered);
         }
         console.log(`[Socket] User ${userId} disconnected (socketId: ${socketId})`);
-        break;
       }
     }
   }

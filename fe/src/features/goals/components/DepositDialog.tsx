@@ -9,10 +9,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import AmountDisplay from '@/components/shared/AmountDisplay'
 import { Goal, useDepositGoal } from '../api/goal.api'
+import { VndCurrencyInput } from '@/components/shared/VndCurrencyInput'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -44,9 +43,9 @@ export default function DepositDialog({ open, onOpenChange, goal }: DepositDialo
   const schema = buildSchema(walletBalance)
 
   const {
-    register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -61,65 +60,71 @@ export default function DepositDialog({ open, onOpenChange, goal }: DepositDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#0f1f3d]">
-            Make a Deposit
-          </DialogTitle>
-          <p className="text-sm text-slate-500 mt-1">{goal.name}</p>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
 
-        <div className="space-y-2 bg-slate-50 rounded-xl p-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-slate-500">Wallet balance</span>
-            <AmountDisplay value={walletBalance} className="font-semibold text-[#0f1f3d]" />
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Still needed</span>
-            <AmountDisplay
-              value={remaining > 0 ? remaining : 0}
-              className="font-semibold text-[#10b981]"
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Progress</span>
-            <span className="font-semibold text-[#0f1f3d]">{goal.progressPercent}%</span>
-          </div>
+        {/* Header — Navy Split */}
+        <div className="bg-[#0f1f3d] px-8 py-6">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-bold">
+              Make a Deposit
+            </DialogTitle>
+            <p className="text-slate-300 text-sm mt-1">
+              Add funds towards your <span className="font-semibold text-white">{goal.name}</span> goal.
+            </p>
+          </DialogHeader>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="deposit-amount" className="text-sm font-semibold text-[#0f1f3d]">
-              Deposit Amount (VND)
-            </Label>
-            <Input
-              id="deposit-amount"
-              type="number"
+        {/* Body — White */}
+        {/* Tách biệt padding px-6 py-5 trên di động và md:px-8 md:py-6 trên máy tính để tối ưu vùng hiển thị */}
+        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 md:px-8 md:py-6 flex flex-col gap-5 bg-white">
+
+          {/* Summary card — Wallet / Still needed / Progress */}
+          <div className="space-y-2 bg-slate-50 rounded-xl p-4 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Wallet balance</span>
+              <AmountDisplay value={walletBalance} className="font-semibold text-[#0f1f3d]" />
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Still needed</span>
+              <AmountDisplay
+                value={remaining > 0 ? remaining : 0}
+                className="font-semibold text-[#10b981]"
+              />
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Progress</span>
+              <span className="font-semibold text-[#0f1f3d]">{goal.progressPercent}%</span>
+            </div>
+          </div>
+
+          {/* Deposit Amount */}
+          <div>
+            <VndCurrencyInput
+              control={control}
+              name="amount"
+              label="Deposit Amount (VND)"
               placeholder="Enter amount..."
-              {...register('amount', { valueAsNumber: true })}
-              className="rounded-xl border-slate-200"
+              error={errors.amount}
             />
-            {errors.amount && (
-              <p className="text-xs text-red-500">{errors.amount.message}</p>
-            )}
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 mt-1">
               Wallet: <AmountDisplay value={walletBalance} className="font-medium" />
             </p>
           </div>
 
-          <DialogFooter>
+          {/* Actions */}
+          <DialogFooter className="flex gap-3 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => { reset(); onOpenChange(false) }}
-              className="rounded-xl"
+              className="flex-1 rounded-xl border-slate-200 text-slate-500 hover:text-slate-800"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || depositGoal.isPending}
-              className="bg-[#10b981] text-white rounded-xl hover:bg-[#0ea572]"
+              className="flex-1 bg-[#0f1f3d] text-white rounded-xl hover:bg-[#1a2f57] disabled:opacity-60"
             >
               {isSubmitting ? 'Processing...' : 'Confirm Deposit'}
             </Button>

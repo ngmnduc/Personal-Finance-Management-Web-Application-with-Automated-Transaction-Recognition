@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 import { useCategories } from '../../categories/api/category.api'
 import { useCreateBudget, useUpdateBudget, type Budget } from '../api/budget.api'
+import { VndCurrencyInput } from '../../../components/shared/VndCurrencyInput'
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ export default function BudgetDialog({ open, onOpenChange, budget }: BudgetDialo
   const createMutation = useCreateBudget()
   const updateMutation = useUpdateBudget()
 
-  const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<FormValues>({
+  const { handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { period: 'MONTHLY', categoryId: '', amountLimit: undefined },
   })
@@ -135,20 +136,14 @@ export default function BudgetDialog({ open, onOpenChange, budget }: BudgetDialo
           </div>
 
           {/* Amount */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Spending Limit</label>
-            <div className="flex items-center gap-2 border border-slate-200 rounded-xl bg-white h-11 px-4 focus-within:ring-1 focus-within:ring-[#0f1f3d] transition-all">
-              <span className="text-lg font-bold text-slate-300">₫</span>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                placeholder="0"
-                className="text-lg font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-300"
-                {...register('amountLimit', { valueAsNumber: true })}
-              />
-            </div>
-            {errors.amountLimit && <p className="text-red-500 text-xs mt-1">{errors.amountLimit.message}</p>}
+          <div className="w-full">
+            <VndCurrencyInput
+              control={control}
+              name="amountLimit"
+              label="Spending Limit"
+              error={errors.amountLimit}
+              placeholder="0"
+            />
           </div>
 
           {/* Actions */}

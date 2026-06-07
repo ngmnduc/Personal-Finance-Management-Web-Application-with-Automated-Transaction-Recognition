@@ -17,6 +17,7 @@ const defaultCategories = [
   { id: '11111111-a1b2-4c3d-8e5f-000000000010', name: 'Travel',              type: TransactionType.EXPENSE, icon: 'plane' },
   { id: '11111111-a1b2-4c3d-8e5f-000000000011', name: 'Gifts',               type: TransactionType.EXPENSE, icon: 'gift' },
   { id: '11111111-a1b2-4c3d-8e5f-000000000012', name: 'Other Expenses',      type: TransactionType.EXPENSE, icon: 'circle-ellipsis' },
+  { id: '11111111-a1b2-4c3d-8e5f-000000000099', name: 'Balance Adjustment',  type: TransactionType.EXPENSE, icon: 'circle-ellipsis' },
 
   // ── INCOME ───────────────────────────────
   { id: '22222222-a1b2-4c3d-8e5f-000000000101', name: 'Salary',              type: TransactionType.INCOME,  icon: 'banknote' },
@@ -26,6 +27,7 @@ const defaultCategories = [
   { id: '22222222-a1b2-4c3d-8e5f-000000000105', name: 'Business',            type: TransactionType.INCOME,  icon: 'store' },
   { id: '22222222-a1b2-4c3d-8e5f-000000000106', name: 'Incoming Transfer',   type: TransactionType.INCOME,  icon: 'arrow-down-circle' },
   { id: '22222222-a1b2-4c3d-8e5f-000000000107', name: 'Other Income',        type: TransactionType.INCOME,  icon: 'circle-ellipsis' },
+  { id: '22222222-a1b2-4c3d-8e5f-000000000199', name: 'Balance Adjustment',  type: TransactionType.INCOME,  icon: 'circle-ellipsis' },
 ]
 
 async function main() {

@@ -21,7 +21,8 @@ export default function AppLayout() {
             <TopNavBar />
           </div>
 
-          <main className="flex-1 overflow-y-auto bg-background pb-20 lg:pb-0">
+          {/* Secure the main content area with a relative layout context, full width, and fluid color transitions to avoid dark background leaks during lazy loading */}
+          <main className="relative w-full flex-1 overflow-y-auto bg-background transition-colors duration-200 pb-20 lg:pb-0">
             <Outlet />
           </main>
 

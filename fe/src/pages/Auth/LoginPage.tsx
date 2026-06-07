@@ -47,6 +47,7 @@ export default function LoginPage() {
   // Protective Layer chống spam đăng nhập
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
+  const [loginLoadingText, setLoginLoadingText] = useState('Sign In');
 
   // Đếm ngược thời gian khoá
   useEffect(() => {
@@ -86,9 +87,10 @@ export default function LoginPage() {
     if (lockoutTime !== null) return;
 
     setApiError('');
+    setLoginLoadingText('Signing in...');
 
     // Hàm helper chạy bất đồng bộ lồng bên trong, sử dụng đệ quy có giới hạn
-    // để quản lý số lần thử lại (Tối đa 3 lần retry ngầm, tương đương tổng 4 lần gửi bao gồm lần đầu)
+    // để quản lý số lần thử lại (Tối đa 1 lần retry ngầm, tương đương tổng 2 lần gửi bao gồm lần đầu)
     const executeLoginWithRetry = async (attempt: number): Promise<void> => {
       try {
         const res = await authApi.login(data);
@@ -107,7 +109,10 @@ export default function LoginPage() {
         const isNetworkError = error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response;
 
         // 2. Logic Retry chỉ kích hoạt khi xác định chính xác lỗi mạng/timeout và chưa vượt quá số lần thử tối đa
-        if ((isTimeout || isNetworkError) && attempt < 3) {
+        /* CODE COMMENT: Optimization P1.3 - Reduced active retries upon direct user credential submission to a maximum of 1 to avoid request spam */
+        if ((isTimeout || isNetworkError) && attempt < 1) {
+          /* CODE COMMENT: Optimization P1.3 - Informative loading text during cold-start server wakeup */
+          setLoginLoadingText('Waking up server, please wait (this may take up to 50s)...');
           // Tiến hành checkHealth ngầm để gửi tín hiệu đánh thức máy chủ (Health Check Polling)
           await authApi.checkHealth();
 
@@ -117,6 +122,8 @@ export default function LoginPage() {
           // Đệ quy thực hiện lượt gửi request tiếp theo
           return executeLoginWithRetry(attempt + 1);
         }
+
+        setLoginLoadingText('Sign In');
 
         // 3. Nếu toàn bộ lượt Retry đều thất bại hoặc gặp lỗi nghiệp vụ thông thường (400, 401, 403, 422)
         if (isTimeout || isNetworkError) {
@@ -257,7 +264,7 @@ export default function LoginPage() {
               {lockoutTime !== null
                 ? `Try again in ${lockoutTime}s`
                 : isLoginSubmitting
-                ? 'Signing in...'
+                ? loginLoadingText
                 : 'Sign In'}
             </button>
           </form>
