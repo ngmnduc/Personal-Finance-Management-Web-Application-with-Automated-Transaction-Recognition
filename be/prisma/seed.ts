@@ -51,12 +51,12 @@ async function main() {
     })
   }
 
-  console.log(`✅ Seeded ${defaultCategories.length} default categories`)
+  console.log(`Seeded ${defaultCategories.length} default categories`)
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e)
+    console.error('Seed failed:', e)
     process.exit(1)
   })
   .finally(async () => {

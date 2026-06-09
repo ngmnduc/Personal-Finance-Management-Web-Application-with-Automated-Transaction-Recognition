@@ -4,6 +4,9 @@ import * as recurringRepo from '../repositories/recurringIncome.repository';
 import * as transactionRepo from '../repositories/transaction.repository';
 import { walletRepository } from '../repositories/wallet.repository';
 import { categoryRepository } from '../repositories/category.repository';
+import { notificationService } from './notification.service';
+import { socketService } from './socket.service';
+import { prisma } from '../config/prisma';
 
 // ─── Input Types ──────────────────────────────────────────────────────────────
 
@@ -145,16 +148,59 @@ export const processInternal = async (id: string) => {
     throw AppError.NotFound('Recurring income not found.', 'RECURRING_NOT_FOUND');
   }
 
-  const tx = await transactionRepo.create({
-    userId: record.userId,
-    walletId: record.walletId,
-    categoryId: record.categoryId,
-    type: TransactionType.INCOME,
-    amount: record.amount,
-    transactionDate: new Date(),
-    source: TxSource.RECURRING,
-    note: `Auto-generated from recurring income: ${record.name}`,
+  // ── Pre-validation ────────────────────────────────────────────────────────
+  const wallet = await prisma.wallet.findFirst({
+    where: { id: record.walletId, deletedAt: null, archivedAt: null }
+  });
+  const category = await prisma.category.findFirst({
+    where: { id: record.categoryId, deletedAt: null }
   });
 
-  return { success: true, transactionId: tx.id };
+  if (!wallet || !category) {
+    if (!wallet) {
+      await prisma.recurringIncome.update({
+        where: { id },
+        data: { isActive: false }
+      });
+    }
+    throw AppError.BadRequest('Target wallet or category is inactive. Configuration halted.', 'DEPENDENCY_INACTIVE');
+  }
+
+  // ── Atomic Mutation ───────────────────────────────────────────────────────
+  const result = await prisma.$transaction(async (tx) => {
+    const transaction = await tx.transaction.create({
+      data: {
+        userId: record.userId,
+        walletId: record.walletId,
+        categoryId: record.categoryId,
+        type: TransactionType.INCOME,
+        amount: record.amount,
+        transactionDate: new Date(),
+        source: TxSource.RECURRING,
+        note: `Auto-generated from recurring income: ${record.name}`,
+      }
+    });
+
+    await tx.wallet.update({
+      where: { id: record.walletId },
+      data: { currentBalance: { increment: record.amount } }
+    });
+
+    return transaction;
+  });
+
+  // ── Real-time Notifications ───────────────────────────────────────────────
+  await notificationService.triggerNotification(
+    record.userId,
+    'AUTOMATION_TRIGGER',
+    `Automated income processed: ${record.name}`,
+    { transactionId: result.id, walletId: record.walletId }
+  );
+
+  socketService.sendToUser(record.userId, 'NEW_NOTIFICATION', {
+    type: 'AUTOMATION_TRIGGER',
+    message: `Automated income processed: ${record.name}`
+  });
+
+  return { success: true, transactionId: result.id };
 };

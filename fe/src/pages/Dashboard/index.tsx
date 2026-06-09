@@ -234,7 +234,7 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between mb-4 relative z-10">
                 <h3 className={`text-xs font-bold uppercase tracking-widest ${isMobile ? 'text-slate-300' : 'text-slate-400'}`}>
-                  TOTAL LIQUIDITY
+                  TOTAL BALANCE
                 </h3>
                 <span className="bg-[#10b981]/20 text-[#10b981] px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center">
                   +12.4% ▲
@@ -293,7 +293,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0">
             <Card className="rounded-[2rem] shadow-sm border border-slate-100 bg-white p-0 min-w-0">
               <CardContent className="p-6 sm:p-8 min-w-0 flex flex-col justify-center h-full">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">BURN RATE</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">MONTHLY SPENDING</p>
                 <p className="text-xl lg:text-2xl font-bold text-red-600 truncate max-w-full">
                   {formatCurrency(capitalHealth.burnRate ?? 0)}
                   <span className="text-xs md:text-sm font-normal text-slate-400 ml-1">/month</span>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
 
             <Card className="rounded-[2rem] shadow-sm border border-slate-100 bg-white p-0 min-w-0">
               <CardContent className="p-6 sm:p-8 min-w-0 flex flex-col justify-center h-full">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">SAVINGS RATIO</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">SAVINGS RATE</p>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xl lg:text-2xl font-bold text-[#10b981] truncate">{capitalHealth.savingsRatio ?? 0}%</span>
                   <span className="text-xs text-slate-400 ml-2 whitespace-nowrap">Savings rate</span>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
               <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-6 ${isMobile ? 'bg-slate-100' : 'bg-white/10'}`}>
                 <Activity size={18} className={isMobile ? 'text-[#0f1f3d]' : 'text-[#34d399]'} />
               </div>
-              <h3 className={`text-2xl font-bold mb-6 ${isMobile ? 'text-[#0f1f3d]' : ''}`}>Monthly Velocity</h3>
+              <h3 className={`text-2xl font-bold mb-6 ${isMobile ? 'text-[#0f1f3d]' : ''}`}>Budget Progress</h3>
 
               {allocated > 0 && (
                 <>

@@ -41,8 +41,9 @@ const internalOnly = (req: Request, res: Response, next: NextFunction) => {
 
 // ─── Routes — internal first (no auth overlap) ───────────────────────────────
 
-router.get('/due-today',      internalOnly, internalGetDueToday);
-router.post('/:id/process',   internalOnly, internalProcess);
+export const internalRecurringIncomeRoutes = Router();
+internalRecurringIncomeRoutes.get('/due-today',      internalOnly, internalGetDueToday);
+internalRecurringIncomeRoutes.post('/:id/process',   internalOnly, internalProcess);
 
 // ─── Routes — user-facing ────────────────────────────────────────────────────
 

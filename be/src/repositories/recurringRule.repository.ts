@@ -150,9 +150,16 @@ export const findDueRules = () =>
 /**
  * After processing a rule, advance nextDueDate by intervalDays.
  */
-export const updateNextDueDate = (id: string, intervalDays: number) => {
-  const next = new Date();
+export const updateNextDueDate = async (id: string, intervalDays: number) => {
+  const rule = await prisma.recurringRule.findUnique({
+    where: { id },
+    select: { nextDueDate: true },
+  });
+
+  // Determine base starting point without systemic drifting
+  const next = rule?.nextDueDate ? new Date(rule.nextDueDate) : new Date();
   next.setDate(next.getDate() + intervalDays);
+
   return prisma.recurringRule.update({
     where: { id },
     data: { nextDueDate: next },

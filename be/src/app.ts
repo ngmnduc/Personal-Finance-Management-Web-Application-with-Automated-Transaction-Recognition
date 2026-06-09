@@ -13,9 +13,9 @@ import categoryRoutes from './routes/category.routes';
 import transactionRoutes from './routes/transaction.routes';
 import ocrRoutes from './routes/ocr.routes';
 import budgetRoutes from './routes/budget.routes';
-import recurringIncomeRoutes from './routes/recurringIncome.routes';
+import recurringIncomeRoutes, { internalRecurringIncomeRoutes } from './routes/recurringIncome.routes';
 import goalRoutes from './routes/goal.routes';
-import recurringRuleRoutes from './routes/recurringRule.routes';
+import recurringRuleRoutes, { internalRecurringRuleRoutes } from './routes/recurringRule.routes';
 import exportRoutes from './routes/export.routes';
 import notificationRoutes from './routes/notification.routes';
 import { socketService, AuthenticatedSocket } from './services/socket.service';
@@ -83,6 +83,10 @@ app.get('/health', (_req, res) => {
 });
 
 // --------------- Routes (mount here) ---------------
+// Bypassed cron routes to prevent automated engine dropouts
+app.use('/api/v1/recurring', internalRecurringRuleRoutes);
+app.use('/api/v1/recurring-incomes', internalRecurringIncomeRoutes);
+
 app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/wallets', apiLimiter, walletRoutes);
 app.use('/api/v1/categories', apiLimiter, categoryRoutes);

@@ -40,7 +40,8 @@ router.post('/suggestions/:id/snooze', requireAuth, validateRequest(snoozeSchema
 
 // ─── Internal routes (Cronjob only — protected by X-Internal-Secret) ──────────
 
-router.get('/rules/due-today',    internalOnly, getDueRules);
-router.post('/rules/:id/process', internalOnly, processRule);
+export const internalRecurringRuleRoutes = Router();
+internalRecurringRuleRoutes.get('/rules/due-today',    internalOnly, getDueRules);
+internalRecurringRuleRoutes.post('/rules/:id/process', internalOnly, processRule);
 
 export default router;

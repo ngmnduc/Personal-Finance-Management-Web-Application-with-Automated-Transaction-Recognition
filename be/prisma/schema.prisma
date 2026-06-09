@@ -260,6 +260,7 @@ enum NotificationType {
   BUDGET_ALERT        // Cảnh báo ngân sách vượt ngưỡng
   AUTOMATION_TRIGGER  // Quy tắc định kỳ được kích hoạt
   SYSTEM_NOTICE       // Thông báo hệ thống chung
+  RECURRING_SUGGESTION // Thông báo gợi ý chu kỳ mới
 }
 
 model Notification {
