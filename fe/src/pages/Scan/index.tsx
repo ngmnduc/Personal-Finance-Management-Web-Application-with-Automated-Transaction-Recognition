@@ -31,6 +31,7 @@ import { useCategories } from '../../features/categories/api/category.api'
 import { useScanImage, useConfirmOCR, useScanBulk, type ScanResponse } from '../../features/ocr/api/ocr.api'
 import ThumbnailItem, { type QueueItem, type QueueStatus } from '../../features/ocr/components/ThumbnailItem'
 import { ROUTES } from '../../lib/constants'
+import { useScanStore } from '../../features/ocr/stores/scan.store'
 
 // ─── Form Schema ──────────────────────────────────────────────────────────────
 
@@ -73,34 +74,27 @@ function SingleThumbnailItem({ file, previewUrl }: { file: File; previewUrl: str
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type ScanPhase = 'upload' | 'scanning' | 'confirm'
-type ScanContext = 'expense' | 'income'
+// Removed local types as they are now in the store if needed
 
 export default function ScanPage() {
   const navigate = useNavigate()
 
   // ── State ────────────────────────────────────────────────────────────────
-  const [scanContext, setScanContext] = useState<ScanContext>('expense')
-  const [scanPhase, setScanPhase] = useState<ScanPhase>('upload')
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [scanResult, setScanResult] = useState<ScanResponse | null>(null)
-  const [currentFile, setCurrentFile] = useState<File | null>(null)
-
-  // ── Bulk state ───────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single')
-  const [bulkPhase, setBulkPhase] = useState<'upload' | 'scanning' | 'review'>('upload')
-  const [bulkQueue, setBulkQueue] = useState<QueueItem[]>([])
-  const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null)
-  const [globalScanContext, setGlobalScanContext] = useState<'expense' | 'income'>('expense')
+  const {
+    scanContext, scanPhase, previewUrl, scanResult, currentFile,
+    activeTab, bulkPhase, bulkQueue, confirmingItemId, globalScanContext,
+    setStates, startCleanupTimer, clearCleanupTimer
+  } = useScanStore()
   const bulkFileInputRef = useRef<HTMLInputElement>(null)
   const MAX_BULK_FILES = 10
 
-  // Revoke object URL on unmount to prevent memory leaks
+  // Invalidate data on unmount (3-minute TTL)
   useEffect(() => {
+    clearCleanupTimer()
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      startCleanupTimer(180000)
     }
-  }, [previewUrl])
+  }, [clearCleanupTimer, startCleanupTimer])
 
   // ── Form ─────────────────────────────────────────────────────────────────
   const form = useForm<ConfirmFormValues>({
@@ -152,18 +146,12 @@ export default function ScanPage() {
     })
   }, [confirmingItemId])
 
-  // Cleanup bulk preview URLs on unmount
-  useEffect(() => {
-    return () => { bulkQueue.forEach((i) => URL.revokeObjectURL(i.previewUrl)) }
-  }, [])
+  
 
   // ── Reset ─────────────────────────────────────────────────────────────────
   function resetToUpload() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
-    setPreviewUrl(null)
-    setCurrentFile(null)
-    setScanResult(null)
-    setScanPhase('upload')
+    setStates({ previewUrl: null, currentFile: null, scanResult: null, scanPhase: 'upload' })
     form.reset()
   }
 
@@ -171,7 +159,7 @@ export default function ScanPage() {
 
   function moveToNextPendingItem(queue: QueueItem[]) {
     const next = queue.find((i) => !i.confirmed && !i.skipped && i.status !== 'error')
-    setConfirmingItemId(next?.id ?? null)
+    setStates({ confirmingItemId: next?.id ?? null })
   }
 
   async function handleBulkFileSelect(files: FileList | null) {
@@ -189,8 +177,8 @@ export default function ScanPage() {
       confirmed: false,
       skipped: false,
     }))
-    setBulkQueue(queue)
-    setBulkPhase('scanning')
+    setStates({ bulkQueue: queue })
+    setStates({ bulkPhase: 'scanning' })
     await handleBulkScan(limited, queue)
   }
 
@@ -210,12 +198,12 @@ export default function ScanPage() {
           result: { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id },
         }
       })
-      setBulkQueue(updated)
-      setBulkPhase('review')
+      setStates({ bulkQueue: updated })
+      setStates({ bulkPhase: 'review' })
       moveToNextPendingItem(updated)
     } catch {
       toast.error('Bulk scan failed. Please try again.')
-      setBulkPhase('upload')
+      setStates({ bulkPhase: 'upload' })
     }
   }
 
@@ -234,13 +222,13 @@ export default function ScanPage() {
       extractedText: item.result?.extracted_text ?? '',
     })
     const updated = bulkQueue.map((i) => i.id === confirmingItemId ? { ...i, confirmed: true } : i)
-    setBulkQueue(updated)
+    setStates({ bulkQueue: updated })
     moveToNextPendingItem(updated)
   }
 
   function handleSkipItem(itemId: string) {
     const updated = bulkQueue.map((i) => i.id === itemId ? { ...i, skipped: true } : i)
-    setBulkQueue(updated)
+    setStates({ bulkQueue: updated })
     moveToNextPendingItem(updated)
   }
 
@@ -263,39 +251,43 @@ export default function ScanPage() {
       })
       updated = updated.map((i) => i.id === item.id ? { ...i, confirmed: true } : i)
     }
-    setBulkQueue(updated)
+    setStates({ bulkQueue: updated })
     toast.success(`${autoConfirmable.length} transaction(s) confirmed!`)
     const focusOrder: QueueStatus[] = ['needs_review', 'error', 'queued']
     for (const s of focusOrder) {
       const next = updated.find((i) => i.status === s && !i.confirmed && !i.skipped)
-      if (next) { setConfirmingItemId(next.id); break }
+      if (next) { setStates({ confirmingItemId: next.id }); break }
     }
   }
 
   async function handleReuploadItem(itemId: string, newFile: File) {
+    const item = bulkQueue.find((i) => i.id === itemId)
+    if (item?.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl)
+    }
     const previewUrl = URL.createObjectURL(newFile)
-    setBulkQueue((prev) => prev.map((i) => i.id === itemId ? { ...i, file: newFile, previewUrl, status: 'queued' as QueueStatus, result: undefined } : i))
+    setStates((prev) => ({ bulkQueue: prev.bulkQueue.map((i) => i.id === itemId ? { ...i, file: newFile, previewUrl, status: 'queued' as QueueStatus, result: undefined } : i) }))
     try {
       const res = await scanMutation.mutateAsync({ file: newFile, scanContext: globalScanContext })
       const confidence = res.extracted.confidence ?? 0
       const autoReady = confidence >= 0.85 && !!res.suggested_category_id
-      setBulkQueue((prev) => prev.map((i) => i.id === itemId ? {
+      setStates((prev) => ({ bulkQueue: prev.bulkQueue.map((i) => i.id === itemId ? {
         ...i, status: (autoReady ? 'ready' : 'needs_review') as QueueStatus,
         result: { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id },
-      } : i))
-      setConfirmingItemId(itemId)
+      } : i) }))
+      setStates({ confirmingItemId: itemId })
     } catch {
-      setBulkQueue((prev) => prev.map((i) => i.id === itemId ? { ...i, status: 'error' as QueueStatus } : i))
+      setStates((prev) => ({ bulkQueue: prev.bulkQueue.map((i) => i.id === itemId ? { ...i, status: 'error' as QueueStatus } : i) }))
     }
   }
 
   // ── handleScan ────────────────────────────────────────────────────────────
   const handleScan = useCallback(
     async (file: File) => {
-      setCurrentFile(file)
+      setStates({ currentFile: file })
       const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-      setScanPhase('scanning')
+      setStates({ previewUrl: url })
+      setStates({ scanPhase: 'scanning' })
 
       try {
         const result = await scanMutation.mutateAsync({ file, scanContext })
@@ -323,11 +315,11 @@ export default function ScanPage() {
           note: '',
         })
 
-        setScanResult(result)
-        setScanPhase('confirm')
+        setStates({ scanResult: result })
+        setStates({ scanPhase: 'confirm' })
       } catch {
         toast.error('Failed to scan the file. Please try again.')
-        setScanPhase('upload')
+        setStates({ scanPhase: 'upload' })
       }
     },
     [scanContext, scanMutation, form],
@@ -379,7 +371,7 @@ export default function ScanPage() {
           {/* Left: Mode Toggle */}
           <div className="flex w-full sm:w-auto gap-1 p-1 bg-slate-100/50 rounded-xl sm:rounded-full border border-slate-200/50 shrink-0">
             <button
-              onClick={() => setActiveTab('single')}
+              onClick={() => setStates({ activeTab: 'single' })}
               className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === 'single'
                 ? 'bg-[#0f1f3d] text-white shadow-sm'
                 : 'text-slate-500 hover:text-[#0f1f3d]'
@@ -388,7 +380,7 @@ export default function ScanPage() {
               Single Scan
             </button>
             <button
-              onClick={() => setActiveTab('bulk')}
+              onClick={() => setStates({ activeTab: 'bulk' })}
               className={`flex-1 sm:flex-none text-center justify-center rounded-lg sm:rounded-full px-5 py-2 text-sm font-bold transition-all duration-200 ${activeTab === 'bulk'
                 ? 'bg-[#0f1f3d] text-white shadow-sm'
                 : 'text-slate-500 hover:text-[#0f1f3d]'
@@ -407,8 +399,8 @@ export default function ScanPage() {
                   key={ctx}
                   type="button"
                   onClick={() => {
-                    if (activeTab === 'single') setScanContext(ctx);
-                    else setGlobalScanContext(ctx);
+                    if (activeTab === 'single') setStates({ scanContext: ctx });
+                    else setStates({ globalScanContext: ctx });
                   }}
                   className={`flex-1 sm:flex-none text-center justify-center px-4 py-1.5 rounded-lg text-sm font-bold capitalize transition-all duration-200 ${isActive
                     ? ctx === 'income'
@@ -551,10 +543,10 @@ export default function ScanPage() {
                         {/* Amount — large text input */}
                         <div>
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                            Total Amount
+                            Total Amount (VND)
                           </p>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold text-slate-400">₫</span>
+                            
                             <input
                               type="number"
                               min="0"
@@ -811,7 +803,7 @@ export default function ScanPage() {
                     </div>
                     <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto pr-1">
                       {bulkQueue.map((item) => (
-                        <ThumbnailItem key={item.id} item={item} isSelected={item.id === confirmingItemId} onClick={() => setConfirmingItemId(item.id)} />
+                        <ThumbnailItem key={item.id} item={item} isSelected={item.id === confirmingItemId} onClick={() => setStates({ confirmingItemId: item.id })} />
                       ))}
                     </div>
                     {doneCount === bulkQueue.length && bulkQueue.length > 0 ? (
@@ -830,7 +822,7 @@ export default function ScanPage() {
                         <Check size={14} className="mr-1" /> Auto-Confirm Ready ({autoConfirmCount})
                       </Button>
                     )}
-                    <Button variant="outline" onClick={() => { bulkQueue.forEach((i) => URL.revokeObjectURL(i.previewUrl)); setBulkQueue([]); setBulkPhase('upload'); setConfirmingItemId(null) }}
+                    <Button variant="outline" onClick={() => { bulkQueue.forEach((i) => URL.revokeObjectURL(i.previewUrl)); setStates({ bulkQueue: [], bulkPhase: 'upload', confirmingItemId: null }) }}
                       className="w-full rounded-xl border-slate-200 text-slate-500 hover:text-[#0f1f3d]">
                       <RefreshCw size={14} className="mr-1" /> Reset Batch
                     </Button>
@@ -939,9 +931,9 @@ export default function ScanPage() {
                               </div>
                               {/* Amount */}
                               <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Amount</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Amount (VND)</p>
                                 <div className="flex items-baseline gap-1">
-                                  <span className="text-2xl font-bold text-slate-400">₫</span>
+                                  
                                   <input type="number" min="0" step="any" placeholder="0"
                                     className="text-4xl font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-200"
                                     {...bulkForm.register('amount', { valueAsNumber: true })} />
