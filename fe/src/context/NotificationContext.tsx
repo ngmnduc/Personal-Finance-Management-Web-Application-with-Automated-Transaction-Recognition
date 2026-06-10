@@ -13,7 +13,7 @@ import { API_ENDPOINTS } from '../lib/constants';
 
 // ─── Interface định nghĩa cấu trúc một thông báo ─────────────────────────────
 
-export type NotificationType = 'BUDGET_ALERT' | 'AUTOMATION_TRIGGER' | 'SYSTEM_NOTICE';
+export type NotificationType = 'BUDGET_ALERT' | 'AUTOMATION_TRIGGER' | 'SYSTEM_NOTICE' | 'RECURRING_SUGGESTION';
 
 export interface Notification {
   id: string;

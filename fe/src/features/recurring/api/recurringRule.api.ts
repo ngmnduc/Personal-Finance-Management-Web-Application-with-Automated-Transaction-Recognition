@@ -91,6 +91,7 @@ export const useSnoozeSuggestion = () => {
     onSuccess: () => {
       toast.info('Snoozed for 60 days.')
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_SUGGESTIONS] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_RULES] })
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to snooze'),
   })
@@ -105,8 +106,54 @@ export const useDeleteRecurringRule = () => {
     },
     onSuccess: () => {
       toast.success('Recurring rule deleted.')
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_SUGGESTIONS] })
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_RULES] })
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to delete rule'),
+  })
+}
+
+export const useRejectSuggestion = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete<ApiResponse<unknown>>(
+        `${API_ENDPOINTS.RECURRING}/suggestions/${id}`,
+      )
+      return res.data
+    },
+    onSuccess: () => {
+      toast.success('Suggestion discarded.')
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_SUGGESTIONS] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_RULES] })
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to reject suggestion'),
+  })
+}
+
+export interface UpdateRecurringRuleInput {
+  merchant: string
+  amount: number
+  walletId: string
+  categoryId: string
+  intervalDays: number
+}
+
+export const useUpdateRecurringRule = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & UpdateRecurringRuleInput) => {
+      const res = await apiClient.patch<ApiResponse<RecurringRule>>(
+        `${API_ENDPOINTS.RECURRING}/rules/${id}`,
+        data,
+      )
+      return res.data.data
+    },
+    onSuccess: () => {
+      toast.success('Recurring rule updated.')
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_SUGGESTIONS] })
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.RECURRING_RULES] })
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to update rule'),
   })
 }

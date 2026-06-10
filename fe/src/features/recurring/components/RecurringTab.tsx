@@ -31,6 +31,8 @@ import {
 import EmptyState from '../../../components/shared/EmptyState'
 import PageSkeleton from '../../../components/shared/PageSkeleton'
 import RecurringIncomeDialog from './RecurringIncomeDialog'
+import SmartRuleDialog from './SmartRuleDialog'
+import PendingSuggestionsDialog from './PendingSuggestionsDialog'
 import {
   useRecurringIncomes,
   useDeleteRecurringIncome,
@@ -40,6 +42,7 @@ import {
 import {
   useRecurringRules,
   useDeleteRecurringRule,
+  useRecurringSuggestions,
   type RecurringRule,
 } from '../api/recurringRule.api'
 import { formatVND } from '../../../lib/utils'
@@ -185,10 +188,11 @@ const RecurringCard = memo(function RecurringCard({ item, onEdit, onDelete, onTo
 
 interface RuleRowProps {
   rule: RecurringRule
+  onEdit: (rule: RecurringRule) => void
   onDelete: (rule: RecurringRule) => void
 }
 
-function RuleRow({ rule, onDelete }: RuleRowProps) {
+function RuleRow({ rule, onEdit, onDelete }: RuleRowProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-5 border-b border-slate-100 last:border-0">
       {/* Left */}
@@ -229,13 +233,22 @@ function RuleRow({ rule, onDelete }: RuleRowProps) {
             </p>
           )}
         </div>
-        <button
-          onClick={() => onDelete(rule)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500"
-          title="Delete rule"
-        >
-          <Trash2 size={15} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onEdit(rule)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-[#0f1f3d]"
+            title="Edit rule"
+          >
+            <Pencil size={15} />
+          </button>
+          <button
+            onClick={() => onDelete(rule)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+            title="Delete rule"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -252,9 +265,15 @@ export default function RecurringTab() {
   const toggleMutation = useToggleRecurringIncome()
 
   // ── W6: Smart Rules ──
+  const [smartDialogOpen, setSmartDialogOpen] = useState(false)
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false)
+  const [editingRule, setEditingRule] = useState<RecurringRule | undefined>(undefined)
   const { data: rules = [], isLoading: rulesLoading } = useRecurringRules()
+  const { data: suggestions = [] } = useRecurringSuggestions()
   const deleteRuleMutation = useDeleteRecurringRule()
   const [ruleToDelete, setRuleToDelete] = useState<RecurringRule | null>(null)
+
+  const suggestionCount = suggestions.length
 
   // ── Income callbacks ──
   const openCreate = useCallback(() => { setEditingItem(undefined); setDialogOpen(true) }, [])
@@ -264,7 +283,9 @@ export default function RecurringTab() {
     toggleMutation.mutate({ id, isActive: !current })
   }, [toggleMutation])
 
-  // ── Rule delete ──
+  // ── Rule delete & edit ──
+  const openSmartRuleEdit = useCallback((rule: RecurringRule) => { setEditingRule(rule); setSmartDialogOpen(true) }, [])
+
   const handleRuleDeleteConfirm = () => {
     if (!ruleToDelete) return
     deleteRuleMutation.mutate(ruleToDelete.id)
@@ -329,6 +350,14 @@ export default function RecurringTab() {
         <SectionHeader
           title="Smart Expense Rules"
           description="Auto-detected recurring expenses confirmed by you."
+          action={
+            <Button
+              onClick={() => setSuggestionsOpen(true)}
+              className="gap-2 bg-[#0f1f3d] text-white hover:bg-[#1a2f57] rounded-xl px-5 h-10 flex-shrink-0 font-semibold shadow-sm"
+            >
+              Pending Suggestions ({suggestionCount})
+            </Button>
+          }
         />
 
         {/* Amber info box */}
@@ -353,7 +382,7 @@ export default function RecurringTab() {
                 Active Rules ({rules.length})
               </p>
               {rules.map((rule) => (
-                <RuleRow key={rule.id} rule={rule} onDelete={setRuleToDelete} />
+                <RuleRow key={rule.id} rule={rule} onEdit={openSmartRuleEdit} onDelete={setRuleToDelete} />
               ))}
             </CardContent>
           </Card>
@@ -365,6 +394,19 @@ export default function RecurringTab() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={editingItem}
+      />
+
+      {/* ── Smart Rule Dialog ── */}
+      <SmartRuleDialog
+        open={smartDialogOpen}
+        onOpenChange={setSmartDialogOpen}
+        rule={editingRule}
+      />
+
+      {/* ── Pending Suggestions Dialog ── */}
+      <PendingSuggestionsDialog
+        open={suggestionsOpen}
+        onOpenChange={setSuggestionsOpen}
       />
 
       {/* ── Delete Rule Confirm ── */}

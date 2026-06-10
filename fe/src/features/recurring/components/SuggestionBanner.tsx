@@ -9,8 +9,10 @@ interface SuggestionBannerProps {
   suggestion: RecurringSuggestion
   onConfirm: (id: string) => void
   onSnooze: (id: string) => void
+  onReject: (id: string) => void
   isConfirming: boolean
   isSnoozing: boolean
+  isRejecting: boolean
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -19,8 +21,10 @@ export default function SuggestionBanner({
   suggestion,
   onConfirm,
   onSnooze,
+  onReject,
   isConfirming,
   isSnoozing,
+  isRejecting,
 }: SuggestionBannerProps) {
   return (
     <div className="relative overflow-hidden rounded-[2rem] bg-[#0f1f3d] p-7 text-white shadow-lg">
@@ -80,8 +84,17 @@ export default function SuggestionBanner({
         <Button
           variant="outline"
           size="sm"
+          onClick={() => onReject(suggestion.id)}
+          disabled={isRejecting || isSnoozing || isConfirming}
+          className="rounded-xl border-white/20 bg-transparent text-white hover:bg-red-500/20 hover:text-red-400 text-xs font-semibold px-4"
+        >
+          Discard
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => onSnooze(suggestion.id)}
-          disabled={isSnoozing || isConfirming}
+          disabled={isRejecting || isSnoozing || isConfirming}
           className="rounded-xl border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white text-xs font-semibold px-4"
         >
           {isSnoozing ? 'Snoozing...' : 'Snooze 60 Days'}
@@ -89,7 +102,7 @@ export default function SuggestionBanner({
         <Button
           size="sm"
           onClick={() => onConfirm(suggestion.id)}
-          disabled={isConfirming || isSnoozing}
+          disabled={isRejecting || isConfirming || isSnoozing}
           className="rounded-xl bg-[#10b981] text-white hover:bg-[#0ea572] text-xs font-bold px-5 shadow-md"
         >
           {isConfirming ? 'Activating...' : 'Create Rule'}
