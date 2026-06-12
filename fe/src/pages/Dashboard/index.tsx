@@ -17,8 +17,6 @@ import { useTransactions } from '../../features/transactions/api/transaction.api
 import { useWallets } from '../../features/wallets/api/wallet.api'
 import {
   useRecurringSuggestions,
-  useConfirmRecurringRule,
-  useSnoozeSuggestion,
 } from '../../features/recurring/api/recurringRule.api'
 import { downloadCSV, downloadPDF, type ExportParams } from '../../features/reports/api/report.api'
 
@@ -161,8 +159,6 @@ export default function DashboardPage() {
   const { data: monthlyCharts = [] } = useMonthlyCharts(new Date().getFullYear())
   const { data: catBreakdown = [] } = useCategoryBreakdown(selectedMonth)
 
-  const confirmRule = useConfirmRecurringRule()
-  const snoozeRule = useSnoozeSuggestion()
 
   if (isLoading) return <PageSkeleton />
 
@@ -614,7 +610,7 @@ export default function DashboardPage() {
 
       {/* Automation Insights */}
       {suggestions.length > 0 && (
-        <div className="mt-8 space-y-4 min-w-0">
+        <div className="mt-8 space-y-4 min-w-0 pb-12">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Automation Insights</h3>
             <Button
@@ -626,16 +622,23 @@ export default function DashboardPage() {
               Manage Rules <ArrowRight size={12} className="ml-1" />
             </Button>
           </div>
-          {suggestions.map((s) => (
+          <div className="relative w-full h-[240px] md:h-[200px]">
+            {suggestions.slice(1, 3).map((s, idx) => {
+              const offsetClass = idx === 0 ? 'translate-y-2 scale-[0.98]' : 'translate-y-4 scale-[0.96]'
+              const zIndexClass = idx === 0 ? 'z-[2]' : 'z-[1]'
+              return (
+                <div
+                  key={s.id}
+                  className={`absolute top-0 left-0 w-full h-full bg-[#0f1f3d] opacity-40 rounded-[2rem] pointer-events-none transition-all duration-300 ${offsetClass} ${zIndexClass}`}
+                />
+              )
+            })}
             <SuggestionBanner
-              key={s.id}
-              suggestion={s}
-              onConfirm={(id) => confirmRule.mutate(id)}
-              onSnooze={(id) => snoozeRule.mutate(id)}
-              isConfirming={confirmRule.isPending}
-              isSnoozing={snoozeRule.isPending}
+              key={suggestions[0].id}
+              suggestion={suggestions[0]}
+              className="absolute top-0 left-0 w-full z-10 transition-all duration-300 animate-in fade-in-50"
             />
-          ))}
+          </div>
         </div>
       )}
     </div>
