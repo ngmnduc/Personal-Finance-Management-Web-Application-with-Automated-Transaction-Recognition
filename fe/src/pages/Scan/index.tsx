@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
@@ -32,6 +32,7 @@ import { useScanImage, useConfirmOCR, useScanBulk, type ScanResponse } from '../
 import ThumbnailItem, { type QueueItem, type QueueStatus } from '../../features/ocr/components/ThumbnailItem'
 import { ROUTES } from '../../lib/constants'
 import { useScanStore } from '../../features/ocr/stores/scan.store'
+import { VndCurrencyInput } from '../../components/shared/VndCurrencyInput'
 
 // ─── Form Schema ──────────────────────────────────────────────────────────────
 
@@ -83,8 +84,13 @@ export default function ScanPage() {
   const {
     scanContext, scanPhase, previewUrl, scanResult, currentFile,
     activeTab, bulkPhase, bulkQueue, confirmingItemId, globalScanContext,
-    setStates, startCleanupTimer, clearCleanupTimer
+    singleFormValues, setStates, startCleanupTimer, clearCleanupTimer
   } = useScanStore()
+  
+  // Sử dụng ref để theo dõi giá trị tab và item trước đó nhằm ngăn chặn vòng lặp render vô hạn
+  const prevTabRef = useRef(activeTab)
+  const prevItemIdRef = useRef(confirmingItemId)
+
   const bulkFileInputRef = useRef<HTMLInputElement>(null)
   const MAX_BULK_FILES = 10
 
@@ -131,22 +137,115 @@ export default function ScanPage() {
 
   // Sync bulk form when active item changes
   useEffect(() => {
-    if (!confirmingItemId) return
-    const item = bulkQueue.find((i) => i.id === confirmingItemId)
-    if (!item?.result) return
-    const ex = item.result.extracted
-    bulkForm.reset({
-      type: ex.type ?? (globalScanContext.toUpperCase() as 'INCOME' | 'EXPENSE'),
-      amount: ex.amount ?? undefined,
-      transactionDate: ex.transaction_date ?? new Date().toISOString().split('T')[0],
-      categoryId: item.result.suggested_category_id ?? '',
-      walletId: item.result.default_wallet_id ?? '',
-      merchant: ex.merchant ?? '',
-      note: '',
-    })
-  }, [confirmingItemId])
+    if (confirmingItemId !== prevItemIdRef.current) {
+      if (confirmingItemId) {
+        // Chỉ reset form khi thực sự thay đổi item đang được chọn trong bulk queue
+        const item = bulkQueue.find((i) => i.id === confirmingItemId)
+        if (item?.result) {
+          const ex = item.result.extracted
+          bulkForm.reset({
+            type: ex.type ?? (globalScanContext.toUpperCase() as 'INCOME' | 'EXPENSE'),
+            amount: ex.amount ?? undefined,
+            transactionDate: ex.transaction_date ?? new Date().toISOString().split('T')[0],
+            categoryId: item.result.suggested_category_id ?? '',
+            walletId: item.result.default_wallet_id ?? '',
+            merchant: ex.merchant ?? '',
+            note: (item.result as any).note ?? '',
+          })
+        }
+      }
+      // Cập nhật ref lưu trữ ID item trước đó để chặn lặp
+      prevItemIdRef.current = confirmingItemId
+    }
+  }, [confirmingItemId, globalScanContext, bulkForm])
 
-  
+  // ── Single Mode Form Synchronization ──────────────────────────────────────
+  const sAmount = useWatch({ control: form.control, name: 'amount' })
+  const sType = useWatch({ control: form.control, name: 'type' })
+  const sDate = useWatch({ control: form.control, name: 'transactionDate' })
+  const sCat = useWatch({ control: form.control, name: 'categoryId' })
+  const sWallet = useWatch({ control: form.control, name: 'walletId' })
+  const sMerchant = useWatch({ control: form.control, name: 'merchant' })
+  const sNote = useWatch({ control: form.control, name: 'note' })
+
+  useEffect(() => {
+    if (activeTab === 'single' && scanPhase === 'confirm') {
+      setStates({
+        singleFormValues: {
+          amount: sAmount, type: sType, transactionDate: sDate,
+          categoryId: sCat, walletId: sWallet, merchant: sMerchant, note: sNote,
+        },
+      })
+    }
+  }, [sAmount, sType, sDate, sCat, sWallet, sMerchant, sNote, activeTab, scanPhase, setStates])
+
+  useEffect(() => {
+    if (activeTab === 'single' && prevTabRef.current !== 'single') {
+      if (scanPhase === 'confirm' && singleFormValues) {
+        // Khôi phục giá trị form Single Mode khi chuyển tab trở lại
+        form.reset(singleFormValues)
+      }
+    }
+    // Cập nhật ref lưu trữ tab trước đó để đánh dấu biên chuyển đổi tab
+    prevTabRef.current = activeTab
+  }, [activeTab, scanPhase, singleFormValues, form])
+
+  // ── Bulk Mode Form Synchronization ────────────────────────────────────────
+  const bAmount = useWatch({ control: bulkForm.control, name: 'amount' })
+  const bType = useWatch({ control: bulkForm.control, name: 'type' })
+  const bDate = useWatch({ control: bulkForm.control, name: 'transactionDate' })
+  const bCat = useWatch({ control: bulkForm.control, name: 'categoryId' })
+  const bWallet = useWatch({ control: bulkForm.control, name: 'walletId' })
+  const bMerchant = useWatch({ control: bulkForm.control, name: 'merchant' })
+  const bNote = useWatch({ control: bulkForm.control, name: 'note' })
+
+  useEffect(() => {
+    if (activeTab === 'bulk' && confirmingItemId) {
+      const activeItem = bulkQueue.find((i) => i.id === confirmingItemId)
+      if (activeItem?.result) {
+        const ex = activeItem.result.extracted
+        const currentCatId = activeItem.result.suggested_category_id ?? ''
+        const currentWalletId = activeItem.result.default_wallet_id ?? ''
+        const currentNote = (activeItem.result as any).note ?? ''
+
+        const hasChanged =
+          bAmount !== (ex.amount ?? undefined) ||
+          bType !== (ex.type ?? 'EXPENSE') ||
+          bDate !== (ex.transaction_date ?? '') ||
+          bCat !== currentCatId ||
+          bWallet !== currentWalletId ||
+          bMerchant !== (ex.merchant ?? '') ||
+          bNote !== currentNote
+
+        if (hasChanged) {
+          setStates((state) => {
+            const updatedQueue = state.bulkQueue.map((item) => {
+              if (item.id === confirmingItemId) {
+                return {
+                  ...item,
+                  result: item.result ? {
+                    ...item.result,
+                    suggested_category_id: bCat,
+                    default_wallet_id: bWallet,
+                    extracted: {
+                      ...item.result.extracted,
+                      amount: bAmount,
+                      type: bType,
+                      transaction_date: bDate,
+                      merchant: bMerchant,
+                    },
+                    note: bNote,
+                  } : undefined
+                }
+              }
+              return item
+            })
+            return { bulkQueue: updatedQueue }
+          })
+        }
+      }
+    }
+  }, [bAmount, bType, bDate, bCat, bWallet, bMerchant, bNote, activeTab, confirmingItemId, bulkQueue, setStates])
 
   // ── Reset ─────────────────────────────────────────────────────────────────
   function resetToUpload() {
@@ -337,6 +436,8 @@ export default function ScanPage() {
       note: values.note,
       extractedText: scanResult?.extracted_text ?? '',
     })
+    // Giải phóng tài nguyên và xóa trạng thái store trước khi chuyển hướng
+    useScanStore.getState().resetStore()
     navigate(ROUTES.TRANSACTIONS)
   }
 
@@ -540,28 +641,14 @@ export default function ScanPage() {
                           <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and link to wallet</p>
                         </div>
 
-                        {/* Amount — large text input */}
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                            Total Amount (VND)
-                          </p>
-                          <div className="flex items-baseline gap-1">
-                            
-                            <input
-                              type="number"
-                              min="0"
-                              step="any"
-                              placeholder="0"
-                              className="text-4xl font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-200"
-                              {...form.register('amount', { valueAsNumber: true })}
-                            />
-                          </div>
-                          {form.formState.errors.amount && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {form.formState.errors.amount.message}
-                            </p>
-                          )}
-                        </div>
+                        {/* Amount */}
+                        <VndCurrencyInput
+                          control={form.control}
+                          name="amount"
+                          label="Total Amount (VND)"
+                          placeholder="0"
+                          error={form.formState.errors.amount}
+                        />
 
                         {/* Date + Category */}
                         <div className="grid grid-cols-2 gap-3">
@@ -808,7 +895,11 @@ export default function ScanPage() {
                     </div>
                     {doneCount === bulkQueue.length && bulkQueue.length > 0 ? (
                       <Button
-                        onClick={() => navigate(ROUTES.TRANSACTIONS)}
+                        onClick={() => {
+                          // Dọn dẹp store để tránh rò rỉ bộ nhớ trước khi rời khỏi trang
+                          useScanStore.getState().resetStore()
+                          navigate(ROUTES.TRANSACTIONS)
+                        }}
                         className="w-full bg-[#10b981] text-white rounded-xl hover:bg-[#0ea572] shadow-md"
                       >
                         <CheckCircle2 size={16} className="mr-2" /> Finish & View Transactions
@@ -930,16 +1021,13 @@ export default function ScanPage() {
                                 <p className="text-xs text-slate-400 mt-0.5">Review AI extraction and save transaction</p>
                               </div>
                               {/* Amount */}
-                              <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Amount (VND)</p>
-                                <div className="flex items-baseline gap-1">
-                                  
-                                  <input type="number" min="0" step="any" placeholder="0"
-                                    className="text-4xl font-bold text-[#0f1f3d] w-full bg-transparent border-none outline-none focus:ring-0 placeholder:text-slate-200"
-                                    {...bulkForm.register('amount', { valueAsNumber: true })} />
-                                </div>
-                                {bulkForm.formState.errors.amount && <p className="text-red-500 text-xs mt-1">{bulkForm.formState.errors.amount.message}</p>}
-                              </div>
+                              <VndCurrencyInput
+                                control={bulkForm.control}
+                                name="amount"
+                                label="Total Amount (VND)"
+                                placeholder="0"
+                                error={bulkForm.formState.errors.amount}
+                              />
                               {/* Date + Category */}
                               <div className="grid grid-cols-2 gap-3">
                                 <div>

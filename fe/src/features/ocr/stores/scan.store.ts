@@ -17,6 +17,7 @@ interface ScanState {
   confirmingItemId: string | null;
   globalScanContext: ScanContext;
   cleanupTimeoutId: ReturnType<typeof setTimeout> | null;
+  singleFormValues: any | null; // Lưu trữ giá trị form Single Mode khi chuyển tab
 
   setStates: (fields: Partial<ScanState> | ((state: ScanState) => Partial<ScanState>)) => void;
   startCleanupTimer: (delayMs?: number) => void;
@@ -36,6 +37,7 @@ const defaultState = {
   confirmingItemId: null,
   globalScanContext: 'expense' as ScanContext,
   cleanupTimeoutId: null,
+  singleFormValues: null, // Khởi tạo giá trị form mặc định là null để dọn dẹp bộ nhớ khi reset
 };
 
 export const useScanStore = create<ScanState>((set, get) => ({
