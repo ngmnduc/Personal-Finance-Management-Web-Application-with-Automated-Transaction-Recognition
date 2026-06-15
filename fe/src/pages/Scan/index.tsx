@@ -157,7 +157,8 @@ export default function ScanPage() {
       // Cập nhật ref lưu trữ ID item trước đó để chặn lặp
       prevItemIdRef.current = confirmingItemId
     }
-  }, [confirmingItemId, globalScanContext, bulkForm])
+    // Bổ sung bulkQueue vào dependency để đảm bảo closure luôn tham chiếu dữ liệu mới nhất
+  }, [confirmingItemId, globalScanContext, bulkForm, bulkQueue])
 
   // ── Single Mode Form Synchronization ──────────────────────────────────────
   const sAmount = useWatch({ control: form.control, name: 'amount' })
@@ -1033,6 +1034,12 @@ export default function ScanPage() {
                                 <div>
                                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Date</label>
                                   <input type="date" className="flex h-11 w-full rounded-xl border border-slate-200 bg-white text-slate-800 px-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d]" {...bulkForm.register('transactionDate')} />
+                                  {/* Hiển thị lỗi kiểm tra điều kiện cho trường ngày giao dịch */}
+                                  {bulkForm.formState.errors.transactionDate && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                      {bulkForm.formState.errors.transactionDate.message}
+                                    </p>
+                                  )}
                                 </div>
                                 <div>
                                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Category</label>
@@ -1040,6 +1047,12 @@ export default function ScanPage() {
                                     <SelectTrigger className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#0f1f3d] w-full [&>span]:text-slate-800"><SelectValue placeholder="Pick..." /></SelectTrigger>
                                     <SelectContent>{bulkCategories.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}</SelectContent>
                                   </Select>
+                                  {/* Hiển thị lỗi kiểm tra điều kiện cho trường danh mục */}
+                                  {bulkForm.formState.errors.categoryId && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                      {bulkForm.formState.errors.categoryId.message}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                               {/* Merchant */}
@@ -1062,6 +1075,12 @@ export default function ScanPage() {
                                     )
                                   })}
                                 </div>
+                                {/* Hiển thị lỗi kiểm tra điều kiện cho trường ví tài khoản */}
+                                {bulkForm.formState.errors.walletId && (
+                                  <p className="text-red-500 text-xs mt-1">
+                                    {bulkForm.formState.errors.walletId.message}
+                                  </p>
+                                )}
                               </div>
                               {/* Confidence */}
                               {activeItem.result && (
