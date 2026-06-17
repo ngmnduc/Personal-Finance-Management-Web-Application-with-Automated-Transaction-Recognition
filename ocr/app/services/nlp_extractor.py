@@ -147,8 +147,39 @@ def normalize_date(raw: str | None) -> str:
     if not raw:
         return date.today().isoformat()
 
+    # Clean internal spacing and strip
+    cleaned = re.sub(r"\s+", " ", raw.strip())
+
+    # Extract matching prefix to handle trailing components and avoid validation panic
+    match = re.match(
+        r"^("
+        r"\d{1,2}[/\-]\d{1,2}[/\-]\d{4}\s+\d{1,2}[.:]\d{1,2}[.:]\d{1,2}"
+        r"|\d{1,2}[/\-]\d{1,2}[/\-]\d{4}\s+\d{1,2}[.:]\d{1,2}"
+        r"|\d{4}[/\-]\d{1,2}[/\-]\d{1,2}\s+\d{1,2}[.:]\d{1,2}[.:]\d{1,2}"
+        r"|\d{4}[/\-]\d{1,2}[/\-]\d{1,2}"
+        r"|\d{1,2}[/\-]\d{1,2}[/\-]\d{4}"
+        r"|\d{1,2}[/\-]\d{1,2}[/\-]\d{2}"
+        r")",
+        cleaned,
+        re.IGNORECASE
+    )
+    if match:
+        cleaned = match.group(1)
+
     # Try common formats
     for fmt in (
+        # 1. Full Datetime Formats (Highest priority to avoid dropping time)
+        "%d-%m-%Y %H:%M:%S",
+        "%d-%m-%Y %H.%M.%S",
+        "%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y %H.%M.%S",
+        "%d-%m-%Y %H:%M",
+        "%d-%m-%Y %H.%M",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %H.%M",
+        "%Y-%m-%d %H:%M:%S",
+        
+        # 2. Standalone Date Formats (Fallback if time is missing)
         "%Y-%m-%d",
         "%Y/%m/%d",
         "%d-%m-%Y",
@@ -158,7 +189,7 @@ def normalize_date(raw: str | None) -> str:
         "%m/%d/%Y",
     ):
         try:
-            return datetime.strptime(raw.strip(), fmt).date().isoformat()
+            return datetime.strptime(cleaned, fmt).date().isoformat()
         except ValueError:
             continue
 

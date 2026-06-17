@@ -1,7 +1,8 @@
 import asyncio
 import logging
+import os
 
-from fastapi import APIRouter, Form, HTTPException,Request, UploadFile, File
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile, File
 from app.utils.rate_limiter import limiter
 from app.models.schemas import BankInfo, BulkScanItem, BulkScanResponse, ExtractedData, HealthResponse, ScanResponse
 from app.utils.cache import get_cached, set_cache
@@ -20,6 +21,8 @@ from app.services.pdf_export_service import generate_pdf
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
 
 # ── Supported banks list ──────────────────────────────────────────────────────
 
@@ -74,13 +77,19 @@ async def scan_receipt(
     is_pdf = content_type == "application/pdf"
 
     try:
-        # ── Routing branch ────────────────────────────────────────────────────
+        # ── Routing branch ──────────────────────────────────────────────────
         if is_pdf:
             raw_text = extract_text_from_pdf(file_bytes)
             parsed = extract_by_regex(raw_text)
         else:
-            raw_text = await extract_with_llm(file_bytes, content_type)
-            parsed = clean_and_parse_json(raw_text)
+            import os
+            if os.getenv("OCR_MODE") == "LOCAL_EASYOCR":
+                from app.services.ocr.easy_ocr import LocalEasyOCREngine
+                engine = LocalEasyOCREngine()
+                parsed, raw_text = engine.run_pipeline(file_bytes)
+            else:
+                raw_text = await extract_with_llm(file_bytes, content_type)
+                parsed = clean_and_parse_json(raw_text)
 
         # ── Normalise fields ──────────────────────────────────────────────────
         extracted_data = ExtractedData(
@@ -169,8 +178,14 @@ async def scan_bulk(
                     raw_text = extract_text_from_pdf(file_bytes)
                     parsed = extract_by_regex(raw_text)
                 else:
-                    raw_text = await extract_with_llm(file_bytes, content_type)
-                    parsed = clean_and_parse_json(raw_text)
+                    import os
+                    if os.getenv("OCR_MODE") == "LOCAL_EASYOCR":
+                        from app.services.ocr.easy_ocr import LocalEasyOCREngine
+                        engine = LocalEasyOCREngine()
+                        parsed, raw_text = engine.run_pipeline(file_bytes)
+                    else:
+                        raw_text = await extract_with_llm(file_bytes, content_type)
+                        parsed = clean_and_parse_json(raw_text)
 
                 extracted_data = ExtractedData(
                     amount=normalize_amount(parsed.get("amount")),

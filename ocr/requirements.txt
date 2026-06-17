@@ -49,3 +49,7 @@ apscheduler>=3.10.0
 pytz>=2024.1
 weasyprint>=62.0
 jinja2>=3.1.0
+# ── Local EasyOCR pipeline (LOCAL_EASYOCR mode) ───────────────────────
+# easyocr installs torch (CPU) + opencv-python-headless transitively.
+# Pin to a known-good minor version to avoid surprise torch upgrades.
+easyocr>=1.7.1,<2.0

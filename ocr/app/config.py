@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     BE_SERVICE_URL: str = "http://localhost:3000"
     INTERNAL_SECRET: str = "change_this_secret"
 
+    # ── OCR Engine Mode ───────────────────────────────────────────────────────
+    # "CLOUD_API"      → Production default: Gemini LLM-based image parsing.
+    # "LOCAL_EASYOCR"  → Offline fallback: CPU-bound EasyOCR + Regex extractors.
+    #                    Useful for local dev, air-gapped envs, or cost savings.
+    OCR_MODE: str = "CLOUD_API"
+
     @property
     def GEMINI_API_KEYS(self) -> list[str]:
         """Convert the raw comma-separated string into a list of keys.
