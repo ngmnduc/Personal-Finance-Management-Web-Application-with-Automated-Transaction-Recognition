@@ -1,0 +1,182 @@
+{
+  "ACB_2_ocr.jpg": {
+    "amount": 200000,
+    "transaction_date": "2026-06-15",
+    "merchant": "NGUYEN VAN A"
+  },
+  "ACB_ocr.jpg": {
+    "amount": 1500000,
+    "transaction_date": "2026-06-16",
+    "merchant": "CONG TY TNHH B"
+  },
+  "agri_2_ocr.jpg": {
+    "amount": 450000,
+    "transaction_date": "2026-06-17",
+    "merchant": "NGUYEN VAN C"
+  },
+  "agri_3_ocr.jpg": {
+    "amount": 11000,
+    "transaction_date": "2023-07-28",
+    "merchant": "CÙNG CHỦ TÀI KHOẢN"
+  },
+  "agri_ocr.jpg": {
+    "amount": 780000,
+    "transaction_date": "2025-04-09",
+    "merchant": "NGUYEN THI HUYEN"
+  },
+  "BIDV_2_ocr.jpg": {
+    "amount": 20000000,
+    "transaction_date": "2022-10-24",
+    "merchant": "DO VAN HUNG"
+  },
+  "BIDV_3_ocr.jpg": {
+    "amount": 1000000,
+    "transaction_date": "2020-06-08",
+    "merchant": "NGUYEN HOANG HIEU/ VP BANK"
+  },
+  "BIDV_5_ocr.jpg": {
+    "amount": 50000,
+    "transaction_date": "2024-03-26",
+    "merchant": "LIEN DOAN BONG DA VIET NAM/ NHTMCP XUAT NHAP KHAU"
+  },
+  "BIDV_ocr.jpg": {
+    "amount": 8900000,
+    "transaction_date": "2021-05-14",
+    "merchant": "MA THI LOAN"
+  },
+  "MB2_ocr.jpg": {
+    "amount": 7300000,
+    "transaction_date": "2024-10-19",
+    "merchant": "NGUYEN VAN KHANH"
+  },
+  "MB_3_ocr.jpg": {
+    "amount": 10000,
+    "transaction_date": "2026-06-21",
+    "merchant": "NGUYEN MINH DUC"
+  },
+  "MB_4_ocr.jpg": {
+    "amount": 16999,
+    "transaction_date": "2025-09-11",
+    "merchant": "LE DUC MINH"
+  },
+  "momo_2_ocr.jpg": {
+    "amount": 20000,
+    "transaction_date": "2021-07-01",
+    "merchant": "VIETCOMBANK"
+  },
+  "momo_3_ocr.jpg": {
+    "amount": 200000,
+    "transaction_date": "2021-07-09",
+    "merchant": "RAOVAT321"
+  },
+  "momo_5_ocr.jpg": {
+    "amount": 50000,
+    "transaction_date": "2026-06-23",
+    "merchant": "UNKNOWN"
+  },
+  "momo_ocr.jpg": {
+    "amount": 50000,
+    "transaction_date": "2021-10-10",
+    "merchant": "NGUYỄN QUANG SỸ"
+  },
+  "ocr.jpg": {
+    "amount": 65000,
+    "transaction_date": "2025-01-14",
+    "merchant": "NGUYEN MINH DUC"
+  },
+  "ocr_tech.jpg": {
+    "amount": 10000,
+    "transaction_date": "2021-09-19",
+    "merchant": "A CHAU (ACB)"
+  },
+  "ocr_tech2.jpg": {
+    "amount": 50000000,
+    "transaction_date": "2023-09-12",
+    "merchant": "TRAN THI THAO"
+  },
+  "Tech_ocr_3.jpg": {
+    "amount": 500000,
+    "transaction_date": "2024-04-12",
+    "merchant": "SHOP ABC"
+  },
+  "Tech_ocr_4.jpg": {
+    "amount": 20000000,
+    "transaction_date": "2026-06-23",
+    "merchant": "VIEN THI HONG THAM"
+  },
+  "Tech_ocr_5.jpg": {
+    "amount": 200000000,
+    "transaction_date": "2024-09-09",
+    "merchant": "UBTW MTTQ VIET NAM"
+  },
+  "Tech_ocr_6.jpg": {
+    "amount": 11590000,
+    "transaction_date": "2024-07-17",
+    "merchant": "LAM DUC"
+  },
+  "Test OCR.jpg": {
+    "amount": 500000,
+    "transaction_date": "2023-09-16",
+    "merchant": "TA TRUNG KIEN"
+  },
+  "VC_ocr_5.jpg": {
+    "amount": 100000,
+    "transaction_date": "2020-08-01",
+    "merchant": "LE THI NGOC HANG"
+  },
+  "vietcom2_ocr.jpg": {
+    "amount": 27000000,
+    "transaction_date": "2021-04-02",
+    "merchant": "TRINH PHAT DAT"
+  },
+  "vietcom3_ocr.jpg": {
+    "amount": 1000,
+    "transaction_date": "2022-03-03",
+    "merchant": "LUU THI THU HOAI"
+  },
+  "VPbank_phone.jpg": {
+    "amount": 280000,
+    "transaction_date": "2024-11-26",
+    "merchant": "DO THI NGOC ANH"
+  },
+  "VP_1_ocr.jpg": {
+    "amount": 50000,
+    "transaction_date": "2022-11-16",
+    "merchant": "VU THI DIEU LINH"
+  },
+  "VP_4_ocr.jpg": {
+    "amount": 160000,
+    "transaction_date": "2024-05-07",
+    "merchant": "808"
+  },
+  "VP_ocr.jpg": {
+    "amount": 580000,
+    "transaction_date": "2020-10-05",
+    "merchant": "DAO THU HA"
+  },
+  "VT3_ocr.jpg": {
+    "amount": 90000,
+    "transaction_date": "2023-07-28",
+    "merchant": "VU THANH SON"
+  },
+  "VT4_ocr.jpg": {
+    "amount": 5000000,
+    "transaction_date": "2022-01-13",
+    "merchant": "HOANG DINH HUNG"
+  },
+  "VTin_ocr.jpg": {
+    "amount": 10000,
+    "transaction_date": "2020-09-25",
+    "merchant": "NGUYEN VAN A"
+  },
+  "zalo_2_ocr.jpg": {
+    "amount": 450000,
+    "transaction_date": "2020-02-10",
+    "merchant": "HOANG VAN TUNG"
+  },
+  "Zalo_ocr.jpg": {
+    "amount": 125000,
+    "transaction_date": "2026-06-23",
+    "merchant": "TRAN QUANG THONG"
+  }
+}

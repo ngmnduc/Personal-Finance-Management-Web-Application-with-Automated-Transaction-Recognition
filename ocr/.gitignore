@@ -8,3 +8,15 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 ocr/tests/samples/*
+
+# Loại bỏ toàn bộ thư mục chứa các tệp tin ảnh biên lai thử nghiệm nặng
+benchmarks/sample_images/
+
+# Loại bỏ các tệp tin lưu kết quả dự đoán sinh ra tự động trong quá trình chạy
+benchmarks/*_predictions.json
+benchmarks/easyocr_predictions.json
+
+# KHÔNG bỏ qua file script chính và cấu hình hệ quy chiếu để Git vẫn quản lý được mã nguồn test
+!benchmarks/evaluate_pipelines.py
+!benchmarks/generate_gt_template.py
+!benchmarks/ground_truth.json
