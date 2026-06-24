@@ -1,23 +1,23 @@
 {
   "ACB_2_ocr.jpg": {
-    "amount": 200000,
-    "transaction_date": "2026-06-15",
-    "merchant": "NGUYEN VAN A"
+    "amount": 662000,
+    "transaction_date": "2025-05-08",
+    "merchant": "NGUYEN DINH DAT"
   },
   "ACB_ocr.jpg": {
-    "amount": 1500000,
-    "transaction_date": "2026-06-16",
-    "merchant": "CONG TY TNHH B"
+    "amount": 1769574,
+    "transaction_date": "2026-03-11",
+    "merchant": "LE THI KHANH NGAN"
   },
   "agri_2_ocr.jpg": {
     "amount": 450000,
     "transaction_date": "2026-06-17",
-    "merchant": "NGUYEN VAN C"
+    "merchant": "NGUYEN HUYEN TRANG"
   },
   "agri_3_ocr.jpg": {
     "amount": 11000,
     "transaction_date": "2023-07-28",
-    "merchant": "CÙNG CHỦ TÀI KHOẢN"
+    "merchant": "NGO THI TUYET MAI"
   },
   "agri_ocr.jpg": {
     "amount": 780000,
@@ -68,11 +68,6 @@
     "amount": 200000,
     "transaction_date": "2021-07-09",
     "merchant": "RAOVAT321"
-  },
-  "momo_5_ocr.jpg": {
-    "amount": 50000,
-    "transaction_date": "2026-06-23",
-    "merchant": "UNKNOWN"
   },
   "momo_ocr.jpg": {
     "amount": 50000,
@@ -171,7 +166,7 @@
   },
   "zalo_2_ocr.jpg": {
     "amount": 450000,
-    "transaction_date": "2020-02-10",
+    "transaction_date": "2020-10-02",
     "merchant": "HOANG VAN TUNG"
   },
   "Zalo_ocr.jpg": {

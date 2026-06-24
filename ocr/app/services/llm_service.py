@@ -39,10 +39,15 @@ Return ONLY a single valid JSON object with exactly these keys:
 {
   "amount": <integer — the transaction amount in VND, no separators>,
   "transaction_date": "<string — date in YYYY-MM-DD format, or null if not found>",
-  "merchant": "<string — merchant or sender/receiver name, or null if not found>",
+  "sender_name": "<string — sender name, or null if not found>",
+  "receiver_name": "<string — receiver name, or null if not found>",
   "type": "<string — either INCOME or EXPENSE>",
   "description": "<string — short description or note, or null if not found>"
 }
+
+Vietnamese field label mapping:
+- "sender_name"   matches labels: "Người chuyển", "Người gửi", "Từ", "From", "Bên gửi", "Chủ TK gửi", "Tài khoản nguồn".
+- "receiver_name" matches labels: "Người nhận", "Đến", "To", "Bên nhận", "Chủ TK nhận", "Beneficiary", "Tài khoản thụ hưởng".
 
 Rules:
 - Do NOT include any text outside the JSON object.
@@ -50,6 +55,11 @@ Rules:
 - If a field cannot be determined, use null.
 - "type" MUST be exactly "INCOME" or "EXPENSE".
 - "amount" MUST be a plain integer (e.g. 1500000, not "1,500,000").
+- Do not attempt to guess or deduce the application owner's identity. Extract raw visible names only.
+- If the document indicates a bill payment, invoice, or purchase to a business/shop, map that shop name directly to "receiver_name".
+- If only one person's name is visible on the receipt and the transaction "type" is "INCOME", set "sender_name" to null instead of guessing or duplicating.
+- If only one person's name is visible on the receipt and the transaction "type" is "EXPENSE", assign that name to "receiver_name" and set "sender_name" to null.
+- If the image represents a service payment (e.g., electricity, water, internet, or telecom bills), assign the utility service company/provider name directly to "receiver_name" and set "sender_name" to null. Do not extract customer reference numbers or contract IDs into name fields.
 """
 
 # ── Gemini ────────────────────────────────────────────────────────────────────
@@ -133,92 +143,159 @@ async def call_openrouter(image_bytes: bytes, mime_type: str, model_id: str) -> 
 
 gemini_limiter = ProviderRateLimiter(max_calls=15, period_seconds=60.0)
 openrouter_limiter = ProviderRateLimiter(max_calls=10, period_seconds=30.0)
+groq_limiter = ProviderRateLimiter(max_calls=10, period_seconds=60.0)
 
-async def call_gemini_with_limit(img: bytes, mt: str) -> str:
-    await gemini_limiter.acquire()
-    return await call_gemini(img, mt)
+# ── Groq ──────────────────────────────────────────────────────────────────────
 
-async def call_openrouter_with_limit(img: bytes, mt: str, model_id: str) -> str:
-    await openrouter_limiter.acquire()
-    return await call_openrouter(img, mt, model_id)
+async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "meta-llama/llama-4-scout-17b-16e-instruct") -> str:
+    """
+    Call Groq Cloud vision model.
+    """
+    if not settings.GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY is not configured.")
+
+    import io
+    from PIL import Image
+
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.thumbnail((1024, 1024))
+        out_buf = io.BytesIO()
+        img.save(out_buf, format="JPEG", quality=80)
+        image_bytes = out_buf.getvalue()
+        mime_type = "image/jpeg"
+    except Exception as e:
+        logger.warning("Failed to compress image for Groq: %s", e)
+
+    b64_image = base64.b64encode(image_bytes).decode("utf-8")
+    data_url = f"data:{mime_type};base64,{b64_image}"
+
+    payload: dict[str, Any] = {
+        "model": model_id,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": EXTRACTION_PROMPT},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ],
+        "temperature": 0.1,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers,
+        )
+        resp.raise_for_status()
+
+    data = resp.json()
+    content: str = data["choices"][0]["message"]["content"]
+
+    if not content:
+        raise ValueError(f"Groq model '{model_id}' returned an empty response.")
+
+    return content.strip()
 
 # ── Fallback chain ────────────────────────────────────────────────────────────
-
-_FALLBACK_CHAIN = [
-    ("Gemini 2.0 Flash",    lambda img, mt: call_gemini_with_limit(img, mt)),
-    ("Qwen2.5-VL-72B (OR)", lambda img, mt: call_openrouter_with_limit(img, mt, "qwen/qwen2.5-vl-72b-instruct")),
-    ("GPT-4o-mini (OR)",    lambda img, mt: call_openrouter_with_limit(img, mt, "openai/gpt-4o-mini")),
-]
-
-
 
 async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     """
     Try each model in the fallback chain and return the first successful response.
 
-    Strategy:
-      1. Try ALL Gemini keys in round-robin (skip on 429, stop on non-retryable).
-      2. If all Gemini keys fail → fall through to OpenRouter (Qwen → GPT-4o-mini).
+    Chain order (priority):
+      1. Gemini 2.0 Flash (direct, key rotation)   — free tier, fastest
+      2. Llama-4-Scout (Groq)                       — free tier, good vision
+      3. Llama-4-Maverick (Groq)                    — free tier, stronger fallback
+      4. Gemini-2.5-Flash (OpenRouter free)          — free tier OR
+      5. Qwen2.5-VL-72B (OpenRouter)                — paid, high quality
+      6. GPT-4o-mini (OpenRouter)                   — paid last resort
 
-    Args:
-        image_bytes: Raw image bytes.
-        mime_type:   MIME type string, e.g. "image/jpeg".
-
-    Returns:
-        Raw text from the LLM (expected to be a JSON string).
-
-    Raises:
-        ValueError: If every model in the chain fails.
+    Special handling:
+      - Gemini 429 (quota/day exceeded) → skip immediately, try free alternatives
+      - OpenRouter 402 (no credit)      → skip all remaining OR models
     """
     errors: list[str] = []
-    global _key_index  # must be declared before first read/write
-    num_keys = len(settings.GEMINI_API_KEYS)
+    openrouter_out_of_credit = False
+    gemini_quota_exceeded = False
 
-    # ── Phase 1: cycle through every Gemini key ──
-    # for attempt in range(num_keys):
-    #     key = settings.GEMINI_API_KEYS[(_key_index + attempt) % num_keys]
-    #     try:
-    #         logger.info("Gemini attempt %d/%d (key …%s)", attempt + 1, num_keys, key[-6:])
-    #         await gemini_limiter.acquire()
-    #         result = await call_gemini(image_bytes, mime_type, api_key=key)
-    #         logger.info("Gemini succeeded on attempt %d", attempt + 1)
-    #         # Advance the global index so the next request starts from a fresh key
-    #         _key_index = (_key_index + attempt + 1) % num_keys
-    #         return result
-    #     except Exception as exc:
-    #         err_str = str(exc)
-    #         logger.warning("Gemini key …%s failed: %s", key[-6:], exc)
-    #         errors.append(f"Gemini[{attempt}]: {exc}")
-    # 
-    #         if "429" in err_str or "quota" in err_str.lower() or "rate" in err_str.lower():
-    #             logger.info("Gemini rate limited, trying next key")
-    #             continue  # try next Gemini key
-    # 
-    #         if "400" in err_str:
-    #             logger.error("Non-retryable Gemini error, skipping to OpenRouter")
-    #             break  # bad prompt / image — no point retrying other keys
-
-    # ── Phase 2: OpenRouter fallback chain ──
-    openrouter_models = [
-        ("Qwen2.5-VL-72B (OR)", "qwen/qwen2.5-vl-72b-instruct"),
-        ("GPT-4o-mini (OR)",    "openai/gpt-4o-mini"),
+    fallback_chain = [
+        # (label, call_func, limiter, is_openrouter, is_gemini_direct)
+        ("Gemini-2.0-Flash (direct)",
+            lambda: call_gemini(image_bytes, mime_type),
+            gemini_limiter, False, True),
+        ("Llama-4-Scout (Groq)",
+            lambda: call_groq(image_bytes, mime_type, "meta-llama/llama-4-scout-17b-16e-instruct"),
+            groq_limiter, False, False),
+        ("Llama-4-Maverick (Groq)",
+            lambda: call_groq(image_bytes, mime_type, "meta-llama/llama-4-maverick-17b-128e-instruct"),
+            groq_limiter, False, False),
+        ("Gemini-2.5-Flash (OR Free)",
+            lambda: call_openrouter(image_bytes, mime_type, "google/gemini-2.5-flash:free"),
+            openrouter_limiter, True, False),
+        ("Qwen2.5-VL-72B (OR)",
+            lambda: call_openrouter(image_bytes, mime_type, "qwen/qwen2.5-vl-72b-instruct"),
+            openrouter_limiter, True, False),
+        ("GPT-4o-mini (OR)",
+            lambda: call_openrouter(image_bytes, mime_type, "openai/gpt-4o-mini"),
+            openrouter_limiter, True, False),
     ]
 
-    for label, model_id in openrouter_models:
+    for label, call_func, limiter, is_openrouter, is_gemini_direct in fallback_chain:
+        # Gemini quota cạn ngày → bỏ qua, không retry vô ích
+        if is_gemini_direct and gemini_quota_exceeded:
+            logger.warning("LLM fallback: skipping %s — daily quota exhausted", label)
+            errors.append(f"{label}: skipped (daily quota)")
+            continue
+
+        # OpenRouter hết credit → bỏ qua toàn bộ OR models còn lại
+        if is_openrouter and openrouter_out_of_credit:
+            logger.warning("LLM fallback: skipping %s — OpenRouter out of credit", label)
+            errors.append(f"{label}: skipped (OpenRouter 402)")
+            continue
+
         try:
             logger.info("LLM fallback: attempting %s", label)
-            await openrouter_limiter.acquire()
-            result = await call_openrouter(image_bytes, mime_type, model_id)
+            await limiter.acquire()
+            result = await call_func()
             logger.info("LLM fallback: %s succeeded", label)
             return result
         except Exception as exc:
-            err_str = str(exc)
-            logger.warning("LLM fallback: %s failed — %s", label, exc)
-            errors.append(f"{label}: {exc}")
+            exc_str = str(exc)
 
-            if "400" in err_str and "429" not in err_str:
-                logger.error("Non-retryable error from %s, stopping chain", label)
-                break
+            # Gemini 429 với daily quota → đánh dấu skip, không retry key khác vì cùng project
+            if is_gemini_direct and ("429" in exc_str or "quota" in exc_str.lower()):
+                if "PerDay" in exc_str or "free_tier" in exc_str:
+                    logger.error(
+                        "LLM fallback: %s — daily quota exceeded (resets 7AM VN). "
+                        "Switching to free Groq/OR alternatives.", label
+                    )
+                    gemini_quota_exceeded = True
+                else:
+                    # Rate limit per-minute → vẫn log warning, không block hẳn
+                    logger.warning("LLM fallback: %s — per-minute rate limit, continuing", label)
+
+            # OpenRouter 402 → đánh dấu skip toàn bộ OR
+            elif is_openrouter and "402" in exc_str:
+                logger.error(
+                    "LLM fallback: %s — 402 Payment Required. "
+                    "Skipping all remaining OpenRouter models.", label
+                )
+                openrouter_out_of_credit = True
+            else:
+                logger.warning("LLM fallback: %s failed — %s", label, exc)
+
+            errors.append(f"{label}: {exc_str[:120]}")
 
     raise ValueError(
         "All LLM models failed to process the image.\n" + "\n".join(errors)

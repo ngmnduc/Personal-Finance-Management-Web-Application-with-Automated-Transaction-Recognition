@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, ValidationError
 
@@ -15,12 +16,19 @@ load_dotenv(dotenv_path=ENV_FILE_PATH, override=True, encoding="utf-8-sig")
 test_key = os.getenv("GEMINI_API_KEY")
 print(f"DEBUG - GEMINI_API_KEY from .env: {'Success (Has data)' if test_key else 'FAIL (Empty)'}")
 
+import hashlib
+if test_key:
+    key_hint = test_key[:6] + "..." + test_key[-4:]
+    key_hash = hashlib.sha256(test_key.encode()).hexdigest()[:8]
+    print(f"DEBUG - Active GEMINI_KEY: {key_hint} (hash: {key_hash})")
+
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = Field(..., description="Primary Gemini API key (required)")
     # Comma-separated list of Gemini keys for rotation, e.g. "key1,key2,key3"
     GEMINI_API_KEYS_RAW: str = Field(default="", alias="GEMINI_API_KEYS")
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    GROQ_API_KEY: str = ""
     PORT: int = 8001
     ALLOWED_ORIGINS: str = "*"
     BE_SERVICE_URL: str = "http://localhost:3000"

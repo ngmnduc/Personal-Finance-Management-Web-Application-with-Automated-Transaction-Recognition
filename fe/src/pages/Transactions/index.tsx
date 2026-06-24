@@ -161,7 +161,7 @@ export default function TransactionsPage() {
         },
       }),
       columnHelper.accessor('merchant', {
-        header: 'Merchant',
+        header: 'Contact',
         cell: (info) => {
           const val = info.getValue()
           return (
@@ -425,16 +425,15 @@ export default function TransactionsPage() {
                             {t.category?.name || 'Uncategorized'}
                           </span>
                           <span className="text-xs text-slate-400 truncate mt-0.5 font-medium">
-                            {t.merchant || 'No merchant'} •{' '}
+                            {t.merchant || 'No contact'} •{' '}
                             <span className="text-slate-500 font-semibold">{t.wallet?.name}</span>
                           </span>
                         </div>
 
                         {/* Khối số tiền bên phải: Phân định màu sắc theo Type */}
                         <div className="text-right shrink-0 pl-3">
-                          <span className={`text-sm font-bold tracking-tight ${
-                            isExpense ? 'text-red-500' : 'text-emerald-500'
-                          }`}>
+                          <span className={`text-sm font-bold tracking-tight ${isExpense ? 'text-red-500' : 'text-emerald-500'
+                            }`}>
                             {isExpense ? '-' : '+'}{Number(t.amount).toLocaleString('vi-VN')} ₫
                           </span>
                         </div>

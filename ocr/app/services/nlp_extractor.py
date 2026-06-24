@@ -10,8 +10,25 @@ returned to the router.
 
 import re
 import json
+import unicodedata
 from datetime import datetime, date
 from typing import Any
+
+# Placeholder for graduation demo.
+# In a production build, this data should dynamically be pulled from the authenticated user profile database.
+OWNER_IDENTITIES: set[str] = {
+    "NGUYEN MINH DUC",
+    "NGUYEN MINH ĐUC",
+    "DAVID NAVS",
+}
+
+def normalize_text_for_matching(text: str) -> str:
+    if not text:
+        return ""
+    text = text.strip().upper()
+    text = text.replace("Đ", "D")
+    text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
+    return text
 
 
 # ── JSON extraction (LLM stream) ──────────────────────────────────────────────
@@ -40,9 +57,40 @@ def clean_and_parse_json(raw_text: str) -> dict:
         raise ValueError(f"No JSON object found in LLM response: {raw_text[:200]!r}")
 
     try:
-        return json.loads(match.group())
+        parsed_dict = json.loads(match.group())
     except json.JSONDecodeError as exc:
         raise ValueError(f"JSON parse error: {exc}. Raw block: {match.group()[:200]!r}") from exc
+
+    tx_type = parsed_dict.get("type")
+    sender_name   = parsed_dict.pop("sender_name", None)
+    receiver_name = parsed_dict.pop("receiver_name", None)
+
+    # Default: graceful degradation — no type resolved or unknown type
+    final_merchant = None
+
+    if tx_type == "INCOME":
+        # The counterparty in an incoming transaction is the sender.
+        # The receiver is inherently the account owner — never expose as merchant.
+        norm_sender = normalize_text_for_matching(sender_name) if sender_name else ""
+        if norm_sender and norm_sender not in OWNER_IDENTITIES:
+            final_merchant = sender_name
+        # If sender matches owner or is absent, final_merchant stays None.
+        # Do NOT cascade to receiver_name — receiver of INCOME is the app owner.
+
+    elif tx_type == "EXPENSE":
+        # The counterparty in an outgoing transaction is the receiver.
+        norm_receiver = normalize_text_for_matching(receiver_name) if receiver_name else ""
+        if norm_receiver and norm_receiver not in OWNER_IDENTITIES:
+            final_merchant = receiver_name
+        else:
+            norm_sender = normalize_text_for_matching(sender_name) if sender_name else ""
+            if norm_sender and norm_sender not in OWNER_IDENTITIES:
+                final_merchant = sender_name
+
+    # else: tx_type is None or unrecognised → final_merchant remains None
+
+    parsed_dict["merchant"] = final_merchant
+    return parsed_dict
 
 
 # ── Regex extraction (PDF stream) ─────────────────────────────────────────────

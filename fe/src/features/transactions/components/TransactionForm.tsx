@@ -212,14 +212,14 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }: Tr
         </div>
       </div>
 
-      {/* Row 5: Person */}
+      {/* Row 5: Contact */}
       <div>
         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-          Person <span className="text-slate-300 normal-case font-normal">(optional)</span>
+          Contact <span className="text-slate-300 normal-case font-normal">(optional)</span>
         </label>
         <Input
           type="text"
-          placeholder="e.g. Grab, Netflix..."
+          placeholder="e.g., Spotify, Grab, Nguyen Van A..."
           className="bg-white rounded-xl border border-slate-200 text-slate-700 h-11 focus-visible:ring-2 focus-visible:ring-[#0f1f3d]"
           {...register('merchant')}
         />

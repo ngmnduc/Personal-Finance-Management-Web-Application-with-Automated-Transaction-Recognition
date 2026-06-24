@@ -86,7 +86,7 @@ export default function ScanPage() {
     activeTab, bulkPhase, bulkQueue, confirmingItemId, globalScanContext,
     singleFormValues, setStates, startCleanupTimer, clearCleanupTimer
   } = useScanStore()
-  
+
   // Sử dụng ref để theo dõi giá trị tab và item trước đó nhằm ngăn chặn vòng lặp render vô hạn
   const prevTabRef = useRef(activeTab)
   const prevItemIdRef = useRef(confirmingItemId)
@@ -371,10 +371,12 @@ export default function ScanPage() {
       const res = await scanMutation.mutateAsync({ file: newFile, scanContext: globalScanContext })
       const confidence = res.extracted.confidence ?? 0
       const autoReady = confidence >= 0.85 && !!res.suggested_category_id
-      setStates((prev) => ({ bulkQueue: prev.bulkQueue.map((i) => i.id === itemId ? {
-        ...i, status: (autoReady ? 'ready' : 'needs_review') as QueueStatus,
-        result: { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id },
-      } : i) }))
+      setStates((prev) => ({
+        bulkQueue: prev.bulkQueue.map((i) => i.id === itemId ? {
+          ...i, status: (autoReady ? 'ready' : 'needs_review') as QueueStatus,
+          result: { extracted: res.extracted, extracted_text: res.extracted_text, suggested_category_id: res.suggested_category_id, default_wallet_id: res.default_wallet_id },
+        } : i)
+      }))
       setStates({ confirmingItemId: itemId })
     } catch {
       setStates((prev) => ({ bulkQueue: prev.bulkQueue.map((i) => i.id === itemId ? { ...i, status: 'error' as QueueStatus } : i) }))
@@ -697,17 +699,20 @@ export default function ScanPage() {
                           </div>
                         </div>
 
-                        {/* Merchant */}
+                        {/* Contact */}
                         <div>
                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                            Merchant
+                            Contact
                           </label>
                           <Input
                             type="text"
-                            placeholder="e.g. Grab, Netflix..."
+                            placeholder="e.g., Spotify, Grab, Nguyen Van A..."
                             className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-[#0f1f3d] w-full px-3"
                             {...form.register('merchant')}
                           />
+                          <div className="mt-2 text-[10px] md:text-xs text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 font-medium">
+                            Please verify the detected contact name and adjust if necessary.
+                          </div>
                         </div>
 
                         {/* Source Wallet — card radio list (no <Select>) */}
@@ -1055,10 +1060,13 @@ export default function ScanPage() {
                                   )}
                                 </div>
                               </div>
-                              {/* Merchant */}
+                              {/* Contact */}
                               <div>
-                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Merchant</label>
-                                <input type="text" placeholder="e.g. Grab, Netflix..." className="flex h-11 w-full rounded-xl border border-slate-200 bg-white text-slate-800 px-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d]" {...bulkForm.register('merchant')} />
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Contact</label>
+                                <input type="text" placeholder="e.g., Spotify, Grab, Nguyen Van A..." className="flex h-11 w-full rounded-xl border border-slate-200 bg-white text-slate-800 px-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d]" {...bulkForm.register('merchant')} />
+                                <div className="mt-2 text-[10px] md:text-xs text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 font-medium">
+                                  Please verify the detected contact name and adjust if necessary.
+                                </div>
                               </div>
                               {/* Wallet */}
                               <div>

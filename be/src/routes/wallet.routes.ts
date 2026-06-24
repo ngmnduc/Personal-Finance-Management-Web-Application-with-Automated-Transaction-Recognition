@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../middlewares/auth.middleware"; // Dùng đúng tên middleware auth của bạn
+import { requireAuth } from "../middlewares/auth.middleware"; 
 import { walletController } from "../controllers/wallet.controller";
 import { z } from "zod";
 import { validateRequest } from "../middlewares/validate.middleware";

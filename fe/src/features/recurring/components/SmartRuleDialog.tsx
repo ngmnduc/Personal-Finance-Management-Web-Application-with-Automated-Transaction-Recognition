@@ -96,13 +96,13 @@ export default function SmartRuleDialog({ open, onOpenChange, rule }: SmartRuleD
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 flex flex-col gap-5 bg-white">
 
-          {/* Merchant */}
+          {/* Contact */}
           <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Merchant Name
+              Contact Name
             </label>
             <Input
-              placeholder="e.g. Netflix, Spotify"
+              placeholder="e.g., Spotify, Grab, Nguyen Van A..."
               className="rounded-xl border-slate-200 h-11 text-sm"
               {...register('merchant')}
             />
