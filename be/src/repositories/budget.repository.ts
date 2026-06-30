@@ -1,16 +1,12 @@
 import { BudgetPeriod, TransactionType } from '@prisma/client';
 import { prisma } from '../config/prisma';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface CreateBudgetDto {
   userId: string;
   categoryId: string;
   amountLimit: bigint;
   period: BudgetPeriod;
 }
-
-// ─── Period helpers ───────────────────────────────────────────────────────────
 
 /**
  * Return the inclusive [startDate, endDate] for the current cycle.
@@ -23,15 +19,12 @@ export const getCurrentPeriodRange = (
   const now = new Date();
 
   if (period === 'MONTHLY') {
-    // 1st day of current UTC month at 00:00:00.000
     const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
-    // Last day of current UTC month at 23:59:59.999
     const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
     return { startDate, endDate };
   }
 
-  // WEEKLY — ISO week: Monday–Sunday (UTC)
-  const dayOfUTCWeek = now.getUTCDay(); // 0=Sun, 1=Mon, …, 6=Sat
+  const dayOfUTCWeek = now.getUTCDay();
   const diffToMonday = dayOfUTCWeek === 0 ? -6 : 1 - dayOfUTCWeek;
 
   const monday = new Date(Date.UTC(
@@ -47,8 +40,6 @@ export const getCurrentPeriodRange = (
 
   return { startDate: monday, endDate: sunday };
 };
-
-// ─── Repository ───────────────────────────────────────────────────────────────
 
 export const findManyByUser = (userId: string, period?: string) =>
   prisma.budget.findMany({

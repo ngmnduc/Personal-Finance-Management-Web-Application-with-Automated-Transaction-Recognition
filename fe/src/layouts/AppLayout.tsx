@@ -6,7 +6,6 @@ import { NotificationProvider } from '../context/NotificationContext'
 
 export default function AppLayout() {
   return (
-    // Bọc toàn bộ layout trong NotificationProvider để các component con dùng context
     <NotificationProvider>
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         {/* Desktop Sidebar */}
@@ -16,7 +15,6 @@ export default function AppLayout() {
 
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* TopNavBar: chỉ hiển thị trên desktop */}
           <div className="hidden lg:block">
             <TopNavBar />
           </div>

@@ -1,7 +1,5 @@
 import { prisma } from '../config/prisma';
 
-// ─── DTO Types ────────────────────────────────────────────────────────────────
-
 export interface CreateGoalDto {
   userId: string;
   sourceWalletId: string;
@@ -16,15 +14,11 @@ export interface UpdateGoalDto {
   deadline?: Date;
 }
 
-// ─── Shared include ───────────────────────────────────────────────────────────
-
 const withSourceWallet = {
   sourceWallet: {
     select: { id: true, name: true, type: true, currentBalance: true },
   },
 } as const;
-
-// ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const findManyByUser = (userId: string) =>
   prisma.savingGoal.findMany({
@@ -55,8 +49,6 @@ export const update = (id: string, data: UpdateGoalDto) =>
     include: withSourceWallet,
   });
 
-// ─── Atomic: Deposit (increment goal + decrement wallet) ──────────────────────
-
 export const deposit = async (id: string, amount: bigint, walletId: string) => {
   const [updatedGoal, updatedWallet] = await prisma.$transaction([
     prisma.savingGoal.update({
@@ -73,16 +65,12 @@ export const deposit = async (id: string, amount: bigint, walletId: string) => {
   return [updatedGoal, updatedWallet] as const;
 };
 
-// ─── Mark goal as COMPLETED ───────────────────────────────────────────────────
-
 export const completeGoal = (id: string) =>
   prisma.savingGoal.update({
     where: { id },
     data: { status: 'COMPLETED' },
     include: withSourceWallet,
   });
-
-// ─── Atomic: Abandon + refund + create INCOME transaction ────────────────────
 
 export const abandonGoal = async (
   id: string,
@@ -91,9 +79,7 @@ export const abandonGoal = async (
   goalName: string,
   userId: string,
 ) => {
-  // Dynamically resolve system INCOME category — no hardcoded IDs.
-  // Priority 1: default system category whose name contains "khác".
-  // Priority 2: any system INCOME category (userId: null).
+  // Dynamically resolve system INCOME category — no hardcoded IDs
   let category = await prisma.category.findFirst({
     where: {
       userId: null,
@@ -109,7 +95,7 @@ export const abandonGoal = async (
         name: 'Thu nhập khác',
         type: 'INCOME',
         isDefault: true,
-        icon: 'plus-circle', // Default icon for other income
+        icon: 'plus-circle',
       },
     });
   }
@@ -149,8 +135,6 @@ export const abandonGoal = async (
 
   return [updatedGoal, updatedWallet, refundTx] as const;
 };
-
-// ─── Dashboard: top N active goals ───────────────────────────────────────────
 
 export const findTopActive = (userId: string, limit = 3) =>
   prisma.savingGoal.findMany({

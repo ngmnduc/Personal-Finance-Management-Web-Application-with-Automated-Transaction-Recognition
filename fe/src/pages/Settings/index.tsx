@@ -66,7 +66,6 @@ export default function SettingsPage() {
 
   const [archivedDialogOpen, setArchivedDialogOpen] = useState(false)
   
-  // Lấy các ví đã bị archived (dành cho Pop-up Quản lý)
   const { data: archivedWalletsData = [] } = useWallets({ archived: true })
   const archivedWallets = archivedWalletsData.filter(w => w.archivedAt !== null)
 
@@ -142,7 +141,6 @@ export default function SettingsPage() {
   }
 
   return (
-    // TODO [DARK MODE]: Đổi bg-[#f0f4f8] → bg-background khi triển khai dark mode
     <div className="px-4 pb-4 md:px-8 md:pb-8 min-h-full bg-[#f0f4f8] max-w-[1200px] mx-auto">
 
       {/* ── Header ── */}
@@ -322,7 +320,6 @@ export default function SettingsPage() {
                   <p className="text-sm font-semibold">Dark Mode</p>
                   <p className="text-xs text-slate-400 mt-0.5">Switch to dark interface</p>
                 </div>
-                {/* LOCKED: disabled cho đến khi hoàn tất dark mode migration */}
                 <Switch checked={false} disabled onCheckedChange={() => {}} />
               </div>
             </CardContent>
@@ -393,7 +390,6 @@ export default function SettingsPage() {
                 />
               </div>
 
-              {/* ── Button Mở Pop-up Quản Lý Ví Đã Archive ── */}
               <div className="flex items-center justify-between rounded-xl border border-slate-100 p-4 mt-3 bg-white">
                 <div className="space-y-0.5">
                   <p className="text-sm font-bold text-[#0f1f3d]">Archived Wallets Storage</p>

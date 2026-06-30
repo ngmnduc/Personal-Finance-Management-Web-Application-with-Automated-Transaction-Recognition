@@ -3,8 +3,6 @@ import { Bell, Check, CheckCheck, AlertTriangle, Zap, Info, X } from 'lucide-rea
 import { formatDistanceToNow } from 'date-fns';
 import { useNotifications, Notification, NotificationType } from '../context/NotificationContext';
 
-// ─── Icon ánh xạ theo loại thông báo ──────────────────────────────────────────
-
 const NotificationIcon: React.FC<{ type: NotificationType }> = ({ type }) => {
   switch (type) {
     case 'BUDGET_ALERT':
@@ -28,8 +26,6 @@ const NotificationIcon: React.FC<{ type: NotificationType }> = ({ type }) => {
   }
 };
 
-// ─── Component một dòng thông báo ─────────────────────────────────────────────
-
 const NotificationItem: React.FC<{
   notification: Notification;
   onRead: (id: string) => void;
@@ -45,10 +41,8 @@ const NotificationItem: React.FC<{
       }`}
       onClick={() => !notification.read && onRead(notification.id)}
     >
-      {/* Icon phân loại thông báo */}
       <NotificationIcon type={notification.type} />
 
-      {/* Nội dung thông báo */}
       <div className="min-w-0 flex-1">
         <p
           className={`text-sm leading-snug ${
@@ -60,7 +54,6 @@ const NotificationItem: React.FC<{
         <span className="mt-0.5 block text-xs text-slate-400">{timeAgo}</span>
       </div>
 
-      {/* Chấm tròn chỉ thị chưa đọc */}
       {!notification.read && (
         <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
       )}
@@ -68,15 +61,12 @@ const NotificationItem: React.FC<{
   );
 };
 
-// ─── Notification Bell Dropdown chính ────────────────────────────────────────
-
 export const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } =
     useNotifications();
 
-  // Đóng dropdown khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -93,7 +83,6 @@ export const NotificationBell: React.FC = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Nút chuông thông báo */}
       <button
         id="notification-bell-btn"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -101,7 +90,6 @@ export const NotificationBell: React.FC = () => {
         aria-label="Notifications"
       >
         <Bell size={20} />
-        {/* Badge bộ đếm thông báo chưa đọc */}
         {unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -112,8 +100,7 @@ export const NotificationBell: React.FC = () => {
       {/* Dropdown panel */}
       {isOpen && (
         <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:w-96">
-          {/* Header của dropdown */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
               {unreadCount > 0 && (
@@ -123,7 +110,6 @@ export const NotificationBell: React.FC = () => {
               )}
             </div>
             <div className="flex items-center gap-1">
-              {/* Nút đánh dấu tất cả đã đọc */}
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
@@ -143,10 +129,8 @@ export const NotificationBell: React.FC = () => {
             </div>
           </div>
 
-          {/* Danh sách thông báo có thanh cuộn */}
           <div className="max-h-[420px] overflow-y-auto">
             {isLoading ? (
-              /* Trạng thái loading */
               <div className="flex flex-col gap-3 p-4">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -159,7 +143,6 @@ export const NotificationBell: React.FC = () => {
                 ))}
               </div>
             ) : notifications.length === 0 ? (
-              /* Trạng thái rỗng */
               <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
                   <Bell size={22} className="text-slate-400" />
@@ -172,7 +155,6 @@ export const NotificationBell: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* Danh sách thông báo */
               notifications.map((notification) => (
                 <NotificationItem
                   key={notification.id}

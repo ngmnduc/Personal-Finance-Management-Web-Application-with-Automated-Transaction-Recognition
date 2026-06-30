@@ -44,12 +44,10 @@ export default function LoginPage() {
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Protective Layer chống spam đăng nhập
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
   const [loginLoadingText, setLoginLoadingText] = useState('Sign In');
 
-  // Đếm ngược thời gian khoá
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
     if (lockoutTime !== null && lockoutTime > 0) {
@@ -83,19 +81,15 @@ export default function LoginPage() {
   } = useForm<ForgotFormValues>({ resolver: zodResolver(forgotSchema) });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
-    // Chặn request nếu đang bị khoá
     if (lockoutTime !== null) return;
 
     setApiError('');
     setLoginLoadingText('Signing in...');
 
-    // Hàm helper chạy bất đồng bộ lồng bên trong, sử dụng đệ quy có giới hạn
-    // để quản lý số lần thử lại (Tối đa 1 lần retry ngầm, tương đương tổng 2 lần gửi bao gồm lần đầu)
     const executeLoginWithRetry = async (attempt: number): Promise<void> => {
       try {
         const res = await authApi.login(data);
         
-        // Request thành công: reset các trạng thái lỗi/spam
         setFailedAttempts(0);
         setLockoutTime(null);
 
@@ -103,35 +97,23 @@ export default function LoginPage() {
         useAuthStore.getState().setAuth(user, accessToken, refreshToken);
         navigate(ROUTES.DASHBOARD);
       } catch (error: any) {
-        // PHÂN TÁCH LUỒNG LOGIC XỬ LÝ LỖI:
-        // 1. Kiểm tra chính xác lỗi có phải do quá hạn (Timeout) hoặc mất kết nối mạng hay không
         const isTimeout = error.message === 'Request timeout';
         const isNetworkError = error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response;
 
-        // 2. Logic Retry chỉ kích hoạt khi xác định chính xác lỗi mạng/timeout và chưa vượt quá số lần thử tối đa
         /* CODE COMMENT: Optimization P1.3 - Reduced active retries upon direct user credential submission to a maximum of 1 to avoid request spam */
         if ((isTimeout || isNetworkError) && attempt < 1) {
           /* CODE COMMENT: Optimization P1.3 - Informative loading text during cold-start server wakeup */
           setLoginLoadingText('Waking up server, please wait (this may take up to 50s)...');
-          // Tiến hành checkHealth ngầm để gửi tín hiệu đánh thức máy chủ (Health Check Polling)
           await authApi.checkHealth();
-
-          // Khởi tạo Promise trì hoãn bắt luồng xử lý dừng lại đúng 4000ms trước khi thử lại
           await new Promise((resolve) => setTimeout(resolve, 4000));
-
-          // Đệ quy thực hiện lượt gửi request tiếp theo
           return executeLoginWithRetry(attempt + 1);
         }
 
         setLoginLoadingText('Sign In');
 
-        // 3. Nếu toàn bộ lượt Retry đều thất bại hoặc gặp lỗi nghiệp vụ thông thường (400, 401, 403, 422)
         if (isTimeout || isNetworkError) {
-          // Gán thông báo lỗi kết nối cuối cùng lên màn hình
           setApiError('Connection failed. Please try again.');
         } else {
-          // Các lỗi nghiệp vụ khác được trả về ngay lập tức để xử lý cục bộ
-          // Tăng số lần thử thất bại
           const newFailedAttempts = failedAttempts + 1;
           setFailedAttempts(newFailedAttempts);
           
@@ -145,7 +127,6 @@ export default function LoginPage() {
       }
     };
 
-    // Kích hoạt tiến trình gửi request đầu tiên (attempt = 0)
     await executeLoginWithRetry(0);
   };
 

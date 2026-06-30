@@ -58,13 +58,8 @@ export const useScanImage = () => {
         `${API_ENDPOINTS.OCR}/scan`,
         form,
         {
-          headers: {
-            // Ép Axios dùng chuẩn gửi file, ghi đè cái mặc định application/json của project
-            'Content-Type': 'multipart/form-data', 
-          },
-        }
-        
-        // No Content-Type — let browser inject multipart boundary
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
       )
       return response.data.data
     },

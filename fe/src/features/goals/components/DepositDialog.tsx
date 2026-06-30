@@ -74,8 +74,6 @@ export default function DepositDialog({ open, onOpenChange, goal }: DepositDialo
           </DialogHeader>
         </div>
 
-        {/* Body — White */}
-        {/* Tách biệt padding px-6 py-5 trên di động và md:px-8 md:py-6 trên máy tính để tối ưu vùng hiển thị */}
         <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 md:px-8 md:py-6 flex flex-col gap-5 bg-white">
 
           {/* Summary card — Wallet / Still needed / Progress */}

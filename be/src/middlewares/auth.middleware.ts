@@ -19,7 +19,6 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     return sendError(res, 'Invalid or expired access token', 'UNAUTHORIZED', 401);
   }
 
-  /* CODE COMMENT: Optimization P1.2 - Removed database check on tokenVersion to prevent DB query overhead on every request. Relying strictly on JWT verification. */
 
   req.user = { userId: result.payload.userId, tokenVersion: result.payload.tokenVersion };
   next();
@@ -40,7 +39,6 @@ export const requireRefreshToken = async (req: Request, res: Response, next: Nex
     return sendError(res, 'Invalid or expired refresh token', 'UNAUTHORIZED', 401);
   }
 
-  /* CODE COMMENT: Optimization P1.2 - Removed database check on tokenVersion for refresh token to prevent DB query overhead. Relying strictly on JWT verification. */
 
   req.user = { userId: result.payload.userId, tokenVersion: result.payload.tokenVersion };
   next();

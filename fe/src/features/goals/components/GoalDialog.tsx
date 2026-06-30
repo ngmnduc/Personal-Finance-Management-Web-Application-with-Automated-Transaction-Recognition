@@ -59,7 +59,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
   const createGoal = useCreateGoal()
   const updateGoal = useUpdateGoal()
 
-  // Only show active (non-archived, non-deleted) wallets
   const activeWallets = wallets.filter(
     (w) => !w.archivedAt && !w.deletedAt,
   )
@@ -85,7 +84,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
   const selectedWalletId = watch('sourceWalletId')
   const selectedWallet = activeWallets.find((w) => w.id === selectedWalletId)
 
-  // Populate form when editing
   useEffect(() => {
     if (goal) {
       reset({
@@ -118,7 +116,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[460px] rounded-[2rem] p-0 overflow-hidden border-0 shadow-xl [&>button]:text-white">
 
-        {/* Header — Navy Split */}
         <div className="bg-[#0f1f3d] px-8 py-6">
           <DialogHeader>
             <DialogTitle className="text-white text-xl font-bold">
@@ -130,11 +127,8 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
           </DialogHeader>
         </div>
 
-        {/* Body — White */}
-        {/* Tách biệt padding px-6 py-5 trên di động và md:px-8 md:py-6 trên máy tính để tối ưu vùng hiển thị */}
         <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 md:px-8 md:py-6 flex flex-col gap-5 bg-white">
 
-          {/* Name */}
           <div>
             <Label htmlFor="goal-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               Goal Name
@@ -150,7 +144,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
             )}
           </div>
 
-          {/* Target Amount */}
           <div>
             <VndCurrencyInput
               control={control}
@@ -161,7 +154,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
             />
           </div>
 
-          {/* Source Wallet — disabled in edit mode */}
           {!isEdit && (
             <div>
               <Label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Source Wallet</Label>
@@ -198,7 +190,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
             </div>
           )}
 
-          {/* Deadline */}
           <div>
             <Label htmlFor="goal-deadline" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               Deadline <span className="text-slate-400 font-normal normal-case tracking-normal">(optional)</span>
@@ -214,7 +205,6 @@ export default function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps
             )}
           </div>
 
-          {/* Actions */}
           <DialogFooter className="flex gap-3 pt-2">
             <Button
               type="button"

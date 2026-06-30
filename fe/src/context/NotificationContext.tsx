@@ -11,8 +11,6 @@ import { useAuthStore } from '../store/auth.store';
 import apiClient from '../lib/axios';
 import { API_ENDPOINTS } from '../lib/constants';
 
-// ─── Interface định nghĩa cấu trúc một thông báo ─────────────────────────────
-
 export type NotificationType = 'BUDGET_ALERT' | 'AUTOMATION_TRIGGER' | 'SYSTEM_NOTICE' | 'RECURRING_SUGGESTION';
 
 export interface Notification {
@@ -24,8 +22,6 @@ export interface Notification {
   createdAt: string;
 }
 
-// ─── Interface định nghĩa giá trị Context ─────────────────────────────────────
-
 interface NotificationContextValue {
   notifications: Notification[];
   unreadCount: number;
@@ -34,11 +30,7 @@ interface NotificationContextValue {
   markAllAsRead: () => Promise<void>;
 }
 
-// ─── Khởi tạo Context ─────────────────────────────────────────────────────────
-
 const NotificationContext = createContext<NotificationContextValue | null>(null);
-
-// ─── Provider Component ───────────────────────────────────────────────────────
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -47,8 +39,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const accessToken = useAuthStore((s) => s.accessToken);
   const socketRef = useRef<Socket | null>(null);
-
-  // ── Tải danh sách thông báo ban đầu từ REST API ──────────────────────────
 
   const fetchInitialNotifications = useCallback(async () => {
     try {
@@ -66,17 +56,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // ── Thiết lập kết nối Socket.IO và lắng nghe sự kiện thời gian thực ─────
-
   useEffect(() => {
     if (!accessToken) return;
 
-    // Truy xuất URL backend từ biến môi trường (bỏ phần /api/v1 để lấy gốc)
     const backendUrl = (import.meta.env.VITE_API_URL as string)
       ?.replace('/api/v1', '')
       .replace('/api', '') ?? 'http://localhost:3000';
 
-    // Khởi tạo Socket.IO với xác thực Bearer token qua handshake
     const socket = io(backendUrl, {
       auth: { token: accessToken },
       transports: ['websocket'],
@@ -91,11 +77,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       console.log('[Socket] Connected, id:', socket.id);
     });
 
-    // Lắng nghe sự kiện thông báo mới từ server
     socket.on('NEW_NOTIFICATION', (notification: Notification) => {
-      // Chèn thông báo mới vào đầu danh sách
       setNotifications((prev) => [notification, ...prev]);
-      // Tăng bộ đếm chưa đọc nếu thông báo chưa được đọc
       if (!notification.read) {
         setUnreadCount((prev) => prev + 1);
       }
@@ -119,7 +102,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       console.warn('[Socket] Connection error:', err.message);
     });
 
-    // Tải thông báo lịch sử khi kết nối thành công
     fetchInitialNotifications();
 
     return () => {
@@ -135,13 +117,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
   }, [accessToken, fetchInitialNotifications]);
 
-  // ── Đánh dấu một thông báo là đã đọc ────────────────────────────────────
-
   const markAsRead = useCallback(async (id: string) => {
     try {
       await apiClient.patch(`${API_ENDPOINTS.NOTIFICATIONS}/${id}/read`);
 
-      // Cập nhật state cục bộ ngay lập tức không cần re-fetch
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
       );
@@ -151,13 +130,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // ── Đánh dấu tất cả thông báo là đã đọc ─────────────────────────────────
-
   const markAllAsRead = useCallback(async () => {
     try {
       await apiClient.patch(`${API_ENDPOINTS.NOTIFICATIONS}/read-all`);
 
-      // Reset toàn bộ danh sách thông báo về trạng thái đã đọc
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
@@ -173,8 +149,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     </NotificationContext.Provider>
   );
 }
-
-// ─── Custom hook tiện ích để truy cập Context ─────────────────────────────────
 
 export function useNotifications(): NotificationContextValue {
   const ctx = useContext(NotificationContext);
