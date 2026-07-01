@@ -4,20 +4,14 @@ import { prisma } from '../config/prisma';
 import * as recurringRuleRepo from '../repositories/recurringRule.repository';
 import { notificationService } from './notification.service';
 
-// ─── Input Types ──────────────────────────────────────────────────────────────
-
 export interface ConfirmRuleInput {
   ruleId: string;
 }
-
-// ─── Serialisation helper ─────────────────────────────────────────────────────
 
 const serialise = (rule: any) => ({
   ...rule,
   amount: Number(rule.amount),
 });
-
-// ─── Detection: central recurring pattern engine ──────────────────────────────
 
 /**
  * Called fire-and-forget after every EXPENSE transaction creation.
@@ -92,8 +86,6 @@ export const detectAndCreateSuggestion = async (
   return serialise(rule);
 };
 
-// ─── User-facing CRUD ─────────────────────────────────────────────────────────
-
 export const getSuggestions = async (userId: string) => {
   const rules = await recurringRuleRepo.findSuggestions(userId);
   return rules.map(serialise);
@@ -137,30 +129,23 @@ export const deleteRule = async (userId: string, ruleId: string) => {
   await recurringRuleRepo.softDelete(ruleId);
 };
 
-// ─── Internal / Cronjob ───────────────────────────────────────────────────────
-
 export const getDueRules = async () => {
   const rules = await recurringRuleRepo.findDueRules();
   return rules.map(serialise);
 };
 
-/**
- * Materialise a single recurring rule into an EXPENSE transaction.
- * Atomic: creates transaction + debits wallet in one prisma.$transaction.
- */
 export const processRule = async (ruleId: string) => {
-  // Re-fetch without userId scope for internal use
   const fullRule = await prisma.recurringRule.findFirst({
     where: { id: ruleId, isActive: true, deletedAt: null },
   });
   if (!fullRule) throw AppError.NotFound('Recurring rule not found or inactive.', 'RULE_NOT_FOUND');
 
-  //check tình trạng ví trước khi thực hiện giao dịch
   const wallet = await prisma.wallet.findFirst({
     where: { id: fullRule.walletId, deletedAt: null, archivedAt: null }
   });
 
   if (!wallet) {
+    console.error(`[CRON EXCEPTION] Rule ${ruleId} failed: Wallet is archived or deleted.`);
     await prisma.recurringRule.update({ where: { id: ruleId }, data: { isActive: false } });
     notificationService.triggerNotification(
       fullRule.userId,
@@ -209,7 +194,7 @@ export const processRule = async (ruleId: string) => {
     }),
   ]);
 
-  /* Asynchronously trigger automation execution notification in a failure-tolerant way to avoid blocking */
+  /* Fire-and-forget automation notification */
   notificationService.triggerNotification(
     fullRule.userId,
     NotificationType.AUTOMATION_TRIGGER,
@@ -220,7 +205,6 @@ export const processRule = async (ruleId: string) => {
     }
   ).catch((err) => console.error('[Notification] Failed to trigger automation alert:', err));
 
-  // Advance nextDueDate outside the transaction (non-critical)
   await recurringRuleRepo.updateNextDueDate(ruleId, fullRule.intervalDays);
 
   return {
