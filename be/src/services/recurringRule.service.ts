@@ -195,6 +195,7 @@ export const processRule = async (ruleId: string) => {
   ]);
 
   /* Fire-and-forget automation notification */
+  /* Fire-and-forget automation notification */
   notificationService.triggerNotification(
     fullRule.userId,
     NotificationType.AUTOMATION_TRIGGER,
