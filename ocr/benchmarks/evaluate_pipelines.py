@@ -1,51 +1,12 @@
 """
-=============================================================================
-EVALUATE_PIPELINES.PY — BENCHMARK SCRIPT CHO ĐỒ ÁN (CHƯƠNG 6)
-=============================================================================
+Benchmark comparing LOCAL_EASYOCR vs CLOUD_API pipelines.
 
-MỤC ĐÍCH:
-  So sánh hiệu năng 2 pipeline OCR:
-    - LOCAL_EASYOCR : Offline, CPU-bound, không tốn API, luôn sẵn sàng
-    - CLOUD_API     : Online, LLM vision (Gemini/Groq/OpenRouter), độ chính xác cao
+Usage:
+  python evaluate_pipelines.py --mode cloud     (default)
+  python evaluate_pipelines.py --mode local
+  python evaluate_pipelines.py --mode both
 
-CÁCH CHẠY:
-  Chỉ chạy CLOUD_API (khuyến nghị cho lần test đồ án):
-    python evaluate_pipelines.py --mode cloud
-
-  Chỉ chạy LOCAL_EASYOCR:
-    python evaluate_pipelines.py --mode local
-
-  Chạy cả 2 (full benchmark, tốn thời gian):
-    python evaluate_pipelines.py --mode both
-
-=============================================================================
-LƯU Ý QUAN TRỌNG VỀ RATE LIMIT TRƯỚC KHI CHẠY
-=============================================================================
-
-[GROQ FREE TIER]
-  - Giới hạn: 30 request/phút (RPM), ~14,400 req/ngày
-  - Script này dùng delay 6.0s giữa mỗi ảnh → ~10 ảnh/phút → AN TOÀN
-  - Nếu muốn nhanh hơn: đổi INTER_IMAGE_DELAY = 4.0 → ~15 ảnh/phút (vẫn OK)
-  - KHÔNG giảm xuống dưới 2.5s vì 1 ảnh có thể retry 1-2 lần → dễ vượt 30 RPM
-
-[GEMINI FREE TIER]
-  - Giới hạn theo ngày: ~1500 req/ngày, reset lúc 7h sáng VN (0h UTC)
-  - Giới hạn per-minute: 15 RPM cho gemini-2.0-flash
-  - Nếu Gemini bị 429 → script tự động chuyển sang Groq (không cần lo)
-  - Không chạy script 2 lần trong 1 ngày nếu dùng Gemini direct
-
-[OPENROUTER]
-  - Chỉ là fallback cuối, không bị gọi nếu Gemini/Groq đang hoạt động
-  - Đảm bảo account OR có credit > $0 nếu muốn OR làm việc
-
-[CHIẾN LƯỢC AN TOÀN CHO 36 ẢNH]
-  - Với INTER_IMAGE_DELAY = 6.0s:
-      36 ảnh × 6s = ~216s = ~3.6 phút tổng thời gian chờ
-      Tốc độ thực: ~10 ảnh/phút → dưới 30 RPM Groq rất nhiều
-  - Mỗi ảnh tối đa 2 retry × 5s delay = 10s thêm trong worst case
-  - Tổng thời gian dự kiến: 5-8 phút cho 36 ảnh CLOUD_API
-
-=============================================================================
+Rate-limit safe defaults: INTER_IMAGE_DELAY=6.0s keeps ~10 img/min under Groq 30 RPM.
 """
 
 import os
@@ -73,24 +34,22 @@ from app.services.nlp_extractor import clean_and_parse_json, normalize_amount, n
 from app.services.bank_parser import detect_bank
 
 # =============================================================================
-# CẤU HÌNH RATE LIMIT — ĐIỀU CHỈNH TẠI ĐÂY NẾU CẦN
+# RATE-LIMIT CONFIG
 # =============================================================================
 
-# Thời gian chờ (giây) giữa 2 ảnh liên tiếp trong Cloud pipeline
-# 6.0s → ~10 ảnh/phút (khuyến nghị, an toàn với Groq 30 RPM)
-# 4.0s → ~15 ảnh/phút (chấp nhận được nếu không retry nhiều)
+# Delay (s) between consecutive images in cloud pipeline (6s → ~10 img/min, safe for Groq 30 RPM)
 INTER_IMAGE_DELAY = 6.0
 
-# Số lần retry tối đa mỗi ảnh khi Cloud API thất bại
+# Max retry attempts per image on cloud API failure
 MAX_RETRIES = 2
 
-# Delay cơ sở khi retry (giây), tăng dần: retry 1 = 5s, retry 2 = 10s
+# Base retry delay (s), doubles per attempt
 BASE_RETRY_DELAY = 5.0
 
-# Ngưỡng similarity để coi merchant là đúng (0.6 = 60% giống nhau)
+# Similarity threshold to count merchant as matched (0.6 = 60%)
 MERCHANT_SIMILARITY_THRESHOLD = 0.6
 
-# Các ảnh có merchant không xác định — bỏ qua field merchant khi tính accuracy
+# Images whose merchant field is indeterminate — skip from merchant accuracy eval
 SKIP_MERCHANT_EVAL = {"momo_5_ocr.jpg"}
 
 
@@ -99,17 +58,14 @@ SKIP_MERCHANT_EVAL = {"momo_5_ocr.jpg"}
 # =============================================================================
 
 def calculate_string_similarity(a: str, b: str) -> float:
-    """Tính độ giống nhau giữa 2 chuỗi, không phân biệt hoa thường."""
+    """Case-insensitive string similarity via SequenceMatcher."""
     if not a or not b:
         return 0.0
     return SequenceMatcher(None, str(a).strip().upper(), str(b).strip().upper()).ratio()
 
 
 def compute_summary(metrics: dict) -> dict:
-    """
-    Tính toán đầy đủ các chỉ số từ raw metrics.
-    Trả về dict chứa tất cả số liệu cần cho bảng so sánh đồ án.
-    """
+    """Compute summary metrics from raw data for comparison table."""
     latencies = metrics["latency"]
     n = metrics["accuracy_tested_samples"]
     overall_hits = metrics.get("overall_hit", 0)
@@ -139,13 +95,13 @@ def compute_summary(metrics: dict) -> dict:
 
 
 def print_summary_table(results: dict):
-    """In bảng tổng hợp ra terminal với đầy đủ label cột."""
+    """Print comparison summary table to terminal."""
     W = 100
     print("\n" + "=" * W)
-    print("        BẢNG TỔNG HỢP SỐ LIỆU THỰC NGHIỆM ĐỐI CHỨNG — CHƯƠNG 6 ĐỒ ÁN")
+    print("        BẢNG TỔNG HỢP SỐ LIỆU THỰC NGHIỆM ĐỐI CHỨNG")
     print("=" * W)
 
-    # Header nhóm
+    # Header
     print(f"{'':30} {'─── ĐỘ CHÍNH XÁC (ACCURACY) ───':^38}  {'─── ĐỘ TRỄ (LATENCY) ───':^28}  {'─ RELIABILITY ─':^16}")
     print(f"{'Chế độ / Pipeline':30} {'Amount':>8} {'Date':>8} {'Merchant':>10} {'Overall':>10}  "
           f"{'Avg':>7} {'Min':>7} {'Max':>7} {'P95':>7}  "
@@ -171,7 +127,7 @@ def print_summary_table(results: dict):
     print("=" * W)
     print()
 
-    # Chú thích
+    # Notes
     print("CHÚ THÍCH:")
     print("  Overall Accuracy : % ảnh có CẢ 3 trường (amount + date + merchant) đúng đồng thời")
     print("  P95 Latency      : Latency của 95% ảnh xử lý nhanh nhất (loại trừ outlier retry)")
@@ -179,7 +135,7 @@ def print_summary_table(results: dict):
     print(f"  Merchant Threshold: similarity >= {MERCHANT_SIMILARITY_THRESHOLD:.0%} được tính là đúng")
     print()
 
-    # Bảng chi tiết từng mode
+    # Per-mode detail
     for mode, label in mode_labels.items():
         if mode not in results:
             continue
@@ -191,7 +147,7 @@ def print_summary_table(results: dict):
 
 
 def write_markdown_report(mismatch_details: list, results: dict, report_path: Path):
-    """Xuất báo cáo .md chi tiết với timestamp và bảng tổng hợp đầy đủ."""
+    """Write detailed .md report with timestamp and summary table."""
     run_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open(report_path, "w", encoding="utf-8") as rf:
@@ -199,7 +155,7 @@ def write_markdown_report(mismatch_details: list, results: dict, report_path: Pa
         rf.write(f"**Thời điểm chạy:** {run_time}  \n")
         rf.write(f"**Script:** `evaluate_pipelines.py`  \n\n")
 
-        # Bảng tổng hợp trong markdown
+        # Summary table in markdown
         rf.write("## BẢNG TỔNG HỢP (SUMMARY)\n\n")
         rf.write("| Chỉ số | Local EasyOCR | Cloud Vision AI |\n")
         rf.write("|:---|:---:|:---:|\n")
@@ -228,7 +184,7 @@ def write_markdown_report(mismatch_details: list, results: dict, report_path: Pa
 
         rf.write("\n> **Overall Accuracy**: % ảnh đúng CẢ 3 trường đồng thời (amount + date + merchant)\n\n")
 
-        # Bảng mismatch chi tiết
+        # Mismatch detail table
         rf.write("## CHI TIẾT SAI LỆCH (MISMATCH DETAILS)\n\n")
         if not mismatch_details:
             rf.write("_Không có sai lệch nào được ghi nhận._\n")
@@ -285,9 +241,9 @@ async def run_local_pipeline(image_files, gt_data, summary_metrics, mismatch_det
                 date_match  = str(tx_date or "") == str(expected["transaction_date"])
                 merch_sim   = calculate_string_similarity(merchant, expected["merchant"])
 
-                # Bỏ qua eval merchant nếu file nằm trong SKIP_MERCHANT_EVAL
+                # Skip merchant eval for specific images
                 if filename in SKIP_MERCHANT_EVAL:
-                    merch_match = True  # không tính vào accuracy
+                    merch_match = True  # excluded from accuracy
                 else:
                     merch_match = merch_sim >= MERCHANT_SIMILARITY_THRESHOLD
 
@@ -340,8 +296,8 @@ async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_det
             mime_type, _ = mimetypes.guess_type(str(img_path))
             mime_type = mime_type or "image/png"
 
-            # ── Retry logic với exponential delay ──────────────────────────
-            # Chỉ đo thời gian xử lý thực (trừ sleep chờ retry)
+            # ── Retry with exponential delay ───────────────────────────
+            # Track real processing time (excluding retry sleep)
             total_sleep_time = 0.0
             raw_response     = None
             t0               = time.perf_counter()
@@ -349,7 +305,7 @@ async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_det
             for attempt in range(MAX_RETRIES):
                 try:
                     raw_response = await extract_with_llm(img_bytes, mime_type)
-                    break  # Thành công → thoát vòng retry
+                    break  # Success → exit retry loop
                 except Exception as e:
                     if attempt < MAX_RETRIES - 1:
                         # Exponential backoff: 5s, 10s
@@ -359,9 +315,9 @@ async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_det
                         total_sleep_time += sleep_dur
                         print(f"  [{idx:02d}/{total}] {filename:35s}", end="", flush=True)
                     else:
-                        raise e  # Hết retry → raise để outer except bắt
+                        raise e  # All retries exhausted
 
-            # Latency thực = tổng thời gian - thời gian ngủ chờ retry
+            # Real latency = total time - retry sleep time
             elapsed = (time.perf_counter() - t0) - total_sleep_time
 
             parsed_json = clean_and_parse_json(raw_response)
@@ -404,8 +360,8 @@ async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_det
             print(f" ✗ Lỗi: {str(e)[:80]}", flush=True)
             summary_metrics["CLOUD_API"]["errors"] += 1
 
-        # ── Delay giữa ảnh để tránh vượt rate limit ──────────────────────
-        # Chỉ sleep nếu còn ảnh tiếp theo
+        # ── Inter-image delay to avoid rate limit ──────────────────────
+        # Sleep only if more images remain
         if idx < total:
             print(f"     ⏱  Chờ {INTER_IMAGE_DELAY}s để tránh rate limit Groq...", flush=True)
             await asyncio.sleep(INTER_IMAGE_DELAY)
@@ -446,7 +402,7 @@ async def run_evaluation_pipeline(mode: str = "cloud"):
     print(f"  Thời điểm   : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70)
 
-    # Khởi tạo metrics — thêm overall_hit so với bản cũ
+    # Init metrics with overall_hit tracking
     summary_metrics = {
         "LOCAL_EASYOCR": {"latency": [], "amount_hit": 0, "date_hit": 0,
                           "merchant_hit": 0, "overall_hit": 0,
@@ -457,24 +413,24 @@ async def run_evaluation_pipeline(mode: str = "cloud"):
     }
     mismatch_details = []
 
-    # Chạy pipeline theo mode
+    # Run pipeline by mode
     if mode in ("local", "both"):
         await run_local_pipeline(image_files, gt_data, summary_metrics, mismatch_details)
 
     if mode in ("cloud", "both"):
         await run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_details)
 
-    # Tổng hợp kết quả
+    # Aggregate results
     computed_results = {}
     if mode in ("local", "both"):
         computed_results["LOCAL_EASYOCR"] = compute_summary(summary_metrics["LOCAL_EASYOCR"])
     if mode in ("cloud", "both"):
         computed_results["CLOUD_API"]     = compute_summary(summary_metrics["CLOUD_API"])
 
-    # In bảng ra terminal
+    # Print summary table to terminal
     print_summary_table(computed_results)
 
-    # Xuất báo cáo markdown (có timestamp trong tên file để không bị ghi đè)
+    # Write timestamped markdown report
     ts          = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_path = BENCHMARK_DIR / f"mismatch_report_{ts}.md"
     write_markdown_report(mismatch_details, computed_results, report_path)

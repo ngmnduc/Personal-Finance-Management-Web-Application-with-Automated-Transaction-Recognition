@@ -165,11 +165,9 @@ async def scan_bulk(
         if cached:
             logger.info("Bulk cache hit: '%s'", filename)
             
-            # Bỏ các trường status/filename cũ nếu có (để phòng ngừa rác)
             cached.pop("status", None)
             cached.pop("filename", None)
-            
-            # Ép trường mới vào
+
             results.append(BulkScanItem(status="ready", filename=filename, **cached))
             cache_hit = True
         else:

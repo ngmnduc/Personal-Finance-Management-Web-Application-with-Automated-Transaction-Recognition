@@ -5,8 +5,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-# NOTE CẦN SỬA: Di chuyển dòng khai báo đối tượng logger lên vị trí này, ngay sau cấu hình logging toàn cục
-# để đảm bảo các khối logic xử lý tự động phát hiện thư viện phía dưới có thể sử dụng mà không gặp lỗi NameError.
 logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI

@@ -8,11 +8,9 @@ logger = logging.getLogger(__name__)
 
 async def process_recurring_incomes() -> None:
     """
-    Gọi Node.js BE để lấy danh sách recurring incomes đến hạn hôm nay,
-    sau đó gọi từng API /process để tạo giao dịch thực tế.
-
-    - 1 item lỗi KHÔNG làm sập cả process.
-    - KHÔNG ghi thẳng vào DB — mọi thao tác đi qua Node.js API.
+    Fetch due recurring incomes from Node.js BE and process each one.
+    - Single failure does NOT abort the batch.
+    - All operations go through Node.js API (never direct DB writes).
     """
     headers = {"X-Internal-Secret": settings.INTERNAL_SECRET}
     base_url = settings.BE_SERVICE_URL.rstrip("/")
@@ -22,7 +20,7 @@ async def process_recurring_incomes() -> None:
         date.today().day,
     )
 
-    # ── Step 1: Lấy danh sách due today ──────────────────────────────────────
+    # ── Step 1: Fetch due-today list ──────────────────────────────────────────
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(
@@ -47,7 +45,7 @@ async def process_recurring_incomes() -> None:
     if not items:
         return
 
-    # ── Step 2: Xử lý từng item (1 lỗi không dừng cả batch) ─────────────────
+    # ── Step 2: Process each item (fault-tolerant) ────────────────────────────
     async with httpx.AsyncClient(timeout=30.0) as client:
         for item in items:
             item_id   = item.get("id", "<unknown>")

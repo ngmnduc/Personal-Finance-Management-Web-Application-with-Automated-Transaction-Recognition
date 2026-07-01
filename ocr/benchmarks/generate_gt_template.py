@@ -5,12 +5,10 @@ import asyncio
 import mimetypes
 from pathlib import Path
 
-# Thêm PROJECT_ROOT vào sys.path để nhận diện package app
 BENCHMARK_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BENCHMARK_DIR.parent
 sys.path.append(str(PROJECT_ROOT))
 
-# Khởi tạo luồng trích xuất dữ liệu của Cloud API
 os.environ["OCR_MODE"] = "CLOUD_API"
 from app.services.llm_service import extract_with_llm
 from app.services.nlp_extractor import clean_and_parse_json, normalize_amount, normalize_date
@@ -26,7 +24,7 @@ async def generate_ground_truth_template():
         print(f"Không tìm thấy file ảnh hợp lệ nào inside thư mục {image_dir.resolve()}")
         return
 
-    # Nạp dữ liệu cũ nếu tệp ground_truth.json đã tồn tại để tránh ghi đè mất dữ liệu đã cấu hình
+    # Load existing ground truth to avoid overwriting configured data
     existing_gt = {}
     if gt_path.exists() and gt_path.stat().st_size > 0:
         try:
@@ -40,7 +38,7 @@ async def generate_ground_truth_template():
     for idx, img_path in enumerate(image_files):
         filename = img_path.name
         
-        # Bỏ qua nếu file ảnh này đã được định nghĩa đáp án chuẩn từ trước
+        # Skip if already has ground truth
         if filename in existing_gt:
             print(f"  -> Bỏ qua file: {filename} (Đã có dữ liệu gốc)")
             continue
@@ -54,25 +52,23 @@ async def generate_ground_truth_template():
             mime_type, _ = mimetypes.guess_type(str(img_path))
             mime_type = mime_type or "image/png"
 
-            # Thực thi gọi Inference từ Cloud API để lấy thông tin cấu trúc nháp
             raw_response = await extract_with_llm(img_bytes, mime_type)
             parsed_json = clean_and_parse_json(raw_response)
             
-            # Đồng bộ định dạng trường thông tin theo đúng Normalization Chain của hệ thống
             existing_gt[filename] = {
                 "amount": int(normalize_amount(parsed_json.get("amount")) or 0),
                 "transaction_date": normalize_date(parsed_json.get("transaction_date")) or "1970-01-01",
                 "merchant": str(parsed_json.get("merchant") or "UNKNOWN").strip().upper()
             }
             
-            # Ghi dữ liệu liên tục xuống ổ đĩa sau mỗi lượt gọi thành công để phòng ngừa rủi ro mất kết nối mạng
+            # Persist after each successful call to avoid data loss on network error
             with open(gt_path, "w", encoding="utf-8") as f:
                 json.dump(existing_gt, f, ensure_ascii=False, indent=2)
 
         except Exception as e:
             print(f"  [LỖI TRÍCH XUẤT NHÃN] Tệp {filename} gặp sự cố: {str(e)}")
 
-        # Chốt chặn Throttle Delay Guard bảo vệ Rate Limit
+        # Throttle delay to avoid rate limits
         if idx < len(image_files) - 1:
             await asyncio.sleep(1.5)
 

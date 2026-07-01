@@ -252,13 +252,13 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     ]
 
     for label, call_func, limiter, is_openrouter, is_gemini_direct in fallback_chain:
-        # Gemini quota cạn ngày → bỏ qua, không retry vô ích
+        # Gemini daily quota exhausted — skip remaining direct calls
         if is_gemini_direct and gemini_quota_exceeded:
             logger.warning("LLM fallback: skipping %s — daily quota exhausted", label)
             errors.append(f"{label}: skipped (daily quota)")
             continue
 
-        # OpenRouter hết credit → bỏ qua toàn bộ OR models còn lại
+        # OpenRouter out of credit — skip remaining OR models
         if is_openrouter and openrouter_out_of_credit:
             logger.warning("LLM fallback: skipping %s — OpenRouter out of credit", label)
             errors.append(f"{label}: skipped (OpenRouter 402)")
@@ -273,7 +273,7 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
         except Exception as exc:
             exc_str = str(exc)
 
-            # Gemini 429 với daily quota → đánh dấu skip, không retry key khác vì cùng project
+            # Gemini 429 daily quota — skip all direct calls (same project)
             if is_gemini_direct and ("429" in exc_str or "quota" in exc_str.lower()):
                 if "PerDay" in exc_str or "free_tier" in exc_str:
                     logger.error(
@@ -282,10 +282,10 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
                     )
                     gemini_quota_exceeded = True
                 else:
-                    # Rate limit per-minute → vẫn log warning, không block hẳn
+                    # Per-minute rate limit — log and continue
                     logger.warning("LLM fallback: %s — per-minute rate limit, continuing", label)
 
-            # OpenRouter 402 → đánh dấu skip toàn bộ OR
+            # OpenRouter 402 — skip all remaining OR models
             elif is_openrouter and "402" in exc_str:
                 logger.error(
                     "LLM fallback: %s — 402 Payment Required. "

@@ -43,7 +43,7 @@ export const detectAndCreateSuggestion = async (
       WHERE user_id   = ${userId}
         AND type      = 'EXPENSE'
         AND deleted_at IS NULL
-        AND merchant ILIKE ${merchant}
+        AND LOWER(merchant) = LOWER(${merchant})
         AND amount    = ${amount}
       ORDER BY transaction_date DESC
       LIMIT 10
@@ -82,10 +82,9 @@ export const detectAndCreateSuggestion = async (
     nextDueDate,
   });
 
-  /* Asynchronously trigger recurring suggestion notification in a failure-tolerant way to avoid blocking */
   notificationService.triggerNotification(
     userId,
-    'RECURRING_SUGGESTION' as NotificationType,
+    NotificationType.RECURRING_SUGGESTION,
     `New recurring pattern discovered for ${merchant}. Review the suggestion to activate.`,
     { ruleId: rule.id }
   ).catch((err) => console.error('[Notification] Failed to trigger recurring suggestion alert:', err));
@@ -162,10 +161,29 @@ export const processRule = async (ruleId: string) => {
   });
 
   if (!wallet) {
-    console.error(`[CRON EXCEPTION] Rule ${ruleId} failed: Wallet is archived or deleted.`);
-    // Nếu ví đã hỏng, update rule thành isActive = false để Cronjob không bao giờ chạy lại nó nữa
     await prisma.recurringRule.update({ where: { id: ruleId }, data: { isActive: false } });
+    notificationService.triggerNotification(
+      fullRule.userId,
+      NotificationType.SYSTEM_NOTICE,
+      `Recurring rule for "${fullRule.merchant}" has been automatically paused because its linked wallet is no longer available.`,
+      { ruleId, merchant: fullRule.merchant, reason: 'WALLET_INACTIVE' },
+    ).catch((err) => console.error('[Notification] Failed to notify wallet inactive for recurring rule:', err));
     throw AppError.BadRequest('Target wallet is inactive or archived. Rule deactivated.', 'WALLET_INACTIVE');
+  }
+
+  const category = await prisma.category.findFirst({
+    where: { id: fullRule.categoryId, deletedAt: null },
+  });
+
+  if (!category) {
+    await prisma.recurringRule.update({ where: { id: ruleId }, data: { isActive: false } });
+    notificationService.triggerNotification(
+      fullRule.userId,
+      NotificationType.SYSTEM_NOTICE,
+      `Recurring rule for "${fullRule.merchant}" has been automatically paused because its linked category is no longer available.`,
+      { ruleId, merchant: fullRule.merchant, reason: 'CATEGORY_INACTIVE' },
+    ).catch((err) => console.error('[Notification] Failed to notify category inactive for recurring rule:', err));
+    throw AppError.BadRequest('Target category is inactive or deleted. Rule deactivated.', 'CATEGORY_INACTIVE');
   }
 
   const [transaction] = await prisma.$transaction([

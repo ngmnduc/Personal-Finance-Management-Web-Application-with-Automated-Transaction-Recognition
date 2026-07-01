@@ -1,11 +1,10 @@
-import { TxSource, TransactionType } from '@prisma/client';
+import { TxSource, TransactionType, NotificationType } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import * as recurringRepo from '../repositories/recurringIncome.repository';
 import * as transactionRepo from '../repositories/transaction.repository';
 import { walletRepository } from '../repositories/wallet.repository';
 import { categoryRepository } from '../repositories/category.repository';
 import { notificationService } from './notification.service';
-import { socketService } from './socket.service';
 import { prisma } from '../config/prisma';
 
 // ─── Input Types ──────────────────────────────────────────────────────────────
@@ -156,14 +155,26 @@ export const processInternal = async (id: string) => {
     where: { id: record.categoryId, deletedAt: null }
   });
 
-  if (!wallet || !category) {
-    if (!wallet) {
-      await prisma.recurringIncome.update({
-        where: { id },
-        data: { isActive: false }
-      });
-    }
-    throw AppError.BadRequest('Target wallet or category is inactive. Configuration halted.', 'DEPENDENCY_INACTIVE');
+  if (!wallet) {
+    await prisma.recurringIncome.update({ where: { id }, data: { isActive: false } });
+    notificationService.triggerNotification(
+      record.userId,
+      NotificationType.SYSTEM_NOTICE,
+      `Recurring income "${record.name}" has been automatically paused because its linked wallet is no longer available.`,
+      { recurringIncomeId: id, name: record.name, reason: 'WALLET_INACTIVE' },
+    ).catch((err) => console.error('[Notification] Failed to notify wallet inactive for recurring income:', err));
+    throw AppError.BadRequest('Target wallet is inactive or archived. Recurring income deactivated.', 'WALLET_INACTIVE');
+  }
+
+  if (!category) {
+    await prisma.recurringIncome.update({ where: { id }, data: { isActive: false } });
+    notificationService.triggerNotification(
+      record.userId,
+      NotificationType.SYSTEM_NOTICE,
+      `Recurring income "${record.name}" has been automatically paused because its linked category is no longer available.`,
+      { recurringIncomeId: id, name: record.name, reason: 'CATEGORY_INACTIVE' },
+    ).catch((err) => console.error('[Notification] Failed to notify category inactive for recurring income:', err));
+    throw AppError.BadRequest('Target category is inactive or deleted. Recurring income deactivated.', 'CATEGORY_INACTIVE');
   }
 
   // ── Atomic Mutation ───────────────────────────────────────────────────────
@@ -189,18 +200,12 @@ export const processInternal = async (id: string) => {
     return transaction;
   });
 
-  // ── Real-time Notifications ───────────────────────────────────────────────
-  await notificationService.triggerNotification(
+  notificationService.triggerNotification(
     record.userId,
-    'AUTOMATION_TRIGGER',
+    NotificationType.AUTOMATION_TRIGGER,
     `Automated income processed: ${record.name}`,
-    { transactionId: result.id, walletId: record.walletId }
-  );
-
-  socketService.sendToUser(record.userId, 'NEW_NOTIFICATION', {
-    type: 'AUTOMATION_TRIGGER',
-    message: `Automated income processed: ${record.name}`
-  });
+    { transactionId: result.id, walletId: record.walletId },
+  ).catch((err) => console.error('[Notification] Failed to trigger automation alert for recurring income:', err));
 
   return { success: true, transactionId: result.id };
 };
