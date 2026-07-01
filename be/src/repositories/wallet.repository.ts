@@ -32,7 +32,7 @@ export const walletRepository = {
         name: data.name,
         type: data.type as WalletType,
         initialBalance: data.initialBalance,
-        currentBalance: data.initialBalance, // Mặc định bằng initial khi mới tạo
+        currentBalance: data.initialBalance,
         isDefault: data.isDefault,
       },
     });

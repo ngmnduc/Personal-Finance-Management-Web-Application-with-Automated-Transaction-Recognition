@@ -1,15 +1,11 @@
 import { prisma } from '../config/prisma';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface ExportFilters {
   from?: Date;
   to?: Date;
   walletId?: string;
   categoryId?: string;
 }
-
-// ─── Repository ───────────────────────────────────────────────────────────────
 
 export const getTransactionsForExport = (userId: string, filters: ExportFilters = {}) => {
   const { from, to, walletId, categoryId } = filters;

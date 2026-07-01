@@ -62,7 +62,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
 function resolveIcon(raw: string): React.ElementType {
   if (!raw) return DollarSign
 
-  /* Implement dynamic string transformation to generate kebab-case slug */
   const kebabSlug = raw
     .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
     .replace(/([a-zA-Z])([0-9])/g, "$1-$2")
@@ -191,13 +190,11 @@ export default function CategoriesPage() {
             >
               <CardContent className="flex flex-row justify-between items-center md:items-start h-full p-4 md:p-6 gap-3 md:gap-0">
 
-                {/* Khối Trái (Mobile) / Khối Trên & Dưới (Desktop) */}
                 <div className="flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 w-full">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${iconWrapClass}`}>
                     <Icon size={22} />
                   </div>
 
-                  {/* Tên & Type: Ép xuống đáy khi ở màn hình Desktop (md:absolute) */}
                   <div className="md:absolute md:bottom-6 md:left-6">
                     <h3 className="text-sm md:text-base font-bold text-[#0f1f3d] leading-snug">{c.name}</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 md:mt-1">
@@ -206,7 +203,6 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                {/* Khối Phải (Mobile) / Khối Góc Trái Trên (Desktop) */}
                 <div className="md:absolute md:top-6 md:right-6 flex-shrink-0">
                   {isSystem ? (
                     <span className="flex items-center gap-1 px-2 md:px-2.5 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-bold uppercase tracking-widest">

@@ -75,8 +75,6 @@ function SingleThumbnailItem({ file, previewUrl }: { file: File; previewUrl: str
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-// Removed local types as they are now in the store if needed
-
 export default function ScanPage() {
   const navigate = useNavigate()
 
@@ -87,7 +85,6 @@ export default function ScanPage() {
     singleFormValues, setStates, startCleanupTimer, clearCleanupTimer
   } = useScanStore()
 
-  // Sử dụng ref để theo dõi giá trị tab và item trước đó nhằm ngăn chặn vòng lặp render vô hạn
   const prevTabRef = useRef(activeTab)
   const prevItemIdRef = useRef(confirmingItemId)
 
@@ -139,7 +136,6 @@ export default function ScanPage() {
   useEffect(() => {
     if (confirmingItemId !== prevItemIdRef.current) {
       if (confirmingItemId) {
-        // Chỉ reset form khi thực sự thay đổi item đang được chọn trong bulk queue
         const item = bulkQueue.find((i) => i.id === confirmingItemId)
         if (item?.result) {
           const ex = item.result.extracted
@@ -154,10 +150,8 @@ export default function ScanPage() {
           })
         }
       }
-      // Cập nhật ref lưu trữ ID item trước đó để chặn lặp
       prevItemIdRef.current = confirmingItemId
     }
-    // Bổ sung bulkQueue vào dependency để đảm bảo closure luôn tham chiếu dữ liệu mới nhất
   }, [confirmingItemId, globalScanContext, bulkForm, bulkQueue])
 
   // ── Single Mode Form Synchronization ──────────────────────────────────────
@@ -183,11 +177,9 @@ export default function ScanPage() {
   useEffect(() => {
     if (activeTab === 'single' && prevTabRef.current !== 'single') {
       if (scanPhase === 'confirm' && singleFormValues) {
-        // Khôi phục giá trị form Single Mode khi chuyển tab trở lại
         form.reset(singleFormValues)
       }
     }
-    // Cập nhật ref lưu trữ tab trước đó để đánh dấu biên chuyển đổi tab
     prevTabRef.current = activeTab
   }, [activeTab, scanPhase, singleFormValues, form])
 
@@ -439,7 +431,6 @@ export default function ScanPage() {
       note: values.note,
       extractedText: scanResult?.extracted_text ?? '',
     })
-    // Giải phóng tài nguyên và xóa trạng thái store trước khi chuyển hướng
     useScanStore.getState().resetStore()
     navigate(ROUTES.TRANSACTIONS)
   }
@@ -902,7 +893,6 @@ export default function ScanPage() {
                     {doneCount === bulkQueue.length && bulkQueue.length > 0 ? (
                       <Button
                         onClick={() => {
-                          // Dọn dẹp store để tránh rò rỉ bộ nhớ trước khi rời khỏi trang
                           useScanStore.getState().resetStore()
                           navigate(ROUTES.TRANSACTIONS)
                         }}
@@ -960,7 +950,6 @@ export default function ScanPage() {
                   {/* ── Col 3: Right Panel ── */}
                   <div className="h-full flex flex-col">
                     {(() => {
-                      // 1. Chưa chọn item -> Render Batch Summary
                       if (!activeItem) {
                         return (
                           <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
@@ -982,7 +971,6 @@ export default function ScanPage() {
                         )
                       }
 
-                      // 2. Lỗi -> Render Error Panel
                       if (activeItem.status === 'error') {
                         return (
                           <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
@@ -1005,7 +993,6 @@ export default function ScanPage() {
                         )
                       }
 
-                      // 3. Đang chờ/Đang quét -> Render Loading (Thêm mới để chống trắng màn hình)
                       if (activeItem.status === 'queued' || activeItem.status === 'scanning') {
                         return (
                           <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100 h-full flex items-center justify-center">
@@ -1017,7 +1004,6 @@ export default function ScanPage() {
                         )
                       }
 
-                      // 4. Ready / Needs Review -> Render Confirm Form
                       return (
                         <Card className="bg-white rounded-[2rem] shadow-sm border border-slate-100">
                           <CardContent className="p-6">
@@ -1039,7 +1025,6 @@ export default function ScanPage() {
                                 <div>
                                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Date</label>
                                   <input type="date" className="flex h-11 w-full rounded-xl border border-slate-200 bg-white text-slate-800 px-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0f1f3d]" {...bulkForm.register('transactionDate')} />
-                                  {/* Hiển thị lỗi kiểm tra điều kiện cho trường ngày giao dịch */}
                                   {bulkForm.formState.errors.transactionDate && (
                                     <p className="text-red-500 text-xs mt-1">
                                       {bulkForm.formState.errors.transactionDate.message}
@@ -1052,7 +1037,6 @@ export default function ScanPage() {
                                     <SelectTrigger className="h-11 bg-white border-slate-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#0f1f3d] w-full [&>span]:text-slate-800"><SelectValue placeholder="Pick..." /></SelectTrigger>
                                     <SelectContent>{bulkCategories.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  {/* Hiển thị lỗi kiểm tra điều kiện cho trường danh mục */}
                                   {bulkForm.formState.errors.categoryId && (
                                     <p className="text-red-500 text-xs mt-1">
                                       {bulkForm.formState.errors.categoryId.message}
@@ -1083,7 +1067,6 @@ export default function ScanPage() {
                                     )
                                   })}
                                 </div>
-                                {/* Hiển thị lỗi kiểm tra điều kiện cho trường ví tài khoản */}
                                 {bulkForm.formState.errors.walletId && (
                                   <p className="text-red-500 text-xs mt-1">
                                     {bulkForm.formState.errors.walletId.message}

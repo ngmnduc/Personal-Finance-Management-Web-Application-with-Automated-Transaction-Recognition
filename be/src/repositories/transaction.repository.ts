@@ -1,8 +1,6 @@
 import { TransactionType, TxSource } from '@prisma/client';
 import { prisma } from '../config/prisma';
 
-// ─── DTO Types ────────────────────────────────────────────────────────────────
-
 export interface CreateTransactionDto {
   userId: string;
   walletId: string;
@@ -51,12 +49,7 @@ interface MonthlySummaryRaw {
   totalExpense: bigint;
 }
 
-// ─── Repository ───────────────────────────────────────────────────────────────
-
-/**
- * Create a transaction and atomically adjust wallet balance.
- * INCOME → increment | EXPENSE → decrement
- */
+/** Create a transaction and atomically adjust wallet balance */
 export const create = async (data: CreateTransactionDto) => {
   const balanceDelta =
     data.type === TransactionType.INCOME ? data.amount : -data.amount;
@@ -85,19 +78,13 @@ export const create = async (data: CreateTransactionDto) => {
   return transaction;
 };
 
-/**
- * Find a transaction by id scoped to userId, excluding soft-deleted.
- */
 export const findById = async (id: string, userId: string) => {
   return prisma.transaction.findFirst({
     where: { id, userId, deletedAt: null },
   });
 };
 
-/**
- * Update a transaction and atomically rebalance wallets.
- * Handles the case where walletId changes (different wallet).
- */
+/** Update a transaction and atomically rebalance wallets (handles wallet change) */
 export const update = async (id: string, userId: string, old: {
   amount: bigint;
   type: TransactionType;
@@ -155,15 +142,11 @@ export const update = async (id: string, userId: string, old: {
     ]);
   }
 
-  // Return fresh record
   return prisma.transaction.findFirst({ where: { id, userId } });
 };
 
-/**
- * Soft-delete a transaction and atomically revert the wallet balance.
- */
+/** Soft-delete a transaction and atomically revert wallet balance */
 export const softDelete = async (id: string, amount: bigint, type: TransactionType, walletId: string) => {
-  // Revert the balance effect: opposite of what was applied on create
   const revertDelta =
     type === TransactionType.INCOME ? -amount : amount;
 
@@ -179,12 +162,7 @@ export const softDelete = async (id: string, amount: bigint, type: TransactionTy
   ]);
 };
 
-// ─── History & Summary ────────────────────────────────────────────────────────
-
-/**
- * Paginated list of transactions with optional filters.
- * Includes category (id, name, icon) and wallet (id, name, type) relations.
- */
+/** Paginated list of transactions with optional filters */
 export const findMany = async (params: FindManyParams) => {
   const where = {
     userId: params.userId,
@@ -227,7 +205,6 @@ export const findMany = async (params: FindManyParams) => {
 
 /**
  * Aggregate monthly income/expense totals for a given year.
- * Uses $queryRaw with Prisma.sql to prevent SQL injection.
  */
 export const getMonthlySummary = async (params: MonthlySummaryParams) => {
   const { Prisma } = await import('@prisma/client');
@@ -256,7 +233,7 @@ export const getMonthlySummary = async (params: MonthlySummaryParams) => {
   `);
 
   return rows.map((row) => ({
-    month: (row.month as Date).toISOString().slice(0, 7), // "YYYY-MM"
+    month: (row.month as Date).toISOString().slice(0, 7),
     totalIncome:  row.totalIncome,
     totalExpense: row.totalExpense,
     net: row.totalIncome - row.totalExpense,

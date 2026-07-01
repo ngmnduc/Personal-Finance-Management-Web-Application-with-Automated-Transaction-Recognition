@@ -23,7 +23,6 @@ export const dashboardRepository = {
   },
 
   getMonthlyTransactionsSum: async (userId: string, startOfMonth: Date, endOfMonth: Date) => {
-    /* CODE COMMENT: Optimization P2.2 - Consolidated monthly income and expense aggregation queries into a single groupBy operation */
     return prisma.transaction.groupBy({
       by: ['type'],
       where: {
@@ -36,7 +35,6 @@ export const dashboardRepository = {
     });
   },
 
-  /* CODE COMMENT: Optimization P2.1 - Helper to fetch spent amount grouped by category IDs in a single query */
   getSpentGroupedByCategories: async (userId: string, categoryIds: string[], startDate: Date, endDate: Date) => {
     return prisma.transaction.groupBy({
       by: ['categoryId'],

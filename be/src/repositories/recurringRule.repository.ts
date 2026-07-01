@@ -1,7 +1,5 @@
 import { prisma } from '../config/prisma';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface CreateRecurringRuleDto {
   userId: string;
   categoryId: string;
@@ -22,14 +20,10 @@ export interface UpdateRecurringRuleDto {
   isActive?: boolean;
 }
 
-// ─── Shared include ───────────────────────────────────────────────────────────
-
 const withRelations = {
   category: { select: { id: true, name: true, icon: true } },
   wallet:   { select: { id: true, name: true } },
 } as const;
-
-// ─── Repository functions ─────────────────────────────────────────────────────
 
 /**
  * Pending suggestions for a user: isActive=false and not currently snoozed.
@@ -59,9 +53,6 @@ export const findActiveRules = (userId: string) =>
     orderBy: { nextDueDate: 'asc' },
   });
 
-/**
- * Find a single rule by id scoped to userId.
- */
 export const findById = (id: string, userId: string) =>
   prisma.recurringRule.findFirst({
     where: { id, userId, deletedAt: null },
@@ -89,9 +80,6 @@ export const create = (data: CreateRecurringRuleDto) =>
     include: withRelations,
   });
 
-/**
- * Confirm a suggestion — user has approved it, flip isActive to true.
- */
 export const confirmRule = (id: string) =>
   prisma.recurringRule.update({
     where: { id },
@@ -99,9 +87,6 @@ export const confirmRule = (id: string) =>
     include: withRelations,
   });
 
-/**
- * General update for amount, category, wallet, intervalDays, etc.
- */
 export const update = (id: string, data: UpdateRecurringRuleDto) =>
   prisma.recurringRule.update({
     where: { id },
@@ -121,18 +106,13 @@ export const snooze = (id: string, days = 60) => {
   });
 };
 
-/**
- * Soft-delete a recurring rule.
- */
 export const softDelete = (id: string) =>
   prisma.recurringRule.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
 
-/**
- * For cronjob: all active rules whose nextDueDate has passed (or is today).
- */
+/** For cronjob: active rules whose nextDueDate has passed */
 export const findDueRules = () =>
   prisma.recurringRule.findMany({
     where: {
@@ -147,16 +127,13 @@ export const findDueRules = () =>
     },
   });
 
-/**
- * After processing a rule, advance nextDueDate by intervalDays.
- */
+/** Advance nextDueDate by intervalDays after processing */
 export const updateNextDueDate = async (id: string, intervalDays: number) => {
   const rule = await prisma.recurringRule.findUnique({
     where: { id },
     select: { nextDueDate: true },
   });
 
-  // Determine base starting point without systemic drifting
   const next = rule?.nextDueDate ? new Date(rule.nextDueDate) : new Date();
   next.setDate(next.getDate() + intervalDays);
 

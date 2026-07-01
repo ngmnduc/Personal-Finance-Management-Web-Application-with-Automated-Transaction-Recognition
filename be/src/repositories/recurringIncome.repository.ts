@@ -1,8 +1,6 @@
 import { TxSource, TransactionType } from '@prisma/client';
 import { prisma } from '../config/prisma';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface CreateRecurringIncomeDto {
   userId: string;
   walletId: string;
@@ -22,14 +20,10 @@ export interface UpdateRecurringIncomeDto {
   isActive?: boolean;
 }
 
-// ─── Shared include ───────────────────────────────────────────────────────────
-
 const withRelations = {
   wallet: { select: { id: true, name: true, type: true } },
   category: { select: { id: true, name: true, icon: true } },
 } as const;
-
-// ─── Repository ───────────────────────────────────────────────────────────────
 
 export const findManyByUser = (userId: string) =>
   prisma.recurringIncome.findMany({

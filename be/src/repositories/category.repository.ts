@@ -2,7 +2,6 @@ import {prisma} from "../config/prisma";
 
 export const categoryRepository = {
   findMany: async (userId: string, type?: string) => {
-    // Xây dựng điều kiện query cơ bản
     const whereCondition: any = {
       deletedAt: null,
       OR: [
@@ -11,7 +10,6 @@ export const categoryRepository = {
       ]
     };
 
-    // Nếu có truyền type, thêm vào điều kiện
     if (type) {
       whereCondition.type = type as any;
     }
@@ -19,7 +17,7 @@ export const categoryRepository = {
     return prisma.category.findMany({
       where: whereCondition,
       orderBy: [
-        { userId: { sort: 'asc', nulls: 'first' } }, // Default categories lên đầu
+        { userId: { sort: 'asc', nulls: 'first' } }, 
         { name: 'asc' }
       ]
     });
@@ -42,7 +40,7 @@ export const categoryRepository = {
       data: {
         userId: data.userId,
         name: data.name,
-        type: data.type as any, // Ép kiểu cho enum Prisma
+        type: data.type as any, 
         icon: data.icon,
       },
     });
@@ -75,7 +73,6 @@ export const categoryRepository = {
     });
   },
 
-  /* System category lookup for automated adjustments */
   findSystemByNameAndType: async (name: string, type: string) => {
     return prisma.category.findFirst({
       where: {

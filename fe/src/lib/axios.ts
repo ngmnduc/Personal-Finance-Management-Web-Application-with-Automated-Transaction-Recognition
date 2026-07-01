@@ -24,7 +24,6 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = []
 }
 
-// Request Interceptor: Gắn Access Token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().accessToken
@@ -36,7 +35,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response Interceptor: Xử lý 401 & Refresh Token
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -50,7 +48,6 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Nếu đang refresh rồi, đưa request hiện tại vào hàng đợi
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then(token => {
@@ -78,7 +75,6 @@ apiClient.interceptors.response.use(
         const newAccessToken = res.data.data.accessToken
         const newRefreshToken = res.data.data.refreshToken || refreshToken
 
-        // Cập nhật state global
         if (user) {
           setAuth(user, newAccessToken, newRefreshToken)
         }
@@ -97,16 +93,12 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Các lỗi khác: extract message
-    // logic kiểm tra lỗi Timeout do ECONNABORTED
     if (error.code === 'ECONNABORTED') {
       return Promise.reject(new Error('Request timeout'))
     }
 
-    // Đối với các lỗi khác, trích xuất dữ liệu message từ error.response?.data hoặc trả về lỗi mặc định
     const message = (error.response?.data as any)?.message || 'An error occurred'
 
-    // Tạo thực thể lỗi mới và đính kèm thêm các thuộc tính response, code để hỗ trợ nhận biết lỗi mất kết nối ở FE
     const customError = new Error(message) as any
     if (error.response) {
       customError.response = error.response

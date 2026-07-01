@@ -32,7 +32,7 @@ const loginSchema = z.object({
   })
 });
 
-// đổi name HOẶC đổi password. Nếu đổi password thì bắt buộc có currentPassword
+// đổi name/ đổi password. Nếu đổi password thì bắt buộc có currentPassword
 const updateMeSchema = z.object({
   body: z.object({
     name: z.string().min(2).optional(),
@@ -45,7 +45,7 @@ const updateMeSchema = z.object({
     return true;
   }, {
     message: "Current password is required when changing password",
-    path: ["currentPassword"], // Đính lỗi vào trường currentPassword
+    path: ["currentPassword"], 
   })
 });
 
