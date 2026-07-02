@@ -9,133 +9,151 @@
 
 **A personal finance tracker — featuring automated receipt scanning via OCR & AI, budget alerts, saving goals, and real-time recurring transaction detection.**
 
-[Live Demo](https://finmanfe.vercel.app/) *(Link coming soon)*
+[Live Demo](https://finmanfe.vercel.app/) 
 
 </div>
 
 ---
 
-## Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Tech Stack](#-tech-stack)
-- [System Architecture](#-system-architecture)
-- [Getting Started](#-getting-started)
-- [Environment Variables](#-environment-variables)
-- [Author](#-author)
-
----
-
 ## Overview
 
-**Finman** is a comprehensive personal finance web application tailored for individuals tracking their expenses and small merchants managing bulk receipt scanning. It eliminates manual data entry by introducing a powerful, intelligent OCR pipeline that automatically extracts transaction details from bank transfer screenshots or PDFs.
+**Finman** is a comprehensive personal finance web application tailored for individuals tracking their expenses and small merchants managing bulk receipt scanning. It eliminates manual data entry by introducing a powerful, intelligent, and hybrid data ingestion pipeline that automatically extracts transaction details from bank transfer screenshots or PDFs.
 
 > 🔗 **Live Application:** *(Vercel deployment link coming soon)*
 
 ### Why Finman?
 
 | Problem | Finman's Solution |
-|---|---|
-| Manual, tedious expense logging | AI-powered OCR (Gemini/Qwen) parses screenshots/PDFs instantly |
+| --- | --- |
+| Manual expense logging | AI-powered dual-track processing parses screenshots/PDFs instantly |
 | Forgetting recurring bills | Auto-detects patterns and suggests recurring rules |
 | Overspending without realizing | Real-time monthly budget alerts |
 | Fragmented tracking tools | Unified dashboard for wallets, goals, budgets, and history |
-| Processing bulk receipts is slow | Sequential bulk OCR scanning with caching and retry logic |
+| Processing bulk receipts is slow | Batch receipt processing with centralized caching optimization |
 
 ---
 
 ## Key Features
 
 ### Automated Transaction Recognition (OCR)
-- Upload bank transfer screenshots (images) or PDFs.
-- **Smart Extraction Pipeline**: Bypasses LLM for PDFs (using `pdfplumber`); uses Google Gemini Flash 2.0 (fallback to Qwen 2.5 VL via OpenRouter) for images.
-- Cache-backed architecture (MD5 hashing) to save API limits and speed up duplicate scans.
-- Bulk processing mode for merchants handling multiple receipts.
+
+* **Core Financial Extraction**: Automatically identifies and structures the three foundational pillars of any financial transaction—**Amount**, **Transaction Date**, and **Merchant/Recipient Context**. This core capability is shared across both processing streams to eliminate manual data entry errors and unify backend ingestion.
+* **Flexible Document Ingestion**: Supports high-accuracy processing for both bank transfer screenshots (images) and digital PDF documents.
+* **Smart Dual-Engine Pipeline**:
+  * *Cloud Vision Stream*: Powered by advanced multimodal Large Language Models (including Google Gemini and Qwen VL). It utilizes a robust **multi-model backup network** to guarantee high availability, seamless structural failover, and deep semantic understanding of complex receipt layouts.
+  * *Offline Local Stream*: Provides a completely air-gapped, zero-cost processing alternative driven by a local engine. It is optimized for data compliance, cost-sensitive environments, and baseline performance benchmarking.
+  * *Direct PDF Path*: Optimizes native digital document reading via deterministic parsing to bypass unnecessary model processing overhead.
+* **Cost & Efficiency Optimization**: Features an intelligent caching mechanism designed to eliminate duplicate transaction processing, protect external API token quotas, and optimize overall system responsiveness.
+* **Context & Flow Validation**: Employs advanced semantic checks to correctly interpret financial layouts, custom typography, and language variations. This ensures perfect role-resolution between senders and receivers, preventing account reversal errors.
+* **Enterprise Bulk Ingestion**: Enables rapid batch scanning capabilities tailored for small merchants to ingest and process multiple receipts concurrently with adaptive queue management.
 
 ### Wallet & Transaction Management
-- Multi-wallet support (Cash, Bank, E-Wallet) with atomic balance recalculations.
-- Full CRUD operations for manual transactions with rich categorization.
-- Real-time synchronization of balances across all active sessions via WebSockets.
+
+* Multi-wallet support (Cash, Bank, E-Wallet) with atomic balance recalculations.
+* Full CRUD operations for manual transactions with rich categorization.
+* Real-time synchronization of balances across all active sessions via WebSockets.
 
 ### Budgeting & Saving Goals
-- Set Weekly/Monthly limits for categories with strict threshold alerts.
-- Dedicated Saving Goals tracker with deposit/refund tracking.
+
+* Set Weekly/Monthly limits for categories with strict threshold alerts.
+* Dedicated Saving Goals tracker with deposit/refund tracking.
 
 ### Smart Automations
-- **Recurring Pattern Detection**: Analyzes past expenses to discover unlogged subscriptions (e.g., matching merchants every ~30 days).
-- **Automated Processing**: Cronjobs automatically execute active recurring incomes and expenses.
-- Real-time **Socket.io notifications** for budget breaches, new automation triggers, and recurring suggestions.
+
+* **Recurring Pattern Detection**: Analyzes past expenses to discover unlogged subscriptions (e.g., matching merchants every ~30 days).
+* **Automated Processing**: Cronjobs automatically execute active recurring incomes and expenses.
+* Real-time **Socket.io notifications** for budget breaches, new automation triggers, and recurring suggestions.
 
 ### Security & UX
-- PWA (Progressive Web App) support for mobile-friendly native-like experience.
-- JWT Authentication (Access + Refresh tokens).
-- Strict Soft-Delete architecture across all entities.
+
+* PWA (Progressive Web App) support for mobile-friendly native-like experience.
+* JWT Authentication (Access + Refresh tokens).
+* Strict Soft-Delete architecture across all entities.
 
 ---
 
 ## Tech Stack
 
 ### Backend (Node.js REST API)
+
 | Technology | Purpose |
-|---|---|
-| **Node.js + Express.js** | Core API server |
-| **PostgreSQL (Supabase)** | Relational database |
+| --- | --- |
+| **Node.js + Express.js** | Core API server & Business logic execution |
+| **PostgreSQL (Supabase)** | Relational database storage |
 | **Prisma ORM v5** | Type-safe database access |
-| **Socket.io** | Real-time push notifications |
-| **Zod** | Request validation |
+| **Socket.io** | Real-time push notifications & connection polling |
+| **Zod** | Request runtime validation |
 | **node-cron** | Automation task scheduling |
 
 ### Frontend (React SPA + PWA)
-| Technology | Purpose |
-|---|---|
-| **React + TypeScript (Vite)** | UI Framework |
-| **Tailwind CSS + shadcn/ui** | Styling and components |
-| **Zustand** | Global state management |
-| **React Query** | Server state caching and fetching |
-| **React Hook Form + Zod** | Form handling and validation |
-| **Recharts & TanStack Table** | Data visualization and history grids |
 
-### Microservice (OCR & AI)
+| Technology | Purpose |
+| --- | --- |
+| **React + TypeScript (Vite)** | Core User Interface Framework |
+| **Tailwind CSS + shadcn/ui** | Design system, styling, and accessible layout components |
+| **Zustand** | Global client state management |
+| **React Query** | Server state caching, asynchronous fetching, and synchronization |
+| **React Hook Form + Zod** | Form handling and client-side input validation |
+| **Recharts & TanStack Table** | Financial data visualization charts and responsive history grids |
+
+### Microservice (OCR & AI Stack)
+
 | Tool | Purpose |
-|---|---|
-| **Python FastAPI** | Dedicated high-performance microservice |
-| **Google Gemini Flash 2.0** | Primary Vision LLM for OCR extraction |
-| **pdfplumber** | Deterministic PDF text extraction |
-| **spaCy** | NLP and regex rule-based processing |
+| --- | --- |
+| **Python FastAPI** | Dedicated high-performance parsing microservice |
+| **Google Gemini Flash 2.0** | Primary cloud Vision LLM for text-to-JSON parsing |
+| **Qwen 2.5 VL, Gemma, GPT-4o** | Several fallbacks for cloud Vision LLM for structured extraction |
+| **EasyOCR & PyTorch** | Local, stateless text localization and character recognition for offline benchmarking |
+| **pdfplumber** | Deterministic native digital PDF text extraction |
+| **Jinja2 & WeasyPrint** | Dynamic HTML document templating and vector-grade PDF report exportation |
 
 ---
 
 ## System Architecture
 
-```
+```text
 ┌───────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                      │
-│                React SPA + PWA (Vercel)                    │
-│   Tailwind CSS · shadcn/ui · React Query · Zustand · Zod   │
+│                    PRESENTATION LAYER                     │
+│                React SPA + PWA (Vercel)                   │
+│   Tailwind CSS · shadcn/ui · React Query · Zustand · Zod  │
 └─────────────────────────┬─────────────────────────────────┘
                           │  REST (HTTP) + WebSocket
 ┌─────────────────────────▼─────────────────────────────────┐
-│                   APPLICATION LAYER                        │
-│             Node.js + Express.js Backend                   │
-│   JWT Auth · Prisma ORM · Socket.io · node-cron tasks      │
-└──────────┬─────────────────────────┬──────────────────────┘
-           │                         │
-┌──────────▼──────────┐   ┌──────────▼──────────────────────┐
-│    DATA LAYER       │   │       OCR MICROSERVICE           │
-│ PostgreSQL (Supabase)│◄──┤  Python FastAPI + Gemini/Qwen   │
-└─────────────────────┘   └──────────────────────────────────┘
+│                   APPLICATION LAYER                       │
+│             Node.js + Express.js Backend                  │
+│   JWT Auth · Prisma ORM · Socket.io · node-cron tasks     │
+└──────────┬────────────────────────────────────▲───────────┘
+           │                                    │
+           │ REST (JSON mutation)               │ HTTP POST (Multipart Image Bytes)
+           │                                    │ Returns Structured Financial JSON
+┌──────────▼──────────┐              ┌──────────┴──────────────────────┐
+│    DATA LAYER       │              │       OCR MICROSERVICE          │
+│ PostgreSQL (Supabase)│             │  Python FastAPI + Gemini/Qwen   │
+│                     │              │  (Supports Local EasyOCR Mode)  │
+└─────────────────────┘              └─────────────────────────────────┘
 ```
+
+> **Architecture Note:** The Python FastAPI Microservice functions as a completely stateless compute layer. It does not connect directly to the database. Extracted data parameters are funneled exclusively back to the central Node.js backend to enforce strict multi-tenant isolation, data logging, and atomic wallet updates.
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js >= 18.x
-- Python >= 3.10 (for OCR microservice)
-- PostgreSQL instance (Supabase recommended)
-- Google Gemini API Key (or OpenRouter API Key)
+
+* Node.js >= 18.x
+* Python >= 3.10 (Tested and optimized for Python 3.14 on macOS Apple Silicon environments)
+* PostgreSQL instance (Supabase recommended)
+* Google Gemini API Key / Qwen DashScope API Key
+
+### Local Benchmarking
+
+The microservice provides an independent execution script to evaluate the local pipeline locally via the terminal workspace without starting the live web containers:
+
+```bash
+# Execute offline rule-based evaluation directly through the terminal shell
+./.venv/bin/python run_benchmark.py ocr/tests/samples/agri_ocr.jpg
+```
 
 ### Installation
 
@@ -178,6 +196,7 @@ cd fe && npm run dev
 # OCR Service (Terminal 3)
 cd ocr && uvicorn app.main:app --reload --port 8000
 ```
+
 
 ---
 
