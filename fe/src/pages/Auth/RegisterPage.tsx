@@ -16,7 +16,7 @@ const registerSchema = z.object({
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
-
+/*
 function GoogleIcon() {
   return (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -27,6 +27,7 @@ function GoogleIcon() {
     </svg>
   );
 }
+*/
 
 
 
@@ -166,23 +167,24 @@ export default function RegisterPage() {
       </form>
 
       {/* OR Divider */}
-      <div className="my-6 flex items-center gap-4">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">or</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+                {/*
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
 
-      {/* Social */}
-      <div className="space-y-3">
-        <button
-          type="button"
-          className="w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-background py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors duration-200"
-        >
-          <GoogleIcon />
-          Sign up with Google
-        </button>
+          <div className="space-y-3">
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-background py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors duration-200"
+            >
+              <GoogleIcon />
+              Sign in with Google
+            </button>
+          </div>
+          */}
 
-      </div>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
         Already have an account?{' '}

@@ -21,7 +21,7 @@ const forgotSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 type ForgotFormValues = z.infer<typeof forgotSchema>;
-
+/*
 function GoogleIcon() {
   return (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -32,7 +32,7 @@ function GoogleIcon() {
     </svg>
   );
 }
-
+*/
 
 
 export default function LoginPage() {
@@ -89,7 +89,7 @@ export default function LoginPage() {
     const executeLoginWithRetry = async (attempt: number): Promise<void> => {
       try {
         const res = await authApi.login(data);
-        
+
         setFailedAttempts(0);
         setLockoutTime(null);
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
         } else {
           const newFailedAttempts = failedAttempts + 1;
           setFailedAttempts(newFailedAttempts);
-          
+
           if (newFailedAttempts >= 5) {
             setLockoutTime(30);
             setApiError('Too many attempts. Wait 30s.');
@@ -245,19 +245,18 @@ export default function LoginPage() {
               {lockoutTime !== null
                 ? `Try again in ${lockoutTime}s`
                 : isLoginSubmitting
-                ? loginLoadingText
-                : 'Sign In'}
+                  ? loginLoadingText
+                  : 'Sign In'}
             </button>
           </form>
-
+          
           {/* OR Divider */}
+          {/*
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">or</span>
             <div className="h-px flex-1 bg-border" />
           </div>
-
-          {/* Social Logins */}
           <div className="space-y-3">
             <button
               type="button"
@@ -266,8 +265,8 @@ export default function LoginPage() {
               <GoogleIcon />
               Sign in with Google
             </button>
-
           </div>
+          */}
 
           {/* Sign up link */}
           <p className="mt-8 text-center text-sm text-muted-foreground">
