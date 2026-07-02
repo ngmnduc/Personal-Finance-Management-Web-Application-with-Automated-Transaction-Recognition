@@ -17,7 +17,7 @@
 
 ## Overview
 
-**Finman** is a comprehensive personal finance web application tailored for individuals tracking their expenses and small merchants managing bulk receipt scanning. It eliminates manual data entry by introducing a powerful, intelligent, and hybrid data ingestion pipeline that automatically extracts transaction details from bank transfer screenshots or PDFs.
+**Finman** is a personal finance web application for individuals tracking their expenses and small merchants managing bulk receipt scanning. It eliminates manual data entry by introducing a powerful, intelligent, and hybrid data ingestion pipeline that automatically extracts transaction details from bank transfer screenshots or PDFs.
 
 ### Why Finman?
 
@@ -35,15 +35,13 @@
 
 ### Automated Transaction Recognition (OCR)
 
-* **Core Financial Extraction**: Automatically identifies and structures the three foundational pillars of any financial transaction—**Amount**, **Transaction Date**, and **Merchant/Recipient Context**. This core capability is shared across both processing streams to eliminate manual data entry errors and unify backend ingestion.
-* **Flexible Document Ingestion**: Supports high-accuracy processing for both bank transfer screenshots (images) and digital PDF documents.
+* **Core Financial Extraction**: Automatically identifies and structures the three pillars of any financial transaction—**Amount**, **Transaction Date**, and **Merchant/Recipient Context**. This core capability is shared across both processing streams to eliminate manual data entry errors and unify backend ingestion.
+* **Document Ingestion**: Supports high-accuracy processing for bank transfer screenshots (images).
 * **Smart Dual-Engine Pipeline**:
   * *Cloud Vision Stream*: Powered by advanced multimodal Large Language Models (including Google Gemini and Qwen VL). It utilizes a robust **multi-model backup network** to guarantee high availability, seamless structural failover, and deep semantic understanding of complex receipt layouts.
   * *Offline Local Stream*: Provides a completely air-gapped, zero-cost processing alternative driven by a local engine. It is optimized for data compliance, cost-sensitive environments, and baseline performance benchmarking.
-  * *Direct PDF Path*: Optimizes native digital document reading via deterministic parsing to bypass unnecessary model processing overhead.
-* **Cost & Efficiency Optimization**: Features an intelligent caching mechanism designed to eliminate duplicate transaction processing, protect external API token quotas, and optimize overall system responsiveness.
-* **Context & Flow Validation**: Employs advanced semantic checks to correctly interpret financial layouts, custom typography, and language variations. This ensures perfect role-resolution between senders and receivers, preventing account reversal errors.
-* **Enterprise Bulk Ingestion**: Enables rapid batch scanning capabilities tailored for small merchants to ingest and process multiple receipts concurrently with adaptive queue management.
+* **Context & Flow Validation**: Employs advanced semantic checks to correctly interpret financial layouts, custom typography, and language variations. This ensures role-resolution between senders and receivers, preventing account reversal errors.
+* **Enterprise Bulk Ingestion**: Enables batch scanning capabilities tailored for small merchants to ingest and process multiple receipts concurrently with adaptive queue management.
 
 ### Wallet & Transaction Management
 
@@ -142,7 +140,7 @@
 * Node.js >= 18.x
 * Python >= 3.10 (Tested and optimized for Python 3.14 on macOS Apple Silicon environments)
 * PostgreSQL instance (Supabase recommended)
-* Google Gemini API Key / Qwen DashScope API Key
+* Google Gemini API Key / Openrouter API Key /GROQ_API_KEY
 
 ### Local Benchmarking
 
