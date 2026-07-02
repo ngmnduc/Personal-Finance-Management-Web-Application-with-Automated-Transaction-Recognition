@@ -18,7 +18,7 @@ BANK_KEYWORDS: dict[str, list[str]] = {
     "acb": ["acb", "á châu", "asia commercial", "acb one"],
     "vtb": ["vietinbank", "vietin", "công thương", "vtb", "ipot", "vietinbank ipay"],
     "vpb": ["vpbank", "vp bank", "việt nam thịnh vượng", "neo", "vpbank neo"],
-    "tpb": ["tpbank", "tp bank", "tiên phong", "tpb", "tập đoàn vàng bạc đá quý doji"],
+    "tpb": ["tpbank", "tp bank", "tiên phong", "tpb", "tập đoàn vàng bạc đá quý đội"],
     "shb": ["shb", "sài gòn - hà nội", "shb mobile"],
     "hdb": ["hdbank", "hdb", "phát triển nhà", "hdbank tết"],
     "scb": ["scb", "thương mại cổ phần sài gòn"],

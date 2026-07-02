@@ -152,7 +152,7 @@ The microservice provides an independent execution script to evaluate the local 
 
 ```bash
 # Execute offline rule-based evaluation directly through the terminal shell
-./.venv/bin/python run_benchmark.py ocr/tests/samples/agri_ocr.jpg
+./ocr/venv/bin/python ocr/run_benchmark.py ocr/tests/samples/agri_ocr.jpg
 ```
 
 ### Installation

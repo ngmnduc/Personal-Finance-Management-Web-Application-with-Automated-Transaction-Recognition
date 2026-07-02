@@ -42,9 +42,9 @@ print(f"[BENCHMARK] Executing Offline Evaluation Pipeline on: {target_image}")
 print("================================================================")
 
 # ── Import application internals AFTER os.environ is set ─────────────────────
-# Add the ocr directory to sys.path so that ``app.*`` imports resolve correctly
-# when this script is executed from the workspace root.
-_OCR_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ocr")
+# Add the current directory (ocr) to sys.path so that ``app.*`` imports resolve correctly
+# when this script is executed from anywhere.
+_OCR_DIR = os.path.dirname(os.path.abspath(__file__))
 if _OCR_DIR not in sys.path:
     sys.path.insert(0, _OCR_DIR)
 

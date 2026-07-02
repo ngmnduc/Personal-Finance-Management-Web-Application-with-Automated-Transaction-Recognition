@@ -1,4 +1,4 @@
-﻿# FinTrack — Frontend
+﻿# Frontend
 
 ## Setup
 cp .env.example .env.local

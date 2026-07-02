@@ -1,4 +1,4 @@
-﻿# FinTrack - Backend
+﻿# Backend
 ## Setup
 cp .env.example .env
 npm install
