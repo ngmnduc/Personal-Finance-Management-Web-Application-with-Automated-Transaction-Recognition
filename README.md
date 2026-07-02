@@ -19,8 +19,6 @@
 
 **Finman** is a comprehensive personal finance web application tailored for individuals tracking their expenses and small merchants managing bulk receipt scanning. It eliminates manual data entry by introducing a powerful, intelligent, and hybrid data ingestion pipeline that automatically extracts transaction details from bank transfer screenshots or PDFs.
 
-> 🔗 **Live Application:** *(Vercel deployment link coming soon)*
-
 ### Why Finman?
 
 | Problem | Finman's Solution |
