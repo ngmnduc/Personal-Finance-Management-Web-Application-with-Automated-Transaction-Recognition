@@ -16,7 +16,6 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-
 class RecipientExtractor:
     """Extractor for recipient names from Vietnamese bank receipts.
 
@@ -26,7 +25,7 @@ class RecipientExtractor:
     """
 
     def __init__(self) -> None:
-        # ── Anchor keyword patterns ───────────────────────────────────────────
+# Anchor keyword patterns
         # Each pattern matches a Vietnamese (or English) label that precedes
         # the recipient name field.  Ordered from most-specific to least.
         self.recipient_keywords: list[str] = [
@@ -39,7 +38,7 @@ class RecipientExtractor:
             r"đ[ếe]n\s+t[àa]i\s+kho[ảa]n",                        # "Đến tài khoản"
         ]
 
-        # ── Blacklisted tokens ────────────────────────────────────────────────
+# Blacklisted tokens
         # Bank / institution names and account-number labels that must never
         # be returned as a recipient name even when they happen to be uppercase.
         self.blacklist_keywords: list[str] = [
@@ -49,7 +48,7 @@ class RecipientExtractor:
             "SỐ TÀI KHOẢN", "SO TAI KHOAN", "STK", "ACCOUNT",
         ]
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
+# Internal helpers
 
     def _is_uppercase_no_accent(self, text: str) -> bool:
         """Return True iff ``text`` is strictly uppercase unaccented Latin.
@@ -87,7 +86,7 @@ class RecipientExtractor:
         """Strip leading delimiter characters commonly OCR'd around field values."""
         return re.sub(r"^[:\s\-\=\>\+]+", "", text).strip()
 
-    # ── Public interface ──────────────────────────────────────────────────────
+# Public interface
 
     def extract(self, raw_text: str) -> Optional[str]:
         """Extract the recipient name from raw OCR text.

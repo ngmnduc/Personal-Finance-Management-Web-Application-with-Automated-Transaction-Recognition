@@ -7,7 +7,7 @@ Identifies the source bank from OCR-extracted text using:
 
 import re
 
-# ── Keyword registry ───────────────────────────────────────────────────────────
+# Keyword registry
 
 BANK_KEYWORDS: dict[str, list[str]] = {
     "agribank": ["agribank", "nông nghiệp", "vba", "agribank plus"],
@@ -47,7 +47,7 @@ BANK_KEYWORDS: dict[str, list[str]] = {
     "vnpay": ["vnpay", "vn pay"]
 }
 
-# ── Layout / structural patterns ──────────────────────────────────────────────
+# Layout / structural patterns
 
 # Pattern: (bank_id, compiled regex)
 _LAYOUT_PATTERNS: list[tuple[str, re.Pattern]] = [
@@ -63,8 +63,7 @@ _LAYOUT_PATTERNS: list[tuple[str, re.Pattern]] = [
     ("momo", re.compile(r"s[oố]\s*(đi[eệ]n tho[aạ]i|phone)[:\s]*0[3-9]\d{8}", re.IGNORECASE)),
 ]
 
-
-# ── Public API ────────────────────────────────────────────────────────────────
+# Public API
 
 def detect_bank_by_keyword(text: str) -> str | None:
     """
@@ -79,7 +78,6 @@ def detect_bank_by_keyword(text: str) -> str | None:
                 return bank_id
     return None
 
-
 def detect_bank_by_layout(text: str) -> str | None:
     """
     Detect bank via structural patterns (account formats, app labels).
@@ -90,7 +88,6 @@ def detect_bank_by_layout(text: str) -> str | None:
         if pattern.search(text):
             return bank_id
     return None
-
 
 def detect_bank(text: str) -> str | None:
     """

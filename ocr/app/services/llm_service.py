@@ -16,10 +16,9 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# ── Key rotation ──────────────────────────────────────────────────────────────
+# Key rotation
 
 _key_index: int = 0
-
 
 def get_next_gemini_key() -> str:
     """Return the next Gemini API key in round-robin order."""
@@ -29,7 +28,7 @@ def get_next_gemini_key() -> str:
     _key_index = (_key_index + 1) % len(keys)
     return key
 
-# ── Prompt ────────────────────────────────────────────────────────────────────
+# Prompt
 
 EXTRACTION_PROMPT = """You are a financial document OCR assistant.
 Analyse the provided image of a bank receipt, transaction notification, or payment confirmation.
@@ -62,7 +61,7 @@ Rules:
 - If the image represents a service payment (e.g., electricity, water, internet, or telecom bills), assign the utility service company/provider name directly to "receiver_name" and set "sender_name" to null. Do not extract customer reference numbers or contract IDs into name fields.
 """
 
-# ── Gemini ────────────────────────────────────────────────────────────────────
+# Gemini
 
 async def call_gemini(image_bytes: bytes, mime_type: str, api_key: str | None = None) -> str:
     """
@@ -87,8 +86,7 @@ async def call_gemini(image_bytes: bytes, mime_type: str, api_key: str | None = 
 
     return response.text.strip()
 
-
-# ── OpenRouter generic caller ─────────────────────────────────────────────────
+# OpenRouter generic caller
 
 async def call_openrouter(image_bytes: bytes, mime_type: str, model_id: str) -> str:
     """
@@ -145,7 +143,7 @@ gemini_limiter = ProviderRateLimiter(max_calls=15, period_seconds=60.0)
 openrouter_limiter = ProviderRateLimiter(max_calls=10, period_seconds=30.0)
 groq_limiter = ProviderRateLimiter(max_calls=10, period_seconds=60.0)
 
-# ── Groq ──────────────────────────────────────────────────────────────────────
+# Groq
 
 async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "meta-llama/llama-4-scout-17b-16e-instruct") -> str:
     """
@@ -207,7 +205,7 @@ async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "meta-ll
 
     return content.strip()
 
-# ── Fallback chain ────────────────────────────────────────────────────────────
+# Fallback chain
 
 async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     """

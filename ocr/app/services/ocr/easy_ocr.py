@@ -27,7 +27,6 @@ from app.services.extractors.datetime_extractor import DatetimeExtractor
 
 logger = logging.getLogger(__name__)
 
-
 class LocalEasyOCREngine:
     """Wraps the local EasyOCR inference pipeline with rule-based field extractors.
 

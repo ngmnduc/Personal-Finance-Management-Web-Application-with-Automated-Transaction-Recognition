@@ -14,12 +14,11 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-
 class AmountExtractor:
     """Extractor for transaction amounts from Vietnamese bank receipts."""
 
     def __init__(self) -> None:
-        # ── Label-anchor patterns ─────────────────────────────────────────────
+# Label-anchor patterns
         # Ordered from most-specific to most-generic to minimise false positives.
         self.label_patterns: list[str] = [
             r"s[ốo]\s+ti[ềe]n\s+chuy[ểe]n",        # "Số tiền chuyển"
@@ -29,7 +28,7 @@ class AmountExtractor:
             r"value",
         ]
 
-        # ── Value patterns ────────────────────────────────────────────────────
+# Value patterns
         # [0] Currency-suffixed:  "100.000 VND", "100,000 VNĐ", "50,000đ"
         # [1] Bare segmented:     "100.000", "1,500,000"  (no currency suffix)
         self.amount_patterns: list[str] = [
@@ -37,7 +36,7 @@ class AmountExtractor:
             r"([+-]?\s*\d{1,3}(?:[.,]\d{3})+)(?!\d)",
         ]
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
+# Internal helpers
 
     def _normalize(self, val: str) -> Optional[str]:
         """Strip formatting characters and return a pure digit string.
@@ -65,7 +64,7 @@ class AmountExtractor:
         result = cleaned.strip()
         return result if result.isdigit() else None
 
-    # ── Public interface ──────────────────────────────────────────────────────
+# Public interface
 
     def extract(self, raw_text: str) -> Optional[str]:
         """Extract the transaction amount from raw OCR text as a digit string.
@@ -87,7 +86,7 @@ class AmountExtractor:
         try:
             lines = [ln.strip() for ln in raw_text.split("\n") if ln.strip()]
 
-            # ── Strategy 1: label-anchored search ────────────────────────────
+# Strategy 1: label-anchored search
             for i, line in enumerate(lines):
                 for label in self.label_patterns:
                     label_match = re.search(label, line, re.IGNORECASE)
@@ -138,7 +137,7 @@ class AmountExtractor:
                                 )
                                 return normalized
 
-            # ── Strategy 2: global currency-suffixed scan ─────────────────────
+# Strategy 2: global currency-suffixed scan
             currency_match = re.search(self.amount_patterns[0], raw_text, re.IGNORECASE)
             if currency_match:
                 normalized = self._normalize(currency_match.group(0))
@@ -146,7 +145,7 @@ class AmountExtractor:
                     logger.debug("AmountExtractor [S2-currency] → %s", normalized)
                     return normalized
 
-            # ── Strategy 3: global bare-segmented number scan ─────────────────
+# Strategy 3: global bare-segmented number scan
             for m in re.finditer(self.amount_patterns[1], raw_text):
                 candidate = m.group(1).strip()
 

@@ -11,7 +11,7 @@ from typing import Any
 from jinja2 import Template
 from weasyprint import HTML
 
-# ─── HTML / CSS Template ─────────────────────────────────────────────────────
+# HTML / CSS Template
 
 _HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="vi">
@@ -204,7 +204,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
-# ─── Public API ───────────────────────────────────────────────────────────────
+# Public API
 
 def generate_pdf(transactions: list[dict[str, Any]]) -> bytes:
     """
@@ -214,7 +214,7 @@ def generate_pdf(transactions: list[dict[str, Any]]) -> bytes:
         amount (int/float), type (str), transactionDate (ISO str),
         category (str), wallet (str), merchant (str), note (str)
     """
-    # ── Enrich rows ──────────────────────────────────────────────────────────
+# Enrich rows
     enriched: list[dict[str, Any]] = []
     total_income  = 0.0
     total_expense = 0.0
@@ -244,7 +244,7 @@ def generate_pdf(transactions: list[dict[str, Any]]) -> bytes:
     net = total_income - total_expense
     export_date = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    # ── Render template ──────────────────────────────────────────────────────
+# Render template
     template = Template(_HTML_TEMPLATE)
     html_str = template.render(
         transactions=enriched,
@@ -254,5 +254,5 @@ def generate_pdf(transactions: list[dict[str, Any]]) -> bytes:
         net=net,
     )
 
-    # ── Generate PDF ─────────────────────────────────────────────────────────
+# Generate PDF
     return HTML(string=html_str).write_pdf()

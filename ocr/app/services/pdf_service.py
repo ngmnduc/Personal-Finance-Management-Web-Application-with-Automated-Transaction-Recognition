@@ -1,27 +1,13 @@
 """
-PDF text extraction service.
-Uses pdfplumber to reliably pull text from digital PDFs,
-bypassing the LLM vision pipeline entirely.
+Extracts text from digital PDFs using pdfplumber, bypassing the vision LLM.
 """
 
 from io import BytesIO
 
 import pdfplumber
 
-
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """
-    Extract and concatenate all text from a PDF.
-
-    Args:
-        file_bytes: Raw bytes of the PDF file.
-
-    Returns:
-        A single string with text from all pages joined by newlines.
-
-    Raises:
-        ValueError: If the PDF cannot be opened or yields no text.
-    """
+    """Extract and concatenate all text from a PDF."""
     try:
         with pdfplumber.open(BytesIO(file_bytes)) as pdf:
             pages_text = []

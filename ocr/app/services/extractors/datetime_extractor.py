@@ -22,12 +22,11 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-
 class DatetimeExtractor:
     """Extractor for transaction datetime from Vietnamese bank receipts."""
 
     def __init__(self) -> None:
-        # ── Label-anchor patterns ─────────────────────────────────────────────
+# Label-anchor patterns
         self.label_patterns: list[str] = [
             r"ng[àa]y\s+giao\s+d[ịi]ch",        # "Ngày giao dịch"
             r"ng[àa]y,\s+gi[ờo]",               # "Ngày, giờ"
@@ -37,7 +36,7 @@ class DatetimeExtractor:
             r"ng[àa]y\b",                        # bare "Ngày"
         ]
 
-        # ── Datetime patterns (longest/most precise first) ────────────────────
+# Datetime patterns (longest/most precise first)
         # All patterns tolerate both colon (:) and dot (.) as time separators
         # since OCR engines often confuse the two on certain receipt fonts.
         self.datetime_patterns: list[str] = [
@@ -63,7 +62,7 @@ class DatetimeExtractor:
             r"\b\d{4}-\d{2}-\d{2}\b",
         ]
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
+# Internal helpers
 
     @staticmethod
     def _looks_like_dot_time(token: str) -> bool:
@@ -105,13 +104,13 @@ class DatetimeExtractor:
         time_str: Optional[str] = None
 
         for part in parts:
-            # ── Explicit dot-time detection (MUST come first) ─────────────────
+# Explicit dot-time detection (MUST come first)
             # e.g. "13.06.06" → time_str  (NOT a date fragment)
             if self._looks_like_dot_time(part):
                 time_str = part
                 continue
 
-            # ── Date classification ───────────────────────────────────────────
+# Date classification
             if "/" in part or "-" in part:
                 # A colon inside a slash/dash token means it's actually a time
                 if ":" in part:
@@ -120,7 +119,7 @@ class DatetimeExtractor:
                     date_str = part
                 continue
 
-            # ── Colon-separated time ──────────────────────────────────────────
+# Colon-separated time
             if ":" in part:
                 time_str = part
                 continue
@@ -129,7 +128,7 @@ class DatetimeExtractor:
         if date_str is None and time_str is None and len(parts) == 1:
             date_str = parts[0]
 
-        # ── Normalise date component ──────────────────────────────────────────
+# Normalise date component
         if date_str:
             date_str = date_str.replace("/", "-")
             # Convert YYYY-MM-DD → DD-MM-YYYY
@@ -138,11 +137,11 @@ class DatetimeExtractor:
                 year, month, day = iso_match.groups()
                 date_str = f"{day}-{month}-{year}"
 
-        # ── Normalise time component ──────────────────────────────────────────
+# Normalise time component
         if time_str:
             time_str = time_str.replace(".", ":")
 
-        # ── Assemble output ───────────────────────────────────────────────────
+# Assemble output
         if date_str and time_str:
             return f"{date_str} {time_str}"
         if date_str:
@@ -151,7 +150,7 @@ class DatetimeExtractor:
         # Last resort: return the raw match so it at least reaches the router
         return val
 
-    # ── Public interface ──────────────────────────────────────────────────────
+# Public interface
 
     def extract(self, raw_text: str) -> Optional[str]:
         """Extract the transaction datetime from raw OCR text.
@@ -175,7 +174,7 @@ class DatetimeExtractor:
         try:
             lines = [ln.strip() for ln in raw_text.split("\n") if ln.strip()]
 
-            # ── Strategy 1: label-anchored search ────────────────────────────
+# Strategy 1: label-anchored search
             for i, line in enumerate(lines):
                 for label in self.label_patterns:
                     label_match = re.search(label, line, re.IGNORECASE)
@@ -209,7 +208,7 @@ class DatetimeExtractor:
                                     )
                                     return result
 
-            # ── Strategy 2: global precision-ordered scan ─────────────────────
+# Strategy 2: global precision-ordered scan
             for pattern in self.datetime_patterns:
                 m = re.search(pattern, raw_text, re.IGNORECASE)
                 if m:

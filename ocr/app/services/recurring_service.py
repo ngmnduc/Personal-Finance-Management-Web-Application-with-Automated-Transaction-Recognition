@@ -5,7 +5,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-
 async def process_recurring_incomes() -> None:
     """
     Fetch due recurring incomes from Node.js BE and process each one.
@@ -20,7 +19,7 @@ async def process_recurring_incomes() -> None:
         date.today().day,
     )
 
-    # ── Step 1: Fetch due-today list ──────────────────────────────────────────
+# Step 1: Fetch due-today list
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(
@@ -45,7 +44,7 @@ async def process_recurring_incomes() -> None:
     if not items:
         return
 
-    # ── Step 2: Process each item (fault-tolerant) ────────────────────────────
+# Step 2: Process each item (fault-tolerant)
     async with httpx.AsyncClient(timeout=30.0) as client:
         for item in items:
             item_id   = item.get("id", "<unknown>")
@@ -77,7 +76,6 @@ async def process_recurring_incomes() -> None:
 
     logger.info("Recurring income job finished")
 
-
 async def process_recurring_rules() -> None:
     """
     Fetch all active recurring EXPENSE rules that are due today from the Node.js BE,
@@ -91,7 +89,7 @@ async def process_recurring_rules() -> None:
 
     logger.info("Recurring rules job started — fetching rules due today")
 
-    # ── Step 1: Get due-today list ────────────────────────────────────────────
+# Step 1: Get due-today list
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(
@@ -116,7 +114,7 @@ async def process_recurring_rules() -> None:
     if not items:
         return
 
-    # ── Step 2: Process each rule individually (fault-tolerant) ───────────────
+# Step 2: Process each rule individually (fault-tolerant)
     async with httpx.AsyncClient(timeout=30.0) as client:
         for item in items:
             item_id      = item.get("id", "<unknown>")

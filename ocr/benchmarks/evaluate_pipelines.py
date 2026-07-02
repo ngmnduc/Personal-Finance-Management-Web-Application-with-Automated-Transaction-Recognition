@@ -33,9 +33,6 @@ from app.services.llm_service import extract_with_llm
 from app.services.nlp_extractor import clean_and_parse_json, normalize_amount, normalize_date
 from app.services.bank_parser import detect_bank
 
-# =============================================================================
-# RATE-LIMIT CONFIG
-# =============================================================================
 
 # Delay (s) between consecutive images in cloud pipeline (6s → ~10 img/min, safe for Groq 30 RPM)
 INTER_IMAGE_DELAY = 6.0
@@ -53,16 +50,11 @@ MERCHANT_SIMILARITY_THRESHOLD = 0.6
 SKIP_MERCHANT_EVAL = {"momo_5_ocr.jpg"}
 
 
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
-
 def calculate_string_similarity(a: str, b: str) -> float:
     """Case-insensitive string similarity via SequenceMatcher."""
     if not a or not b:
         return 0.0
     return SequenceMatcher(None, str(a).strip().upper(), str(b).strip().upper()).ratio()
-
 
 def compute_summary(metrics: dict) -> dict:
     """Compute summary metrics from raw data for comparison table."""
@@ -93,7 +85,6 @@ def compute_summary(metrics: dict) -> dict:
         "overall_acc":      pct(overall_hits),
     }
 
-
 def print_summary_table(results: dict):
     """Print comparison summary table to terminal."""
     W = 100
@@ -101,7 +92,6 @@ def print_summary_table(results: dict):
     print("        BẢNG TỔNG HỢP SỐ LIỆU THỰC NGHIỆM ĐỐI CHỨNG")
     print("=" * W)
 
-    # Header
     print(f"{'':30} {'─── ĐỘ CHÍNH XÁC (ACCURACY) ───':^38}  {'─── ĐỘ TRỄ (LATENCY) ───':^28}  {'─ RELIABILITY ─':^16}")
     print(f"{'Chế độ / Pipeline':30} {'Amount':>8} {'Date':>8} {'Merchant':>10} {'Overall':>10}  "
           f"{'Avg':>7} {'Min':>7} {'Max':>7} {'P95':>7}  "
@@ -127,7 +117,6 @@ def print_summary_table(results: dict):
     print("=" * W)
     print()
 
-    # Notes
     print("CHÚ THÍCH:")
     print("  Overall Accuracy : % ảnh có CẢ 3 trường (amount + date + merchant) đúng đồng thời")
     print("  P95 Latency      : Latency của 95% ảnh xử lý nhanh nhất (loại trừ outlier retry)")
@@ -135,7 +124,6 @@ def print_summary_table(results: dict):
     print(f"  Merchant Threshold: similarity >= {MERCHANT_SIMILARITY_THRESHOLD:.0%} được tính là đúng")
     print()
 
-    # Per-mode detail
     for mode, label in mode_labels.items():
         if mode not in results:
             continue
@@ -144,7 +132,6 @@ def print_summary_table(results: dict):
         print(f"    Tổng ảnh chạy   : {r['samples_total']}  |  Thành công: {r['samples_success']}  |  Lỗi: {r['errors']}")
         print(f"    Độ lệch chuẩn latency: {r['stdev_latency']}")
         print()
-
 
 def write_markdown_report(mismatch_details: list, results: dict, report_path: Path):
     """Write detailed .md report with timestamp and summary table."""
@@ -155,7 +142,6 @@ def write_markdown_report(mismatch_details: list, results: dict, report_path: Pa
         rf.write(f"**Thời điểm chạy:** {run_time}  \n")
         rf.write(f"**Script:** `evaluate_pipelines.py`  \n\n")
 
-        # Summary table in markdown
         rf.write("## BẢNG TỔNG HỢP (SUMMARY)\n\n")
         rf.write("| Chỉ số | Local EasyOCR | Cloud Vision AI |\n")
         rf.write("|:---|:---:|:---:|\n")
@@ -184,7 +170,6 @@ def write_markdown_report(mismatch_details: list, results: dict, report_path: Pa
 
         rf.write("\n> **Overall Accuracy**: % ảnh đúng CẢ 3 trường đồng thời (amount + date + merchant)\n\n")
 
-        # Mismatch detail table
         rf.write("## CHI TIẾT SAI LỆCH (MISMATCH DETAILS)\n\n")
         if not mismatch_details:
             rf.write("_Không có sai lệch nào được ghi nhận._\n")
@@ -201,10 +186,7 @@ def write_markdown_report(mismatch_details: list, results: dict, report_path: Pa
 
     print(f"\n  Báo cáo chi tiết đã xuất: {report_path.resolve()}")
 
-
-# =============================================================================
 # PIPELINE 1: LOCAL EASYOCR
-# =============================================================================
 
 async def run_local_pipeline(image_files, gt_data, summary_metrics, mismatch_details):
     print("\n[VÒNG CHẠY: LOCAL EASYOCR] Kích hoạt luồng trích xuất offline...")
@@ -266,10 +248,7 @@ async def run_local_pipeline(image_files, gt_data, summary_metrics, mismatch_det
             print(f" ✗ Lỗi: {str(e)[:80]}", flush=True)
             summary_metrics["LOCAL_EASYOCR"]["errors"] += 1
 
-
-# =============================================================================
 # PIPELINE 2: CLOUD API
-# =============================================================================
 
 async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_details):
     total = len(image_files)
@@ -296,7 +275,7 @@ async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_det
             mime_type, _ = mimetypes.guess_type(str(img_path))
             mime_type = mime_type or "image/png"
 
-            # ── Retry with exponential delay ───────────────────────────
+# Retry with exponential delay
             # Track real processing time (excluding retry sleep)
             total_sleep_time = 0.0
             raw_response     = None
@@ -360,16 +339,12 @@ async def run_cloud_pipeline(image_files, gt_data, summary_metrics, mismatch_det
             print(f" ✗ Lỗi: {str(e)[:80]}", flush=True)
             summary_metrics["CLOUD_API"]["errors"] += 1
 
-        # ── Inter-image delay to avoid rate limit ──────────────────────
+# Inter-image delay to avoid rate limit
         # Sleep only if more images remain
         if idx < total:
             print(f"     ⏱  Chờ {INTER_IMAGE_DELAY}s để tránh rate limit Groq...", flush=True)
             await asyncio.sleep(INTER_IMAGE_DELAY)
 
-
-# =============================================================================
-# MAIN
-# =============================================================================
 
 async def run_evaluation_pipeline(mode: str = "cloud"):
     image_dir = BENCHMARK_DIR / "sample_images"
@@ -434,7 +409,6 @@ async def run_evaluation_pipeline(mode: str = "cloud"):
     ts          = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_path = BENCHMARK_DIR / f"mismatch_report_{ts}.md"
     write_markdown_report(mismatch_details, computed_results, report_path)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="OCR Pipeline Benchmark")

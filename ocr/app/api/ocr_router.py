@@ -22,9 +22,7 @@ from app.services.pdf_export_service import generate_pdf
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
-
-# ── Supported banks list ──────────────────────────────────────────────────────
+# Supported banks list
 
 _SUPPORTED_BANKS = [
     BankInfo(id="agribank", name="Agribank"),
@@ -64,19 +62,19 @@ _SUPPORTED_BANKS = [
     BankInfo(id="vnpay", name="VNPay"),
 ]
 
-# ── Health ────────────────────────────────────────────────────────────────────
+# Health
 
 @router.get("/health", response_model=HealthResponse)
 def health_check():
     return HealthResponse(status="ok", service="ocr")
 
-# ── Banks ─────────────────────────────────────────────────────────────────────
+# Banks
 
 @router.get("/api/v1/ocr/banks", response_model=list[BankInfo])
 def get_supported_banks():
     return _SUPPORTED_BANKS
 
-# ── Scan ──────────────────────────────────────────────────────────────────────
+# Scan
 
 @router.post("/api/v1/ocr/scan", response_model=ScanResponse)
 # @limiter.limit("10/minute")
@@ -107,7 +105,7 @@ async def scan_receipt(
     is_pdf = content_type == "application/pdf"
 
     try:
-        # ── Routing branch ──────────────────────────────────────────────────
+# Routing branch
         if is_pdf:
             raw_text = extract_text_from_pdf(file_bytes)
             parsed = extract_by_regex(raw_text)
@@ -121,7 +119,7 @@ async def scan_receipt(
                 raw_text = await extract_with_llm(file_bytes, content_type)
                 parsed = clean_and_parse_json(raw_text)
 
-        # ── Normalise fields ──────────────────────────────────────────────────
+# Normalise fields
         extracted_data = ExtractedData(
             amount=normalize_amount(parsed.get("amount")),
             transaction_date=normalize_date(parsed.get("transaction_date")),
@@ -139,7 +137,7 @@ async def scan_receipt(
             default_wallet_id=None,
         )
 
-        # ── Cache & return ────────────────────────────────────────────────────
+# Cache & return
         set_cache(file_bytes, result.model_dump())
         return result
 
@@ -158,7 +156,7 @@ async def scan_receipt(
             default_wallet_id=None,
         )
 
-# ── Bulk Scan ─────────────────────────────────────────────────────────────────
+# Bulk Scan
 
 @router.post("/api/v1/ocr/scan/bulk", response_model=BulkScanResponse)
 async def scan_bulk(
@@ -255,7 +253,7 @@ async def scan_bulk(
     processed = sum(1 for r in results if r.status == "ready")
     return BulkScanResponse(total=total, processed=processed, results=results)
 
-# ── PDF Export ────────────────────────────────────────────────────────────────
+# PDF Export
 
 from fastapi import Body
 from fastapi.responses import Response as FastAPIResponse

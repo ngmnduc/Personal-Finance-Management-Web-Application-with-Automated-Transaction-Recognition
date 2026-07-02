@@ -11,31 +11,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-# ── Dynamic GTK3 Discovery (WeasyPrint Dependency) ─────────────────────────────
-# Fix for WeasyPrint on Apple Silicon (M1/M2/M3)
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = "/opt/homebrew/lib"
 
-# Windows: Avoid hardcoding by using Dynamic Discovery
+# Load GTK3 dynamically for WeasyPrint on Windows
 if os.name == 'nt' and hasattr(os, 'add_dll_directory'):
-    gtk_path = None
-    
-    # 1. Priority: Custom Environment Variable
     gtk_path = os.environ.get("GTK_WIN_PATH")
     
-    # 2. Fallback: Standard Installation Path
     if not gtk_path:
         std_path = r"C:\Program Files\GTK3-Runtime Win64\bin"
         if os.path.exists(std_path):
             gtk_path = std_path
             
-    # 3. Fallback: Search System PATH
     if not gtk_path:
         for path in os.environ.get('PATH', '').split(os.pathsep):
             if ('GTK3' in path or 'GTK' in path) and os.path.exists(path):
                 gtk_path = path
                 break
     
-    # Apply configuration
     if gtk_path:
         os.add_dll_directory(gtk_path)
         logger.info(f"Windows: GTK3 library loaded from '{gtk_path}'")
@@ -51,7 +43,7 @@ from app.services.recurring_service import process_recurring_incomes, process_re
 
 app = FastAPI(title="Finman OCR Service", version="1.0.0")
 
-# ── APScheduler ───────────────────────────────────────────────────────────────
+# APScheduler
 scheduler = AsyncIOScheduler()
 
 app.state.limiter = limiter

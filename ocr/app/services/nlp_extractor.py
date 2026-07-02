@@ -30,8 +30,7 @@ def normalize_text_for_matching(text: str) -> str:
     text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
     return text
 
-
-# ── JSON extraction (LLM stream) ──────────────────────────────────────────────
+# JSON extraction (LLM stream)
 
 def clean_and_parse_json(raw_text: str) -> dict:
     """
@@ -92,8 +91,7 @@ def clean_and_parse_json(raw_text: str) -> dict:
     parsed_dict["merchant"] = final_merchant
     return parsed_dict
 
-
-# ── Regex extraction (PDF stream) ─────────────────────────────────────────────
+# Regex extraction (PDF stream)
 
 # Matches amounts like "1,500,000", "1500000", "1.500.000", "1500000 đ", "VND 1,500,000"
 _AMOUNT_RE = re.compile(
@@ -121,7 +119,6 @@ _EXPENSE_KEYWORDS = re.compile(
     r"\b(?:thanh toán|chuyển khoản|rút|mua|chi|trừ|debit|expense|payment|withdraw|purchase)\b",
     re.IGNORECASE,
 )
-
 
 def extract_by_regex(raw_text: str) -> dict:
     """
@@ -169,8 +166,7 @@ def extract_by_regex(raw_text: str) -> dict:
         "description": None,
     }
 
-
-# ── Normalisation helpers ─────────────────────────────────────────────────────
+# Normalisation helpers
 
 def normalize_amount(raw: Any) -> int:
     """
@@ -185,7 +181,6 @@ def normalize_amount(raw: Any) -> int:
         return 0
     cleaned = re.sub(r"[^\d]", "", str(raw))
     return int(cleaned) if cleaned else 0
-
 
 def normalize_date(raw: str | None) -> str:
     """
@@ -248,7 +243,6 @@ def normalize_date(raw: str | None) -> str:
     except Exception:
         return date.today().isoformat()
 
-
 def normalize_type(raw: str | None, scan_context: str) -> str:
     """
     Map raw type string (from LLM or regex) to INCOME or EXPENSE.
@@ -283,8 +277,7 @@ def normalize_type(raw: str | None, scan_context: str) -> str:
 
     return "EXPENSE"  # safe default
 
-
-# ── Confidence scoring ────────────────────────────────────────────────────────
+# Confidence scoring
 
 def calculate_confidence(extracted: dict, is_pdf: bool = False) -> float:
     """
