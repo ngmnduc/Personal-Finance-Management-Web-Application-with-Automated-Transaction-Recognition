@@ -7,9 +7,9 @@
 ![PERN Stack](https://img.shields.io/badge/Stack-React%20%7C%20Node%20%7C%20Postgres-61DAFB?style=for-the-badge&logo=react)
 ![License](https://img.shields.io/badge/License-Academic-blue?style=for-the-badge)
 
-**A smart, centralized personal finance tracker — featuring automated receipt scanning via OCR & AI, budget alerts, saving goals, and real-time recurring transaction detection.**
+**A personal finance tracker — featuring automated receipt scanning via OCR & AI, budget alerts, saving goals, and real-time recurring transaction detection.**
 
-[Live Demo](#) *(Link coming soon)*
+[Live Demo](https://finmanfe.vercel.app/) *(Link coming soon)*
 
 </div>
 
@@ -210,8 +210,4 @@ OPENROUTER_API_KEY=your_openrouter_key
 ## Author
 
 **Nguyễn Minh Đức - 23bi14102**  
-*Project developed for Academic Web Application Development Course.*
 
-<div align="center">
-  Made with ❤️ by Nguyễn Minh Đức
-</div>
