@@ -10,14 +10,31 @@ function getMonthRange(date: Date = new Date()) {
   return { year, month, startOfMonth, endOfMonth };
 }
 
-export const getDashboardOverview = async (userId: string) => {
-  const { year, month, startOfMonth, endOfMonth } = getMonthRange();
+export const getDashboardOverview = async (userId: string, monthParam?: string, walletId?: string) => {
+  let startOfMonth: Date;
+  let endOfMonth: Date;
+  let year: number;
+  let month: number;
 
-  const [balanceAggregate, wallets] = await dashboardRepository.getWalletBalances(userId);
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [yStr, mStr] = monthParam.split('-');
+    year = parseInt(yStr, 10);
+    month = parseInt(mStr, 10) - 1;
+    startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
+    endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+  } else {
+    const range = getMonthRange();
+    year = range.year;
+    month = range.month;
+    startOfMonth = range.startOfMonth;
+    endOfMonth = range.endOfMonth;
+  }
+
+  const [balanceAggregate, wallets] = await dashboardRepository.getWalletBalances(userId, walletId);
 
   const totalBalance = Number(balanceAggregate._sum.currentBalance ?? 0n);
 
-  const transactionSums = await dashboardRepository.getMonthlyTransactionsSum(userId, startOfMonth, endOfMonth);
+  const transactionSums = await dashboardRepository.getMonthlyTransactionsSum(userId, startOfMonth, endOfMonth, walletId);
 
   const incomeRow = transactionSums.find((r) => r.type === 'INCOME');
   const expenseRow = transactionSums.find((r) => r.type === 'EXPENSE');
@@ -29,8 +46,7 @@ export const getDashboardOverview = async (userId: string) => {
   const savingsRatio =
     net > 0 && totalIncome > 0 ? Math.round((net / totalIncome) * 100) : 0;
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const burnRate    = Math.round(totalExpense / daysInMonth);
+  const burnRate    = totalExpense;
 
   const budgets = await budgetRepo.findManyByUser(userId);
   const budgetCategoryIds = budgets.map((b) => b.categoryId);
@@ -39,7 +55,8 @@ export const getDashboardOverview = async (userId: string) => {
     userId,
     budgetCategoryIds,
     startOfMonth,
-    endOfMonth
+    endOfMonth,
+    walletId
   );
 
   const spentMap = new Map<string, number>(

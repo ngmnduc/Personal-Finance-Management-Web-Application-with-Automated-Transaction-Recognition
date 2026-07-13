@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   XCircle,
   type LucideIcon,
+  AlertTriangle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -122,7 +123,7 @@ function BudgetStatusBadge({ status }: { status: Budget['status'] }) {
 interface BudgetCardProps {
   budget: Budget
   onEdit: (b: Budget) => void
-  onDelete: (id: string) => void
+  onDelete: (b: Budget) => void
 }
 
 const BudgetCard = memo(function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
@@ -134,9 +135,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onEdit, onDelete }: Budget
         'text-[#0f1f3d]'
 
   const handleDelete = () => {
-    if (window.confirm(`Delete budget for "${budget.category.name}"? This action cannot be undone.`)) {
-      onDelete(budget.id)
-    }
+    onDelete(budget)
   }
 
   return (
@@ -376,6 +375,7 @@ export default function PlanningHubPage() {
   const [budgetFilter, setBudgetFilter] = useState<FilterValue>('all')
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined)
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null)
 
   const { data: budgets = [], isLoading: budgetsLoading } = useBudgets(budgetFilter === 'all' ? undefined : budgetFilter)
   const deleteBudgetMutation = useDeleteBudget()
@@ -390,9 +390,15 @@ export default function PlanningHubPage() {
     setBudgetDialogOpen(true)
   }, [])
 
-  const handleDeleteBudget = useCallback((id: string) => {
-    deleteBudgetMutation.mutate(id)
-  }, [deleteBudgetMutation])
+  const handleDeleteBudget = useCallback((b: Budget) => {
+    setBudgetToDelete(b)
+  }, [])
+
+  const handleBudgetDeleteConfirm = () => {
+    if (!budgetToDelete) return
+    deleteBudgetMutation.mutate(budgetToDelete.id)
+    setBudgetToDelete(null)
+  }
 
   // ── Goal state ──
   const { data: goals = [], isLoading: goalsLoading } = useGoals()
@@ -609,6 +615,30 @@ export default function PlanningHubPage() {
               className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
             >
               Abandon Goal
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Budget Confirm Dialog */}
+      <AlertDialog open={!!budgetToDelete} onOpenChange={(v) => !v && setBudgetToDelete(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold text-[#0f1f3d]">
+              Delete Budget?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-500">
+              Are you sure you want to delete the budget for <strong className="text-[#0f1f3d]">{budgetToDelete?.category.name}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBudgetDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
+            >
+              Delete Budget
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

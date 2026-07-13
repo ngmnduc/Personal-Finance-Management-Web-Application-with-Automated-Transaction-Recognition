@@ -185,20 +185,25 @@ export const update = async (id: string, userId: string, input: UpdateTransactio
     }
   }
 
-  // ── Validate new category if changing ─────────────────────────────────
-  if (input.categoryId && input.categoryId !== existing.categoryId) {
+  const isCategoryChanging = input.categoryId && input.categoryId !== existing.categoryId;
+  const isTypeChanging = newType && newType !== existing.type;
+
+  if (isCategoryChanging || isTypeChanging) {
+    const resolvedCategoryId = input.categoryId ?? existing.categoryId;
+    const resolvedType = newType ?? existing.type;
+
     const category = await prisma.category.findFirst({
       where: {
-        id: input.categoryId,
+        id: resolvedCategoryId,
         deletedAt: null,
         OR: [{ userId }, { userId: null }],
       },
     });
+
     if (!category) {
       throw AppError.NotFound('Category not found.', 'CATEGORY_NOT_FOUND');
     }
 
-    const resolvedType = newType ?? existing.type;
     if (category.type !== resolvedType) {
       throw AppError.BadRequest(
         `Category type "${category.type}" does not match transaction type "${resolvedType}".`,

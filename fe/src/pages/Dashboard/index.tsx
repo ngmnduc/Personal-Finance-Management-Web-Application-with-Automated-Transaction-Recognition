@@ -151,7 +151,10 @@ export default function DashboardPage() {
     return options;
   }, []);
 
-  const { data: overview, isLoading } = useDashboardOverview()
+  const { data: overview, isLoading } = useDashboardOverview(
+    selectedMonth,
+    walletFilter !== 'all' ? walletFilter : undefined
+  )
   const { data: goalsSummary = [] } = useGoalsSummary()
   const { data: suggestions = [] } = useRecurringSuggestions()
   const { data: wallets = [] } = useWallets()

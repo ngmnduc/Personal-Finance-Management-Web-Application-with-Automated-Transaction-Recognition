@@ -3,17 +3,25 @@ import { useCategories, useDeleteCategory } from "../../features/categories/api/
 import { CategoryDialog } from "../../features/categories/components/CategoryDialog"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog"
 import PageSkeleton from "../../components/shared/PageSkeleton"
 import { Category, TransactionType } from "../../types"
 import {
   Plus, Edit2, Trash2, Lock, MoreVertical,
-  // Picker icons
   Coffee, ShoppingCart, Car, DollarSign, Home, Phone,
   HeartPulse, GraduationCap, Briefcase, Gift, Zap,
   Utensils, PawPrint, Smartphone, BriefcaseMedical, HeartHandshake, ShoppingBag,
-  // System seed icons
   Gamepad2, BookOpen, Shirt, Wifi, Plane, CircleEllipsis,
-  Banknote, Trophy, Laptop, TrendingUp, Store, ArrowDownCircle,
+  Banknote, Trophy, Laptop, TrendingUp, Store, ArrowDownCircle, AlertTriangle,
 } from "lucide-react"
 
 // ── Icon registry ──────────────────────────────────────────────────────────────
@@ -87,6 +95,7 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -116,9 +125,7 @@ export default function CategoriesPage() {
 
   const handleDelete = (c: Category, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (window.confirm(`Delete category "${c.name}"?`)) {
-      deleteCategory.mutate(c.id)
-    }
+    setCategoryToDelete(c)
     setActiveDropdown(null)
   }
 
@@ -269,6 +276,35 @@ export default function CategoriesPage() {
         category={editingCategory}
         defaultType={activeTab}
       />
+
+      <AlertDialog open={!!categoryToDelete} onOpenChange={(v) => !v && setCategoryToDelete(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-[#0f1f3d]">
+              <AlertTriangle size={17} className="text-red-500" />
+              Delete Category?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 text-sm leading-relaxed">
+              Are you sure you want to delete the category <strong className="text-[#0f1f3d]">{categoryToDelete?.name}</strong>?
+              This action cannot be undone and will affect transactions using this category.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (categoryToDelete) {
+                  deleteCategory.mutate(categoryToDelete.id)
+                  setCategoryToDelete(null)
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </div>
   )

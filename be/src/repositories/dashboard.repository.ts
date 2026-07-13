@@ -8,43 +8,59 @@ export interface MonthlyChartRow {
 }
 
 export const dashboardRepository = {
-  getWalletBalances: async (userId: string) => {
+  getWalletBalances: async (userId: string, walletId?: string) => {
+    const where: Prisma.WalletWhereInput = {
+      userId,
+      deletedAt: null,
+      archivedAt: null,
+    };
+    if (walletId) {
+      where.id = walletId;
+    }
     return Promise.all([
       prisma.wallet.aggregate({
         _sum: { currentBalance: true },
-        where: { userId, deletedAt: null, archivedAt: null },
+        where,
       }),
       prisma.wallet.findMany({
-        where: { userId, deletedAt: null, archivedAt: null },
+        where,
         select: { id: true, name: true, type: true, currentBalance: true, isDefault: true },
         orderBy: { isDefault: 'desc' },
       }),
     ]);
   },
 
-  getMonthlyTransactionsSum: async (userId: string, startOfMonth: Date, endOfMonth: Date) => {
+  getMonthlyTransactionsSum: async (userId: string, startOfMonth: Date, endOfMonth: Date, walletId?: string) => {
+    const where: Prisma.TransactionWhereInput = {
+      userId,
+      type: { in: ['INCOME', 'EXPENSE'] },
+      deletedAt: null,
+      transactionDate: { gte: startOfMonth, lte: endOfMonth },
+    };
+    if (walletId) {
+      where.walletId = walletId;
+    }
     return prisma.transaction.groupBy({
       by: ['type'],
-      where: {
-        userId,
-        type: { in: ['INCOME', 'EXPENSE'] },
-        deletedAt: null,
-        transactionDate: { gte: startOfMonth, lte: endOfMonth },
-      },
+      where,
       _sum: { amount: true },
     });
   },
 
-  getSpentGroupedByCategories: async (userId: string, categoryIds: string[], startDate: Date, endDate: Date) => {
+  getSpentGroupedByCategories: async (userId: string, categoryIds: string[], startDate: Date, endDate: Date, walletId?: string) => {
+    const where: Prisma.TransactionWhereInput = {
+      userId,
+      type: 'EXPENSE',
+      deletedAt: null,
+      categoryId: { in: categoryIds },
+      transactionDate: { gte: startDate, lte: endDate },
+    };
+    if (walletId) {
+      where.walletId = walletId;
+    }
     return prisma.transaction.groupBy({
       by: ['categoryId'],
-      where: {
-        userId,
-        type: 'EXPENSE',
-        deletedAt: null,
-        categoryId: { in: categoryIds },
-        transactionDate: { gte: startDate, lte: endDate },
-      },
+      where,
       _sum: { amount: true },
     });
   },

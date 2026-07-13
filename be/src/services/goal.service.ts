@@ -118,26 +118,31 @@ export const deposit = async (id: string, userId: string, input: DepositInput) =
     throw AppError.BadRequest('amount must be greater than 0.', 'INVALID_AMOUNT');
   }
 
-  const amountBig = BigInt(input.amount);
+  const missingAmount = goal.targetAmount - goal.currentAmount;
+  if (missingAmount <= 0n) {
+    throw AppError.BadRequest('Goal is already fully funded.', 'GOAL_FULLY_FUNDED');
+  }
 
-  // Validate wallet is still active and has sufficient balance
+  const requestedAmount = BigInt(input.amount);
+  const actualDeposit = requestedAmount > missingAmount ? missingAmount : requestedAmount;
+
   const wallet = await walletRepository.findActiveByIdAndUserId(goal.sourceWalletId, userId);
   if (!wallet) {
     throw AppError.NotFound('Source wallet not found or inactive.', 'WALLET_NOT_FOUND');
   }
-  if (BigInt(wallet.currentBalance) < amountBig) {
+  if (BigInt(wallet.currentBalance) < actualDeposit) {
     throw AppError.BadRequest('Insufficient wallet balance.', 'INSUFFICIENT_BALANCE');
   }
 
-  const [updatedGoal, updatedWallet] = await goalRepo.deposit(id, amountBig, goal.sourceWalletId);
+  const [updatedGoal, updatedWallet] = await goalRepo.deposit(id, actualDeposit, goal.sourceWalletId);
 
-  // Auto-complete when target is reached
   if (updatedGoal.currentAmount >= updatedGoal.targetAmount) {
     const completed = await goalRepo.completeGoal(id);
     return {
       goal: serialiseGoal(completed),
       wallet: serialiseWallet(updatedWallet),
       autoCompleted: true,
+      actualDeposit: Number(actualDeposit),
     };
   }
 
@@ -145,8 +150,9 @@ export const deposit = async (id: string, userId: string, input: DepositInput) =
     goal: serialiseGoal(updatedGoal),
     wallet: serialiseWallet(updatedWallet),
     autoCompleted: false,
+    actualDeposit: Number(actualDeposit),
   };
-};
+}
 
 export const deleteGoal = async (id: string, userId: string) => {
   const goal = await goalRepo.findById(id, userId);

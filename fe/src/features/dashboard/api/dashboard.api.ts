@@ -22,12 +22,13 @@ export interface CategoryBreakdownItem {
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
-export const useDashboardOverview = () =>
+export const useDashboardOverview = (month?: string, walletId?: string) =>
   useQuery({
-    queryKey: [QUERY_KEYS.DASHBOARD, 'overview'],
+    queryKey: [QUERY_KEYS.DASHBOARD, 'overview', month, walletId],
     queryFn: async () => {
       const response = await apiClient.get<ApiResponse<DashboardOverview>>(
         `${API_ENDPOINTS.DASHBOARD}/overview`,
+        { params: { month, walletId } },
       )
       return response.data.data
     },

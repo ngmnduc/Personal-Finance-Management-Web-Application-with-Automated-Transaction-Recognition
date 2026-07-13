@@ -6,10 +6,20 @@ import { WalletDialog } from "../../features/wallets/components/WalletDialog"
 import RecurringTab from "../../features/recurring/components/RecurringTab"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog"
 import PageSkeleton from "../../components/shared/PageSkeleton"
 import { Wallet } from "../../types"
 import { formatCurrency } from "../../lib/utils"
-import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard } from "lucide-react"
+import { Plus, Edit2, Trash2, Archive, Star, Landmark, Wallet as WalletIcon, Smartphone, CreditCard, AlertTriangle } from "lucide-react"
 
 export default function WalletsPage() {
   const user = useAuthStore((s) => s.user)
@@ -22,6 +32,7 @@ export default function WalletsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
   const [activeTab, setActiveTab] = useState<'wallets' | 'automations'>('wallets')
+  const [walletToDelete, setWalletToDelete] = useState<Wallet | null>(null)
 
   // Pagination
   const [currentPage] = useState(1) // Keep logic, ignore UI update for simple display
@@ -66,17 +77,7 @@ export default function WalletsPage() {
 
   const handleDelete = (w: Wallet, e: React.MouseEvent) => {
     e.stopPropagation()
-    const balance = Number(w.currentBalance)
-    if (balance > 0) {
-      const confirmArchive = window.confirm(`Wallet ${w.name} has a balance of ${balance}. Archive instead?`)
-      if (confirmArchive) {
-        deleteWallet.mutate(w.id)
-      }
-    } else {
-      if (window.confirm("Are you sure you want to delete this wallet?")) {
-        deleteWallet.mutate(w.id)
-      }
-    }
+    setWalletToDelete(w)
     setActiveDropdown(null)
   }
 
@@ -256,6 +257,45 @@ export default function WalletsPage() {
       </div>
 
       <WalletDialog open={dialogOpen} onOpenChange={setDialogOpen} wallet={editingWallet} />
+
+      <AlertDialog open={!!walletToDelete} onOpenChange={(v) => !v && setWalletToDelete(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-[#0f1f3d]">
+              <AlertTriangle size={17} className="text-red-500" />
+              {walletToDelete && Number(walletToDelete.currentBalance) > 0 ? 'Archive Wallet?' : 'Delete Wallet?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 text-sm leading-relaxed">
+              {walletToDelete && Number(walletToDelete.currentBalance) > 0 ? (
+                <span>
+                  <strong className="text-[#0f1f3d]">{walletToDelete.name}</strong> has a remaining balance of{' '}
+                  <strong className="text-[#0f1f3d]">{formatCurrency(Number(walletToDelete.currentBalance))}</strong>.
+                  Are you sure you want to archive it?
+                </span>
+              ) : (
+                <span>
+                  Are you sure you want to delete the wallet <strong className="text-[#0f1f3d]">{walletToDelete?.name}</strong>?
+                  This action cannot be undone.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (walletToDelete) {
+                  deleteWallet.mutate(walletToDelete.id)
+                  setWalletToDelete(null)
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
+            >
+              {walletToDelete && Number(walletToDelete.currentBalance) > 0 ? 'Archive' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

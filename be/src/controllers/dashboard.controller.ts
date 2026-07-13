@@ -5,11 +5,12 @@ import { AppError } from '../utils/errors';
 import { serializeBigInt } from '../utils/bigint';
 
 export const dashboardController = {
-  // GET /dashboard/overview
   getOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.userId;
-      const data   = await dashboardService.getDashboardOverview(userId);
+      const month = req.query.month as string | undefined;
+      const walletId = req.query.walletId as string | undefined;
+      const data   = await dashboardService.getDashboardOverview(userId, month, walletId);
       sendSuccess(res, serializeBigInt(data), 'Get dashboard overview successfully', 200);
     } catch (error) {
       next(error);

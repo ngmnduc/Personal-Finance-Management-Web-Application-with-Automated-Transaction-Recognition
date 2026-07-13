@@ -122,7 +122,10 @@ export default function ReportsPage() {
   }
 
   // ── Fetch ──
-  const { data: overview }         = useDashboardOverview()
+  const { data: overview }         = useDashboardOverview(
+    filterMode === 'month' ? selectedMonth : (fromDate ? fromDate.substring(0, 7) : undefined),
+    walletFilter !== 'all' ? walletFilter : undefined
+  )
   const { data: wallets = [] }     = useWallets()
   const { data: txData, isLoading: txLoading } = useTransactions(txFilters)
   const { data: monthlyCharts = [] } = useMonthlyCharts(new Date().getFullYear())

@@ -132,18 +132,12 @@ function ToggleSwitch({ active, onToggle }: ToggleSwitchProps) {
 interface RecurringCardProps {
   item: RecurringIncome
   onEdit: (item: RecurringIncome) => void
-  onDelete: (id: string) => void
+  onDelete: (item: RecurringIncome) => void
   onToggle: (id: string, current: boolean) => void
 }
 
 const RecurringCard = memo(function RecurringCard({ item, onEdit, onDelete, onToggle }: RecurringCardProps) {
   const Icon = getCategoryIcon(item.category?.icon)
-
-  const handleDelete = useCallback(() => {
-    if (window.confirm(`Delete "${item.name}"? This cannot be undone.`)) {
-      onDelete(item.id)
-    }
-  }, [item.id, item.name, onDelete])
 
   return (
     <div
@@ -151,20 +145,21 @@ const RecurringCard = memo(function RecurringCard({ item, onEdit, onDelete, onTo
         !item.isActive ? 'opacity-60' : ''
       }`}
     >
-      <div className="absolute top-4 right-14 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-        <button onClick={(e) => { e.stopPropagation(); onEdit(item) }} className="p-1.5 rounded-lg text-slate-400 hover:text-[#0f1f3d] hover:bg-slate-100 transition-colors" title="Edit">
-          <Pencil size={14} />
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); handleDelete() }} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Delete">
-          <Trash2 size={14} />
-        </button>
-      </div>
-
       <div className="flex items-start justify-between">
         <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center flex-shrink-0">
           <Icon size={22} className="text-slate-600" />
         </div>
-        <ToggleSwitch active={item.isActive} onToggle={() => onToggle(item.id, item.isActive)} />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-150">
+            <button onClick={(e) => { e.stopPropagation(); onEdit(item) }} className="p-1.5 rounded-lg text-slate-400 hover:text-[#0f1f3d] hover:bg-slate-100 transition-colors" title="Edit">
+              <Pencil size={14} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(item) }} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Delete">
+              <Trash2 size={14} />
+            </button>
+          </div>
+          <ToggleSwitch active={item.isActive} onToggle={() => onToggle(item.id, item.isActive)} />
+        </div>
       </div>
 
       <div>
@@ -263,6 +258,7 @@ export default function RecurringTab() {
   const { data: incomes = [], isLoading: incomesLoading } = useRecurringIncomes()
   const deleteMutation = useDeleteRecurringIncome()
   const toggleMutation = useToggleRecurringIncome()
+  const [incomeToDelete, setIncomeToDelete] = useState<RecurringIncome | null>(null)
 
   // ── W6: Smart Rules ──
   const [smartDialogOpen, setSmartDialogOpen] = useState(false)
@@ -278,10 +274,16 @@ export default function RecurringTab() {
   // ── Income callbacks ──
   const openCreate = useCallback(() => { setEditingItem(undefined); setDialogOpen(true) }, [])
   const openEdit = useCallback((item: RecurringIncome) => { setEditingItem(item); setDialogOpen(true) }, [])
-  const handleDelete = useCallback((id: string) => { deleteMutation.mutate(id) }, [deleteMutation])
+  const handleDelete = useCallback((item: RecurringIncome) => { setIncomeToDelete(item) }, [])
   const handleToggle = useCallback((id: string, current: boolean) => {
     toggleMutation.mutate({ id, isActive: !current })
   }, [toggleMutation])
+
+  const handleIncomeDeleteConfirm = () => {
+    if (!incomeToDelete) return
+    deleteMutation.mutate(incomeToDelete.id)
+    setIncomeToDelete(null)
+  }
 
   // ── Rule delete & edit ──
   const openSmartRuleEdit = useCallback((rule: RecurringRule) => { setEditingRule(rule); setSmartDialogOpen(true) }, [])
@@ -435,6 +437,35 @@ export default function RecurringTab() {
               className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
             >
               Delete Rule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Delete Income Confirm ── */}
+      <AlertDialog open={!!incomeToDelete} onOpenChange={(v) => !v && setIncomeToDelete(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-[#0f1f3d]">
+              <AlertTriangle size={17} className="text-red-500" />
+              Delete Income Automation?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 text-sm leading-relaxed">
+              Are you sure you want to delete the income automation <strong className="text-[#0f1f3d]">{incomeToDelete?.name}</strong>?
+              {incomeToDelete && (
+                <span className="block mt-2 font-semibold text-red-500">
+                  + {formatVND(incomeToDelete.amount)} will no longer be auto-deposited.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleIncomeDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
+            >
+              Delete Income
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
