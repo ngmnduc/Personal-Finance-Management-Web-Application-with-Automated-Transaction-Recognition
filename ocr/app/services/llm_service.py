@@ -145,7 +145,7 @@ groq_limiter = ProviderRateLimiter(max_calls=10, period_seconds=60.0)
 
 # Groq
 
-async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "meta-llama/llama-4-scout-17b-16e-instruct") -> str:
+async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "qwen/qwen3.6-27b") -> str:
     """
     Call Groq Cloud vision model.
     """
@@ -232,6 +232,9 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
         ("Gemini-2.0-Flash (direct)",
             lambda: call_gemini(image_bytes, mime_type),
             gemini_limiter, False, True),
+        ("Qwen3.6-27B (Groq)",
+            lambda: call_groq(image_bytes, mime_type, "qwen/qwen3.6-27b"),
+            groq_limiter, False, False),
         ("Llama-4-Scout (Groq)",
             lambda: call_groq(image_bytes, mime_type, "meta-llama/llama-4-scout-17b-16e-instruct"),
             groq_limiter, False, False),
