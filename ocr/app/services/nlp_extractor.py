@@ -51,14 +51,31 @@ def clean_and_parse_json(raw_text: str) -> dict:
     # Remove markdown code fences if present
     cleaned = re.sub(r"```(?:json)?", "", raw_text).strip()
 
-    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-    if not match:
+    start = cleaned.find('{')
+    if start == -1:
         raise ValueError(f"No JSON object found in LLM response: {raw_text[:200]!r}")
 
+    # Use bracket matching to find the exact closing brace for the top-level object
+    depth = 0
+    end = -1
+    for i in range(start, len(cleaned)):
+        if cleaned[i] == '{':
+            depth += 1
+        elif cleaned[i] == '}':
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+                
+    if end == -1:
+        raise ValueError(f"Incomplete JSON object in LLM response: {raw_text[:200]!r}")
+
+    json_str = cleaned[start:end+1]
+
     try:
-        parsed_dict = json.loads(match.group())
+        parsed_dict = json.loads(json_str)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"JSON parse error: {exc}. Raw block: {match.group()[:200]!r}") from exc
+        raise ValueError(f"JSON parse error: {exc}. Raw block: {json_str[:200]!r}") from exc
 
     tx_type = parsed_dict.get("type")
     sender_name   = parsed_dict.pop("sender_name", None)
