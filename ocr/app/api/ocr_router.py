@@ -82,8 +82,8 @@ async def scan_receipt(
     request: Request,
     file: UploadFile = File(...),
     scan_context: str = Form(...),
+    owner_name: str | None = Form(None),
 ):
-    # 1. Validate MIME type
     content_type = file.content_type or ""
     is_valid = content_type.startswith("image/") or content_type == "application/pdf"
     if not is_valid:
@@ -92,16 +92,16 @@ async def scan_receipt(
             detail=f"Unsupported file type '{content_type}'. Only images and PDFs are accepted.",
         )
 
-    # 2. Read bytes
+    # Read bytes
     file_bytes = await file.read()
 
-    # 3. Cache hit — return immediately
+    # Return early if cache hits
     cached = get_cached(file_bytes)
     if cached:
         logger.info("Cache hit for file '%s'", file.filename)
         return ScanResponse(**cached)
 
-    # 4-8. Process + graceful error response on failure
+    # Process file with error handling
     is_pdf = content_type == "application/pdf"
 
     try:
@@ -117,7 +117,7 @@ async def scan_receipt(
                 parsed, raw_text = engine.run_pipeline(file_bytes)
             else:
                 raw_text = await extract_with_llm(file_bytes, content_type)
-                parsed = clean_and_parse_json(raw_text)
+                parsed = clean_and_parse_json(raw_text, owner_name)
 
 # Normalise fields
         extracted_data = ExtractedData(
@@ -148,7 +148,7 @@ async def scan_receipt(
             e,
             exc_info=True,
         )
-        # Soft-error: return 200 with error payload so the FE can show UI feedback
+        # Return 200 with error for UI feedback
         return ScanResponse(
             extracted=ExtractedData(confidence=0.0, error=str(e)),
             extracted_text="",
@@ -163,9 +163,10 @@ async def scan_bulk(
     request: Request,
     files: list[UploadFile] = File(...),
     scan_context: str = Form("EXPENSE"),
+    owner_name: str | None = Form(None),
 ):
-    if len(files) > 20:
-        raise HTTPException(status_code=400, detail="Maximum 20 files per batch.")
+    if len(files) > 10:
+        raise HTTPException(status_code=400, detail="Maximum 10 files per batch.")
 
     results: list[BulkScanItem] = []
     total = len(files)
@@ -211,7 +212,7 @@ async def scan_bulk(
                         parsed, raw_text = engine.run_pipeline(file_bytes)
                     else:
                         raw_text = await extract_with_llm(file_bytes, content_type)
-                        parsed = clean_and_parse_json(raw_text)
+                        parsed = clean_and_parse_json(raw_text, owner_name)
 
                 extracted_data = ExtractedData(
                     amount=normalize_amount(parsed.get("amount")),
@@ -246,7 +247,7 @@ async def scan_bulk(
                     extracted=ExtractedData(confidence=0.0, error=str(exc)),
                 ))
 
-        # Throttle between items to avoid hitting rate limits on free-tier Gemini
+        # Throttle to avoid LLM rate limits
         if not is_last and not cache_hit:
             await asyncio.sleep(1.5)
 
@@ -266,8 +267,7 @@ class PdfExportPayload(BaseModel):
 @router.post("/api/v1/export/pdf")
 def export_pdf(payload: PdfExportPayload):
     """
-    Accepts a JSON list of transaction dicts from the Node.js backend and returns
-    a binary PDF file ready for download.
+    Generate PDF from JSON payload.
     """
     try:
         pdf_bytes = generate_pdf(payload.transactions)

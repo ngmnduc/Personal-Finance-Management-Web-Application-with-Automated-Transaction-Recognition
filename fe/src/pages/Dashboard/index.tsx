@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts'
-import { ArrowRight, Target, Activity, Download, ChevronLeft, ChevronRight, Loader2, FileSpreadsheet, FileText, TrendingUp } from 'lucide-react'
+import { ArrowRight, Target, Activity, Download, ChevronLeft, ChevronRight, Loader2, FileSpreadsheet } from 'lucide-react'
 
 import {
   useDashboardOverview,
@@ -18,7 +18,7 @@ import { useWallets } from '../../features/wallets/api/wallet.api'
 import {
   useRecurringSuggestions,
 } from '../../features/recurring/api/recurringRule.api'
-import { downloadCSV, downloadPDF, type ExportParams } from '../../features/reports/api/report.api'
+import { downloadCSV, type ExportParams } from '../../features/reports/api/report.api'
 
 import SuggestionBanner from '../../features/recurring/components/SuggestionBanner'
 import PageSkeleton from '../../components/shared/PageSkeleton'
@@ -196,17 +196,7 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleExportPDF() {
-    setExportLoading('pdf')
-    try {
-      await downloadPDF(exportParams)
-      toast.success('PDF downloaded successfully')
-    } catch {
-      toast.error('Failed to download PDF')
-    } finally {
-      setExportLoading(null)
-    }
-  }
+
 
   return (
     <div className="p-4 md:p-8 text-slate-800 min-h-full max-w-[1400px] mx-auto bg-[#f0f4f8]">
@@ -359,12 +349,6 @@ export default function DashboardPage() {
                       <FileSpreadsheet size={14} className="text-[#10b981]" />
                       Download CSV
                       {exportLoading === 'csv' && <Loader2 size={12} className="ml-auto animate-spin" />}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleExportPDF} disabled={exportLoading === 'pdf'} className="gap-2 cursor-pointer">
-                      <FileText size={14} className="text-red-500" />
-                      Download PDF
-                      {exportLoading === 'pdf' && <Loader2 size={12} className="ml-auto animate-spin" />}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -11,12 +11,12 @@ const router = Router();
 
 // ── Rate Limiting chuyên biệt cho OCR Upload (Chống spam RAM/OOM) ───────────────
 const ocrUploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 phút
+  windowMs: 5 * 60 * 1000, // 5 phút
   max: 5, // Tối đa 5 lần upload (single hoặc bulk)
   handler: (req, res) => {
     return sendError(
       res,
-      'Too many OCR scan requests. Please try again after 15 minutes.',
+      'Too many OCR scan requests. Please try again after 5 minutes.',
       'RATE_LIMITED',
       429
     );

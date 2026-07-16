@@ -1,12 +1,4 @@
-"""
-NLP / text normalisation layer.
-Handles two input streams:
-  - LLM stream  → clean_and_parse_json()
-  - PDF stream  → extract_by_regex()
-
-Both outputs are normalised through shared helpers before being
-returned to the router.
-"""
+"""NLP normalisation layer for LLM and PDF extraction streams."""
 
 import re
 import json
@@ -14,13 +6,7 @@ import unicodedata
 from datetime import datetime, date
 from typing import Any
 
-# Placeholder for graduation demo.
-# In a production build, this data should dynamically be pulled from the authenticated user profile database.
-OWNER_IDENTITIES: set[str] = {
-    "NGUYEN MINH DUC",
-    "NGUYEN MINH ĐUC",
-    "DAVID NAVS",
-}
+# Placeholder for demo. Dynamically fetch in production.
 
 def normalize_text_for_matching(text: str) -> str:
     if not text:
@@ -32,61 +18,44 @@ def normalize_text_for_matching(text: str) -> str:
 
 # JSON extraction (LLM stream)
 
-def clean_and_parse_json(raw_text: str) -> dict:
-    """
-    Strip prose around JSON and parse the first JSON object block found.
+def clean_and_parse_json(raw_text: str, owner_name: str | None = None) -> dict:
+    """Extract JSON object from LLM response reliably."""
+    start_idx = raw_text.find('{')
+    end_idx = raw_text.rfind('}')
 
-    LLMs sometimes wrap their answer in markdown fences or add explanations.
-    This extracts just the `{...}` block robustly.
-
-    Args:
-        raw_text: Raw string returned by the LLM.
-
-    Returns:
-        Parsed dict.
-
-    Raises:
-        ValueError: If no valid JSON object is found.
-    """
-    # Remove markdown code fences if present
-    cleaned = re.sub(r"```(?:json)?", "", raw_text).strip()
-
-    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-    if not match:
+    if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
         raise ValueError(f"No JSON object found in LLM response: {raw_text[:200]!r}")
 
+    json_str = raw_text[start_idx:end_idx + 1]
+
     try:
-        parsed_dict = json.loads(match.group())
+        parsed_dict = json.loads(json_str)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"JSON parse error: {exc}. Raw block: {match.group()[:200]!r}") from exc
+        raise ValueError(f"JSON parse error: {exc}. Raw block: {json_str[:200]!r}") from exc
 
     tx_type = parsed_dict.get("type")
     sender_name   = parsed_dict.pop("sender_name", None)
     receiver_name = parsed_dict.pop("receiver_name", None)
 
-    # Default: graceful degradation — no type resolved or unknown type
     final_merchant = None
 
+    owner_identities = set()
+    if owner_name:
+        owner_identities.add(normalize_text_for_matching(owner_name))
+
     if tx_type == "INCOME":
-        # The counterparty in an incoming transaction is the sender.
-        # The receiver is inherently the account owner — never expose as merchant.
         norm_sender = normalize_text_for_matching(sender_name) if sender_name else ""
-        if norm_sender and norm_sender not in OWNER_IDENTITIES:
+        if norm_sender and norm_sender not in owner_identities:
             final_merchant = sender_name
-        # If sender matches owner or is absent, final_merchant stays None.
-        # Do NOT cascade to receiver_name — receiver of INCOME is the app owner.
 
     elif tx_type == "EXPENSE":
-        # The counterparty in an outgoing transaction is the receiver.
         norm_receiver = normalize_text_for_matching(receiver_name) if receiver_name else ""
-        if norm_receiver and norm_receiver not in OWNER_IDENTITIES:
+        if norm_receiver and norm_receiver not in owner_identities:
             final_merchant = receiver_name
         else:
             norm_sender = normalize_text_for_matching(sender_name) if sender_name else ""
-            if norm_sender and norm_sender not in OWNER_IDENTITIES:
+            if norm_sender and norm_sender not in owner_identities:
                 final_merchant = sender_name
-
-    # else: tx_type is None or unrecognised → final_merchant remains None
 
     parsed_dict["merchant"] = final_merchant
     return parsed_dict
@@ -99,7 +68,7 @@ _AMOUNT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# ISO-style and common Vietnamese date formats
+# date formats
 _DATE_RE = re.compile(
     r"""
     (?:                        # group of alternatives
@@ -121,32 +90,27 @@ _EXPENSE_KEYWORDS = re.compile(
 )
 
 def extract_by_regex(raw_text: str) -> dict:
-    """
-    Extract structured fields from plain PDF text using regex.
-
-    Returns a dict with the same shape expected from the LLM:
-    {amount, transaction_date, merchant, type, description}
-    """
-    # Amount: take the first (and usually largest) hit
+    """Extract structured fields from PDF text using regex."""
+    # Extract amount
     amount: Any = None
     amount_match = _AMOUNT_RE.search(raw_text)
     if amount_match:
         amount = amount_match.group(1)  # still a raw string; normalised later
 
-    # Date
+    # Extract date
     transaction_date: str | None = None
     date_match = _DATE_RE.search(raw_text)
     if date_match:
         transaction_date = date_match.group()
 
-    # Type via keyword scan
+    # Extract transaction type
     tx_type: str | None = None
     if _INCOME_KEYWORDS.search(raw_text):
         tx_type = "INCOME"
     elif _EXPENSE_KEYWORDS.search(raw_text):
         tx_type = "EXPENSE"
 
-    # Merchant: first non-blank line that isn't a date / pure-number
+    # Extract merchant
     merchant: str | None = None
     for line in raw_text.splitlines():
         stripped = line.strip()
@@ -169,31 +133,21 @@ def extract_by_regex(raw_text: str) -> dict:
 # Normalisation helpers
 
 def normalize_amount(raw: Any) -> int:
-    """
-    Strip all non-digit characters and coerce to int.
-
-    Examples:
-        "1,500,000 đ" → 1500000
-        1500000.0     → 1500000
-        None          → 0
-    """
+    """Strip non-digits and coerce to int."""
     if raw is None:
         return 0
     cleaned = re.sub(r"[^\d]", "", str(raw))
     return int(cleaned) if cleaned else 0
 
 def normalize_date(raw: str | None) -> str:
-    """
-    Parse a raw date string to YYYY-MM-DD.
-    Falls back to today's date if the input is None or unparseable.
-    """
+    """Parse date string to YYYY-MM-DD format."""
     if not raw:
         return date.today().isoformat()
 
-    # Clean internal spacing and strip
+    # Clean spacing
     cleaned = re.sub(r"\s+", " ", raw.strip())
 
-    # Extract matching prefix to handle trailing components and avoid validation panic
+    # Extract date prefix
     match = re.match(
         r"^("
         r"\d{1,2}[/\-]\d{1,2}[/\-]\d{4}\s+\d{1,2}[.:]\d{1,2}[.:]\d{1,2}"
@@ -211,7 +165,7 @@ def normalize_date(raw: str | None) -> str:
 
     # Try common formats
     for fmt in (
-        # 1. Full Datetime Formats (Highest priority to avoid dropping time)
+        # Full datetime formats
         "%d-%m-%Y %H:%M:%S",
         "%d-%m-%Y %H.%M.%S",
         "%d/%m/%Y %H:%M:%S",
@@ -222,7 +176,7 @@ def normalize_date(raw: str | None) -> str:
         "%d/%m/%Y %H.%M",
         "%Y-%m-%d %H:%M:%S",
         
-        # 2. Standalone Date Formats (Fallback if time is missing)
+        # Standalone date formats
         "%Y-%m-%d",
         "%Y/%m/%d",
         "%d-%m-%Y",
@@ -236,7 +190,7 @@ def normalize_date(raw: str | None) -> str:
         except ValueError:
             continue
 
-    # Last resort: let dateutil handle it if installed, else today
+    # Fallback to dateutil or today
     try:
         from dateutil import parser as du_parser  # type: ignore
         return du_parser.parse(raw, dayfirst=True).date().isoformat()
@@ -244,11 +198,7 @@ def normalize_date(raw: str | None) -> str:
         return date.today().isoformat()
 
 def normalize_type(raw: str | None, scan_context: str) -> str:
-    """
-    Map raw type string (from LLM or regex) to INCOME or EXPENSE.
-
-    Falls back to scan_context hint (e.g. "EXPENSE") provided by the caller.
-    """
+    """Map raw type to INCOME or EXPENSE."""
     _map = {
         "income": "INCOME",
         "thu": "INCOME",
@@ -270,7 +220,7 @@ def normalize_type(raw: str | None, scan_context: str) -> str:
             if key in normalised:
                 return value
 
-    # Fall back to caller-supplied context
+    # Fallback to provided context
     ctx = (scan_context or "").strip().upper()
     if ctx in ("INCOME", "EXPENSE"):
         return ctx
@@ -280,18 +230,13 @@ def normalize_type(raw: str | None, scan_context: str) -> str:
 # Confidence scoring
 
 def calculate_confidence(extracted: dict, is_pdf: bool = False) -> float:
-    """
-    Heuristic confidence score in [0.0, 1.0].
-
-    PDF path is high-confidence by nature (structured digital text).
-    LLM path accumulates score based on successfully extracted fields.
-    """
+    """Calculate heuristic confidence score."""
     if is_pdf:
         return 0.95
 
     score = 0.0
 
-    # Core fields weighted by importance
+    # Weight core fields
     if extracted.get("amount") and extracted["amount"] != 0:
         score += 0.35
     if extracted.get("transaction_date"):

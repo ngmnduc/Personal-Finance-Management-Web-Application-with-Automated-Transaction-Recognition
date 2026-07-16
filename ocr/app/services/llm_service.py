@@ -1,9 +1,4 @@
-"""
-LLM vision service with Gemini → Qwen (OpenRouter) → GPT-4o-mini fallback chain.
-
-All models are instructed to return a single raw JSON object — no prose,
-no markdown fences — to make downstream parsing reliable.
-"""
+"""LLM vision service with API fallback chain for JSON extraction."""
 
 import base64
 import logging
@@ -21,7 +16,7 @@ logger = logging.getLogger(__name__)
 _key_index: int = 0
 
 def get_next_gemini_key() -> str:
-    """Return the next Gemini API key in round-robin order."""
+    """Return next Gemini API key using round-robin."""
     global _key_index
     keys = settings.GEMINI_API_KEYS
     key = keys[_key_index % len(keys)]
@@ -51,6 +46,7 @@ Vietnamese field label mapping:
 Rules:
 - Do NOT include any text outside the JSON object.
 - Do NOT wrap the JSON in markdown code fences.
+- STRICT RULE: Do NOT output any reasoning process, step-by-step breakdown, or <think> tags. Return ONLY the raw JSON object.
 - If a field cannot be determined, use null.
 - "type" MUST be exactly "INCOME" or "EXPENSE".
 - "amount" MUST be a plain integer (e.g. 1500000, not "1,500,000").
@@ -64,12 +60,7 @@ Rules:
 # Gemini
 
 async def call_gemini(image_bytes: bytes, mime_type: str, api_key: str | None = None) -> str:
-    """
-    Call Gemini 2.0 Flash with vision using the provided (or next-in-rotation) key.
-
-    Returns raw LLM response string.
-    Raises Exception on API or content error.
-    """
+    """Call Gemini vision API with key rotation."""
     key = api_key or get_next_gemini_key()
     genai.configure(api_key=key)
     model = genai.GenerativeModel("gemini-2.0-flash")
@@ -89,12 +80,7 @@ async def call_gemini(image_bytes: bytes, mime_type: str, api_key: str | None = 
 # OpenRouter generic caller
 
 async def call_openrouter(image_bytes: bytes, mime_type: str, model_id: str) -> str:
-    """
-    Call any OpenRouter-hosted vision model.
-
-    Uses the OpenAI-compatible chat/completions endpoint.
-    Raises httpx.HTTPStatusError or ValueError on failure.
-    """
+    """Call OpenRouter vision models via OpenAI compatible endpoint."""
     if not settings.OPENROUTER_API_KEY:
         raise ValueError("OPENROUTER_API_KEY is not configured.")
 
@@ -112,14 +98,14 @@ async def call_openrouter(image_bytes: bytes, mime_type: str, model_id: str) -> 
                 ],
             }
         ],
-        "max_tokens": 512,
+        "max_tokens": 2048,
         "temperature": 0.1,
     }
 
     headers = {
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://fintrack.app",   # recommended by OpenRouter
+        "HTTP-Referer": "https://fintrack.app",   # Required by OpenRouter
         "X-Title": "Finman OCR",
     }
 
@@ -146,9 +132,7 @@ groq_limiter = ProviderRateLimiter(max_calls=10, period_seconds=60.0)
 # Groq
 
 async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "qwen/qwen3.6-27b") -> str:
-    """
-    Call Groq Cloud vision model.
-    """
+    """Call Groq Cloud vision model."""
     if not settings.GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY is not configured.")
 
@@ -181,6 +165,7 @@ async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "qwen/qw
                 ],
             }
         ],
+        "max_tokens": 2048,
         "temperature": 0.1,
     }
 
@@ -208,18 +193,8 @@ async def call_groq(image_bytes: bytes, mime_type: str, model_id: str = "qwen/qw
 # Fallback chain
 
 async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
-    """
-    Try each model in the fallback chain and return the first successful response.
-
-    Chain order (priority):
-      1. Gemini 2.0 Flash (direct, key rotation)   — free tier, fastest
-      2. Llama-4-Scout (Groq)                       — free tier, good vision
-      3. Llama-4-Maverick (Groq)                    — free tier, stronger fallback
-      4. Gemini-2.5-Flash (OpenRouter free)          — free tier OR
-      5. Qwen2.5-VL-72B (OpenRouter)                — paid, high quality
-      6. GPT-4o-mini (OpenRouter)                   — paid last resort
-
-    Special handling:
+    """Execute LLM fallback chain gracefully handling limits.
+     note:
       - Gemini 429 (quota/day exceeded) → skip immediately, try free alternatives
       - OpenRouter 402 (no credit)      → skip all remaining OR models
     """
@@ -228,7 +203,7 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     gemini_quota_exceeded = False
 
     fallback_chain = [
-        # (label, call_func, limiter, is_openrouter, is_gemini_direct)
+        # Format: (label, call_func, limiter, is_or, is_gemini)
         ("Gemini-2.0-Flash (direct)",
             lambda: call_gemini(image_bytes, mime_type),
             gemini_limiter, False, True),
@@ -253,13 +228,13 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
     ]
 
     for label, call_func, limiter, is_openrouter, is_gemini_direct in fallback_chain:
-        # Gemini daily quota exhausted — skip remaining direct calls
+        # Skip remaining direct calls if daily quota exhausted
         if is_gemini_direct and gemini_quota_exceeded:
             logger.warning("LLM fallback: skipping %s — daily quota exhausted", label)
             errors.append(f"{label}: skipped (daily quota)")
             continue
 
-        # OpenRouter out of credit — skip remaining OR models
+        # Skip remaining OpenRouter models if out of credit
         if is_openrouter and openrouter_out_of_credit:
             logger.warning("LLM fallback: skipping %s — OpenRouter out of credit", label)
             errors.append(f"{label}: skipped (OpenRouter 402)")
@@ -274,7 +249,7 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
         except Exception as exc:
             exc_str = str(exc)
 
-            # Gemini 429 daily quota — skip all direct calls (same project)
+            # Handle Gemini 429 daily quota exhaustion
             if is_gemini_direct and ("429" in exc_str or "quota" in exc_str.lower()):
                 if "PerDay" in exc_str or "free_tier" in exc_str:
                     logger.error(
@@ -283,10 +258,10 @@ async def extract_with_llm(image_bytes: bytes, mime_type: str) -> str:
                     )
                     gemini_quota_exceeded = True
                 else:
-                    # Per-minute rate limit — log and continue
+                    # Handle per-minute rate limit gracefully
                     logger.warning("LLM fallback: %s — per-minute rate limit, continuing", label)
 
-            # OpenRouter 402 — skip all remaining OR models
+            # Handle OpenRouter 402 insufficient credit
             elif is_openrouter and "402" in exc_str:
                 logger.error(
                     "LLM fallback: %s — 402 Payment Required. "

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
-import { getTransactions, generateCSV, ExportFilters } from '../services/export.service';
+import { getTransactions, formatCSVRow, CSV_HEADER, ExportFilters } from '../services/export.service';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -41,14 +41,21 @@ export const exportCSV = async (req: Request, res: Response, next: NextFunction)
     const filters = parseFilters(req.query);
 
     const transactions = await getTransactions(userId, filters);
-    const csvContent   = generateCSV(transactions);
 
     const timestamp = new Date().toISOString().split('T')[0];
     const filename  = `transactions-${timestamp}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(csvContent);
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    res.write('\uFEFF' + CSV_HEADER + '\n');
+
+    for (const tx of transactions) {
+      res.write(formatCSVRow(tx) + '\n');
+    }
+
+    res.end();
   } catch (error) {
     next(error);
   }

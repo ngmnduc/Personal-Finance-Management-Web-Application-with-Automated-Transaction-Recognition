@@ -82,6 +82,11 @@ export const scan = async (
   });
   form.append('scan_context', scanContext);
 
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+  if (user?.name) {
+    form.append('owner_name', user.name);
+  }
+
   let ocrData: any;
   let retries = MAX_RETRIES;
 
@@ -186,6 +191,11 @@ export const scanBulk = async (
     });
   }
   form.append('scan_context', scanContext);
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+  if (user?.name) {
+    form.append('owner_name', user.name);
+  }
 
   let ocrData: any;
 

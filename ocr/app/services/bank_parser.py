@@ -6,6 +6,7 @@ Identifies the source bank from OCR-extracted text using:
 """
 
 import re
+from app.models.schemas import BankInfo
 
 # Keyword registry
 
@@ -96,3 +97,52 @@ def detect_bank(text: str) -> str | None:
     Returns bank_id string (e.g. 'vcb', 'mb') or None if unrecognised.
     """
     return detect_bank_by_keyword(text) or detect_bank_by_layout(text)
+
+_BANK_DISPLAY_NAMES: dict[str, str] = {
+    "agribank": "Agribank",
+    "vcb": "Vietcombank",
+    "mb": "MB Bank",
+    "tcb": "Techcombank",
+    "bidv": "BIDV",
+    "acb": "ACB",
+    "vtb": "VietinBank",
+    "vpb": "VPBank",
+    "tpb": "TPBank",
+    "shb": "SHB",
+    "hdb": "HDBank",
+    "scb": "SCB",
+    "stb": "Sacombank",
+    "vib": "VIB",
+    "msb": "MSB",
+    "ocb": "OCB",
+    "tcb_digital": "LPBank / Cake / Timo",
+    "seab": "SeABank",
+    "bab": "Bac A Bank",
+    "bvb": "BaoViet Bank",
+    "abb": "ABBank",
+    "nab": "Nam A Bank",
+    "pgb": "PG Bank",
+    "vab": "VietABank",
+    "vietbank": "Vietbank",
+    "sgb": "Saigonbank",
+    "klb": "Kienlongbank",
+    "vncb": "CBBank",
+    "oceanbank": "Oceanbank",
+    "gpb": "GPBank",
+    "vrb": "VRB",
+    "ivb": "Indovina Bank",
+    "momo": "MoMo",
+    "zalopay": "ZaloPay",
+    "vnpay": "VNPay",
+}
+
+def get_bank_list() -> list[BankInfo]:
+    """
+    Returns the list of supported banks derived from BANK_KEYWORDS.
+    Single Source of Truth: adding a bank to BANK_KEYWORDS automatically
+    exposes it via the /banks API endpoint.
+    """
+    return [
+        BankInfo(id=bank_id, name=_BANK_DISPLAY_NAMES.get(bank_id, bank_id.upper()))
+        for bank_id in BANK_KEYWORDS
+    ]
