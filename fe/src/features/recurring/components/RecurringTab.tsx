@@ -197,9 +197,6 @@ function RuleRow({ rule, onEdit, onDelete }: RuleRowProps) {
         </div>
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="rounded-md bg-[#10b981]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#10b981]">
-              AUTO
-            </span>
             <span className="font-bold text-[#0f1f3d] text-sm">{rule.merchant}</span>
             <span className="rounded-full bg-[#10b981]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#10b981]">
               Active

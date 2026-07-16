@@ -30,7 +30,9 @@ def clean_and_parse_json(raw_text: str, owner_name: str | None = None) -> dict:
 
     try:
         parsed_dict = json.loads(json_str)
+        parsed_dict = json.loads(json_str)
     except json.JSONDecodeError as exc:
+        raise ValueError(f"JSON parse error: {exc}. Raw block: {json_str[:200]!r}") from exc
         raise ValueError(f"JSON parse error: {exc}. Raw block: {json_str[:200]!r}") from exc
 
     tx_type = parsed_dict.get("type")
