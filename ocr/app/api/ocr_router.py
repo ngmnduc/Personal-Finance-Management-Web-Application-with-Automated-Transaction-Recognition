@@ -16,7 +16,7 @@ from app.services.nlp_extractor import (
     normalize_type,
     calculate_confidence,
 )
-from app.services.bank_parser import detect_bank
+from app.services.bank_parser import detect_bank, get_bank_list
 from app.services.pdf_export_service import generate_pdf
 
 logger = logging.getLogger(__name__)
@@ -24,43 +24,7 @@ router = APIRouter()
 
 # Supported banks list
 
-_SUPPORTED_BANKS = [
-    BankInfo(id="agribank", name="Agribank"),
-    BankInfo(id="vcb", name="Vietcombank"),
-    BankInfo(id="mb", name="MB Bank"),
-    BankInfo(id="tcb", name="Techcombank"),
-    BankInfo(id="bidv", name="BIDV"),
-    BankInfo(id="acb", name="ACB"),
-    BankInfo(id="vtb", name="VietinBank"),
-    BankInfo(id="vpb", name="VPBank"),
-    BankInfo(id="tpb", name="TPBank"),
-    BankInfo(id="shb", name="SHB"),
-    BankInfo(id="hdb", name="HDBank"),
-    BankInfo(id="scb", name="SCB"),
-    BankInfo(id="stb", name="Sacombank"),
-    BankInfo(id="vib", name="VIB"),
-    BankInfo(id="msb", name="MSB"),
-    BankInfo(id="ocb", name="OCB"),
-    BankInfo(id="tcb_digital", name="LPBank / Cake / Timo"),
-    BankInfo(id="seab", name="SeABank"),
-    BankInfo(id="bab", name="Bac A Bank"),
-    BankInfo(id="bvb", name="BaoViet Bank"),
-    BankInfo(id="abb", name="ABBank"),
-    BankInfo(id="nab", name="Nam A Bank"),
-    BankInfo(id="pgb", name="PG Bank"),
-    BankInfo(id="vab", name="VietABank"),
-    BankInfo(id="vietbank", name="Vietbank"),
-    BankInfo(id="sgb", name="Saigonbank"),
-    BankInfo(id="klb", name="Kienlongbank"),
-    BankInfo(id="vncb", name="CBBank"),
-    BankInfo(id="oceanbank", name="Oceanbank"),
-    BankInfo(id="gpb", name="GPBank"),
-    BankInfo(id="vrb", name="VRB"),
-    BankInfo(id="ivb", name="Indovina Bank"),
-    BankInfo(id="momo", name="MoMo"),
-    BankInfo(id="zalopay", name="ZaloPay"),
-    BankInfo(id="vnpay", name="VNPay"),
-]
+
 
 # Health
 
@@ -72,7 +36,7 @@ def health_check():
 
 @router.get("/api/v1/ocr/banks", response_model=list[BankInfo])
 def get_supported_banks():
-    return _SUPPORTED_BANKS
+    return get_bank_list()
 
 # Scan
 

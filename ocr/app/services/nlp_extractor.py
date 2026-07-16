@@ -21,19 +21,25 @@ def normalize_text_for_matching(text: str) -> str:
 def clean_and_parse_json(raw_text: str, owner_name: str | None = None) -> dict:
     """Extract JSON object from LLM response reliably."""
     start_idx = raw_text.find('{')
-    end_idx = raw_text.rfind('}')
+    if start_idx == -1:
+        raise ValueError(f"No JSON object found in LLM response (missing '{{'): {raw_text[:200]!r}")
 
-    if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
-        raise ValueError(f"No JSON object found in LLM response: {raw_text[:200]!r}")
+    parsed_dict = None
+    last_err = None
 
-    json_str = raw_text[start_idx:end_idx + 1]
+    # Iteratively search backwards for '}' and try parsing to bypass extra trailing text
+    for end_idx in range(len(raw_text), start_idx, -1):
+        if raw_text[end_idx - 1] == '}':
+            json_str = raw_text[start_idx:end_idx]
+            try:
+                parsed_dict = json.loads(json_str)
+                break  # Successfully parsed
+            except json.JSONDecodeError as exc:
+                last_err = exc
+                continue
 
-    try:
-        parsed_dict = json.loads(json_str)
-        parsed_dict = json.loads(json_str)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"JSON parse error: {exc}. Raw block: {json_str[:200]!r}") from exc
-        raise ValueError(f"JSON parse error: {exc}. Raw block: {json_str[:200]!r}") from exc
+    if parsed_dict is None:
+        raise ValueError(f"Found '{{' but failed to parse JSON. Last error: {last_err}. Raw block: {raw_text[start_idx:start_idx+200]!r}")
 
     tx_type = parsed_dict.get("type")
     sender_name   = parsed_dict.pop("sender_name", None)

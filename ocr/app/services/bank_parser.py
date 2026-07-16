@@ -8,44 +8,44 @@ Identifies the source bank from OCR-extracted text using:
 import re
 from app.models.schemas import BankInfo
 
-# Keyword registry
+# Unified Registry (Single Source of Truth)
 
-BANK_KEYWORDS: dict[str, list[str]] = {
-    "agribank": ["agribank", "nông nghiệp", "vba", "agribank plus"],
-    "vcb": ["vietcombank", "vcb", "ngoại thương", "joint stock commercial bank for foreign trade", "vietcombank.com.vn"],
-    "mb": ["mb bank", "mbbank", "quân đội", "military commercial joint stock bank", "mb smart bank", "mbmobile"],
-    "tcb": ["techcombank", "tcb", "kỹ thương", "technological and commercial joint-stock bank", "techcombank.com.vn"],
-    "bidv": ["bidv", "đầu tư và phát triển", "bank for investment and development", "bidv.com.vn", "smartbanking"],
-    "acb": ["acb", "á châu", "asia commercial", "acb one"],
-    "vtb": ["vietinbank", "vietin", "công thương", "vtb", "ipot", "vietinbank ipay"],
-    "vpb": ["vpbank", "vp bank", "việt nam thịnh vượng", "neo", "vpbank neo"],
-    "tpb": ["tpbank", "tp bank", "tiên phong", "tpb", "tập đoàn vàng bạc đá quý đội"],
-    "shb": ["shb", "sài gòn - hà nội", "shb mobile"],
-    "hdb": ["hdbank", "hdb", "phát triển nhà", "hdbank tết"],
-    "scb": ["scb", "thương mại cổ phần sài gòn"],
-    "stb": ["sacombank", "stb", "sài gòn thương tín", "sacombank mbanking"],
-    "vib": ["vib", "quốc tế", "vietnam international bank", "vib myvib"],
-    "msb": ["msb", "hàng hải", "maritime", "msb mbank"],
-    "ocb": ["ocb", "phương đông", "orient commercial", "ocb omni"],
-    "tcb_digital": ["cake", "timo", "lpb", "lpbank", "bưu điện liên việt", "lienvietpostbank"],
-    "seab": ["seabank", "seab", "đông nam á"],
-    "bab": ["bac a bank", "bắc á"],
-    "bvb": ["baovietbank", "bảo việt"],
-    "abb": ["abbank", "an bình"],
-    "nab": ["nam a bank", "nam á"],
-    "pgb": ["pg bank", "petrolimex"],
-    "vab": ["vietabank", "việt á"],
-    "vietbank": ["vietbank", "việt nam thương tín"],
-    "sgb": ["saigonbank", "sài gòn công thương"],
-    "klb": ["kienlongbank", "kiên long"],
-    "vncb": ["cbbank", "xây dựng"],
-    "oceanbank": ["oceanbank", "đại dương"],
-    "gpb": ["gpbank", "dầu khí toàn cầu"],
-    "vrb": ["vrb", "liên doanh việt - nga"],
-    "ivb": ["indovina", "ivb"],
-    "momo": ["momo", "m_service", "mservice", "ví momo", "momo e-wallet", "momo.vn"],
-    "zalopay": ["zalopay", "zalo pay", "vng"],
-    "vnpay": ["vnpay", "vn pay"]
+BANK_REGISTRY: dict[str, dict] = {
+    "agribank": {"name": "Agribank", "keywords": ["agribank", "nông nghiệp", "vba", "agribank plus"]},
+    "vcb": {"name": "Vietcombank", "keywords": ["vietcombank", "vcb", "ngoại thương", "joint stock commercial bank for foreign trade", "vietcombank.com.vn"]},
+    "mb": {"name": "MB Bank", "keywords": ["mb bank", "mbbank", "quân đội", "military commercial joint stock bank", "mb smart bank", "mbmobile"]},
+    "tcb": {"name": "Techcombank", "keywords": ["techcombank", "tcb", "kỹ thương", "technological and commercial joint-stock bank", "techcombank.com.vn"]},
+    "bidv": {"name": "BIDV", "keywords": ["bidv", "đầu tư và phát triển", "bank for investment and development", "bidv.com.vn", "smartbanking"]},
+    "acb": {"name": "ACB", "keywords": ["acb", "á châu", "asia commercial", "acb one"]},
+    "vtb": {"name": "VietinBank", "keywords": ["vietinbank", "vietin", "công thương", "vtb", "ipot", "vietinbank ipay"]},
+    "vpb": {"name": "VPBank", "keywords": ["vpbank", "vp bank", "việt nam thịnh vượng", "neo", "vpbank neo"]},
+    "tpb": {"name": "TPBank", "keywords": ["tpbank", "tp bank", "tiên phong", "tpb", "tập đoàn vàng bạc đá quý đội"]},
+    "shb": {"name": "SHB", "keywords": ["shb", "sài gòn - hà nội", "shb mobile"]},
+    "hdb": {"name": "HDBank", "keywords": ["hdbank", "hdb", "phát triển nhà", "hdbank tết"]},
+    "scb": {"name": "SCB", "keywords": ["scb", "thương mại cổ phần sài gòn"]},
+    "stb": {"name": "Sacombank", "keywords": ["sacombank", "stb", "sài gòn thương tín", "sacombank mbanking"]},
+    "vib": {"name": "VIB", "keywords": ["vib", "quốc tế", "vietnam international bank", "vib myvib"]},
+    "msb": {"name": "MSB", "keywords": ["msb", "hàng hải", "maritime", "msb mbank"]},
+    "ocb": {"name": "OCB", "keywords": ["ocb", "phương đông", "orient commercial", "ocb omni"]},
+    "tcb_digital": {"name": "LPBank / Cake / Timo", "keywords": ["cake", "timo", "lpb", "lpbank", "bưu điện liên việt", "lienvietpostbank"]},
+    "seab": {"name": "SeABank", "keywords": ["seabank", "seab", "đông nam á"]},
+    "bab": {"name": "Bac A Bank", "keywords": ["bac a bank", "bắc á"]},
+    "bvb": {"name": "BaoViet Bank", "keywords": ["baovietbank", "bảo việt"]},
+    "abb": {"name": "ABBank", "keywords": ["abbank", "an bình"]},
+    "nab": {"name": "Nam A Bank", "keywords": ["nam a bank", "nam á"]},
+    "pgb": {"name": "PG Bank", "keywords": ["pg bank", "petrolimex"]},
+    "vab": {"name": "VietABank", "keywords": ["vietabank", "việt á"]},
+    "vietbank": {"name": "Vietbank", "keywords": ["vietbank", "việt nam thương tín"]},
+    "sgb": {"name": "Saigonbank", "keywords": ["saigonbank", "sài gòn công thương"]},
+    "klb": {"name": "Kienlongbank", "keywords": ["kienlongbank", "kiên long"]},
+    "vncb": {"name": "CBBank", "keywords": ["cbbank", "xây dựng"]},
+    "oceanbank": {"name": "Oceanbank", "keywords": ["oceanbank", "đại dương"]},
+    "gpb": {"name": "GPBank", "keywords": ["gpbank", "dầu khí toàn cầu"]},
+    "vrb": {"name": "VRB", "keywords": ["vrb", "liên doanh việt - nga"]},
+    "ivb": {"name": "Indovina Bank", "keywords": ["indovina", "ivb"]},
+    "momo": {"name": "MoMo", "keywords": ["momo", "m_service", "mservice", "ví momo", "momo e-wallet", "momo.vn"]},
+    "zalopay": {"name": "ZaloPay", "keywords": ["zalopay", "zalo pay", "vng"]},
+    "vnpay": {"name": "VNPay", "keywords": ["vnpay", "vn pay"]},
 }
 
 # Layout / structural patterns
@@ -73,8 +73,8 @@ def detect_bank_by_keyword(text: str) -> str | None:
     Returns the bank_id (e.g. 'vcb') on first match, or None.
     """
     normalized = text.lower()
-    for bank_id, keywords in BANK_KEYWORDS.items():
-        for kw in keywords:
+    for bank_id, data in BANK_REGISTRY.items():
+        for kw in data["keywords"]:
             if kw in normalized:
                 return bank_id
     return None
@@ -98,51 +98,13 @@ def detect_bank(text: str) -> str | None:
     """
     return detect_bank_by_keyword(text) or detect_bank_by_layout(text)
 
-_BANK_DISPLAY_NAMES: dict[str, str] = {
-    "agribank": "Agribank",
-    "vcb": "Vietcombank",
-    "mb": "MB Bank",
-    "tcb": "Techcombank",
-    "bidv": "BIDV",
-    "acb": "ACB",
-    "vtb": "VietinBank",
-    "vpb": "VPBank",
-    "tpb": "TPBank",
-    "shb": "SHB",
-    "hdb": "HDBank",
-    "scb": "SCB",
-    "stb": "Sacombank",
-    "vib": "VIB",
-    "msb": "MSB",
-    "ocb": "OCB",
-    "tcb_digital": "LPBank / Cake / Timo",
-    "seab": "SeABank",
-    "bab": "Bac A Bank",
-    "bvb": "BaoViet Bank",
-    "abb": "ABBank",
-    "nab": "Nam A Bank",
-    "pgb": "PG Bank",
-    "vab": "VietABank",
-    "vietbank": "Vietbank",
-    "sgb": "Saigonbank",
-    "klb": "Kienlongbank",
-    "vncb": "CBBank",
-    "oceanbank": "Oceanbank",
-    "gpb": "GPBank",
-    "vrb": "VRB",
-    "ivb": "Indovina Bank",
-    "momo": "MoMo",
-    "zalopay": "ZaloPay",
-    "vnpay": "VNPay",
-}
-
 def get_bank_list() -> list[BankInfo]:
     """
-    Returns the list of supported banks derived from BANK_KEYWORDS.
-    Single Source of Truth: adding a bank to BANK_KEYWORDS automatically
+    Returns the list of supported banks derived from BANK_REGISTRY.
+    Single Source of Truth: adding a bank to BANK_REGISTRY automatically
     exposes it via the /banks API endpoint.
     """
     return [
-        BankInfo(id=bank_id, name=_BANK_DISPLAY_NAMES.get(bank_id, bank_id.upper()))
-        for bank_id in BANK_KEYWORDS
+        BankInfo(id=bank_id, name=data["name"])
+        for bank_id, data in BANK_REGISTRY.items()
     ]
